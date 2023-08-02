@@ -1,0 +1,33 @@
+/opt/rds/log/*/redis.log {
+  weekly
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  notifempty
+  create 644 redis redis
+}
+
+/opt/rds/log/rds.log {
+  size 15M
+  missingok
+  rotate 5
+  compress
+  delaycompress
+  notifempty
+  create 640 redis redis
+}
+
+/opt/rds/log/rds-sync.log {
+  size 15M
+  missingok
+  rotate 5
+  compress
+  delaycompress
+  notifempty
+  create 640 root root
+  sharedscripts
+  postrotate
+    systemctl reload rds-sync.service &> /dev/null || :
+  endscript
+}

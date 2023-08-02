@@ -1,0 +1,190 @@
+###############################################################################
+#                                                                             #
+#                           ██████╗░██████╗░░██████╗                          #
+#                           ██╔══██╗██╔══██╗██╔════╝                          #
+#                           ██████╔╝██║░░██║╚█████╗░                          #
+#                           ██╔══██╗██║░░██║░╚═══██╗                          #
+#                           ██║░░██║██████╔╝██████╔╝                          #
+#                           ╚═╝░░╚═╝╚═════╝░╚═════╝░                          #
+#                                                                             #
+###############################################################################
+
+[main]
+
+  # Maintenance mode flag (superuser password will be required for ANY command)
+  maintenance: false
+
+  # The maximum number of Redis instances (16-1024)
+  max-instances: 128
+
+  # Allow ID reusing
+  allow-id-reuse: true
+
+  # Disable system configuration check (highly unrecommended)
+  disable-configuration-check: false
+
+  # Disable data directory size check (highly unrecommended)
+  disable-filesystem-check: false
+
+  # Warn if system memory usage greater than the defined value (in percentage)
+  warn-used-memory: 50
+
+  # Main data directory
+  dir: /opt/rds
+
+  # Length of superuser password
+  su-pass-length: 18
+
+  # Length of password for instances
+  default-pass-length: 12
+
+  # Minimal password length (6-64)
+  min-pass-length: 6
+
+  # Don't allow users to run non-destructive commands without a password
+  strict-secure: false
+
+  # Hostname used for URL generation
+  hostname:
+
+[redis]
+
+  # Path to Redis server binary
+  binary: /usr/bin/redis-server
+
+  # Redis user
+  user: redis
+
+  # Start port (must be greater than 1024 and same for master and minions)
+  start-port: 63000
+
+  # Force to save dump even if no save points are configured (true by default)
+  save-on-stop: true
+
+  # Scheduling priority for Redis (from -20 for most favorable scheduling
+  # to 19 for least favorable)
+  nice:
+
+  # The scheduling class (1 for real time, 2 for best-effort, 3 for idle)
+  ionice-class:
+
+  # The scheduling class data (0-7 for real time and best-effort class)
+  ionice-classdata:
+
+[sentinel]
+
+  # Enable or disable Sentinel support
+  enabled: false
+
+  # Path to Sentinel binary
+  binary: /usr/bin/redis-sentinel
+
+  # The port that this Sentinel instance will run on
+  port: 63999
+
+  # Number of Sentinels that need to agree about the fact the master
+  # is not reachable
+  quorum: 3
+
+  # Property down-after-milliseconds which will be set for each instance
+  down-after-milliseconds: 5000
+
+  # Property parallel-syncs which will be set for each instance
+  parallel-syncs: 1
+
+  # Property failover-timeout which will be set for each instance
+  failover-timeout: 60000
+
+  # Sentinel monitoring mode (always|targeted)
+  # always - monitoring will be enabled for all started instances by default
+  # targeted - user must use "sentinel-enable" and "sentinel-disable" commands
+  # for working with Sentinel
+  mode: always
+
+[templates]
+
+  # Path to directory with Redis configuration files templates
+  redis: {main:dir}/templates/redis
+
+  # Path to directory with Sentinel configuration files templates
+  sentinel: {main:dir}/templates/sentinel
+
+[log]
+
+  # Minimal log level (debug/info/warn/error/crit)
+  level: info
+
+[path]
+
+  # Path to directory with meta data
+  meta-dir: {main:dir}/meta
+
+  # Path to directory with configuration files
+  config-dir: {main:dir}/conf
+
+  # Path to directory with redis data
+  data-dir: {main:dir}/data
+
+  # Path to directory with PID files
+  pid-dir: {main:dir}/pid
+
+  # Path to directory with logs
+  log-dir: {main:dir}/log
+
+[replication]
+
+  # Node role (master|minion|sentinel|-empty-)
+  role:
+
+  # IP of master sync daemon
+  # If the role is master, this IP can be used for Sentinel monitoring
+  master-ip:
+
+  # Port for master sync daemon (1025-65535)
+  master-port: 64000
+
+  # Authentication token (use command 'rds gen-token'
+  # for token generation)
+  auth-token:
+
+  # Default instance role on minions (standby|replica)
+  default-role: replica
+
+  # Checks if the read-only mode is enabled on a minion
+  check-readonly-mode: true
+
+  # Allow Redis replicas on RDS minions
+  allow-replicas: true
+
+  # Allow execute some non-destructive commands on minions (start, stop,
+  # restart, start-all, stop-all, restart-all)
+  allow-commands: false
+
+  # Always propagate some commands (start, stop, estart, start-all, stop-all,
+  # restart-all) to minions
+  always-propagate: true
+
+  # Max time (in seconds) which given to minions for initial state sync with
+  # master (time between fetch and pull command)
+  max-init-sync-wait: 3600
+
+  # Max time (in seconds) which given to Redis replicas for syncing with masters
+  # Increase this value if you have big instances (20+ Gb) or slow connection
+  # between nodes
+  max-sync-wait: 600
+
+  # Max time (in seconds) for checking syncing state.
+  # If diskless replication is enabled, this value must be equal to or greater
+  # than repl-diskless-sync-delay option.
+  init-sync-delay: 10
+
+[delay]
+
+  # Maximum time (in seconds) for the service to start
+  start: 10
+
+  # Maximum time (in seconds) for the service to stop.
+  # This delay does not count time for saving instance data.
+  stop: 15
+
+################################################################################

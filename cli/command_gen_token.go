@@ -1,0 +1,34 @@
+package cli
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+//                                                                                    //
+//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
+//                                                                                    //
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+import (
+	"fmt"
+
+	"github.com/essentialkaos/ek/v12/fmtc"
+	"github.com/essentialkaos/ek/v12/fmtutil"
+
+	CORE "github.com/essentialkaos/rds/core"
+)
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// GenTokenCommand is "gen-token" command handler
+func GenTokenCommand(args CommandArgs) int {
+	token := CORE.GenerateToken()
+
+	if !useRawOutput {
+		fmtutil.Separator(true)
+		fmtc.Printf("\n  {*}Token:{!} %s\n\n", token)
+		fmtutil.Separator(true)
+	} else {
+		fmt.Println(token)
+	}
+
+	return EC_OK
+}
