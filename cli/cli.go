@@ -69,6 +69,7 @@ const (
 	OPT_FORMAT          = "f:format"
 	OPT_SECURE          = "s:secure"
 	OPT_DISABLE_SAVES   = "ds:disable-saves"
+	OPT_YES             = "y:yes"
 	OPT_SIMPLE          = "S:simple"
 	OPT_NO_COLOR        = "nc:no-color"
 	OPT_HELP            = "h:help"
@@ -180,6 +181,7 @@ var optMap = options.Map{
 	OPT_DISABLE_SAVES:   {Type: options.BOOL},
 	OPT_NO_COLOR:        {Type: options.BOOL},
 	OPT_SIMPLE:          {Type: options.BOOL},
+	OPT_YES:             {Type: options.BOOL},
 	OPT_HELP:            {Type: options.BOOL},
 	OPT_VERSION:         {Type: options.BOOL},
 	OPT_VERBOSE_VERSION: {Type: options.BOOL},
@@ -339,6 +341,10 @@ func configureUI() {
 	fmtutil.SizeSeparator = " "
 	table.HeaderCapitalize = true
 	strutil.EllipsisSuffix = "…"
+
+	if options.GetB(OPT_YES) {
+		terminal.AlwaysYes = true
+	}
 }
 
 // parseOptions parse command line options
@@ -948,6 +954,7 @@ func showSmartUsage() {
 	info.AddOption(OPT_PRIVATE, "Force access to private data ({y}conf{!}/{y}cli{!}/{y}settings{!})")
 	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag")
 	info.AddOption(OPT_FORMAT, "Data output format ({y}info{!}/{y}stats{!})", "text|json|xml")
+	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output (useful for copy-paste)")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
@@ -1033,6 +1040,7 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_PRIVATE, "Force access to private data")
 	info.AddOption(OPT_TAGS, "List of tags", "tag")
 	info.AddOption(OPT_FORMAT, "Data output format", "text|json|xml")
+	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output (useful for copy-paste)")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
