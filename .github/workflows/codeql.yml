@@ -1,0 +1,44 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '0 3 * * */2'
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force workflow run'
+        required: true
+        type: choice
+        options: [yes, no]
+
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyse:
+    name: Analyse
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: go
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
