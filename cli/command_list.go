@@ -67,11 +67,12 @@ func ListCommand(args CommandArgs) int {
 			continue
 		}
 
-		coloredID := getInstanceIDWithColor(id, state)
-		coloredOwner := getInstanceOwnerWithColor(meta)
-		memUsage := getInstanceMemoryUsageWithColor(id, state)
-
-		t.Print(coloredID, memUsage, coloredOwner, getInstanceDescWithTags(meta))
+		t.Print(
+			getInstanceIDWithColor(id, state),
+			getInstanceMemoryUsageWithColor(id, state),
+			getInstanceOwnerWithColor(meta, true),
+			getInstanceDescWithTags(meta),
+		)
 
 		dataShown = true
 	}

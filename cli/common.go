@@ -302,7 +302,7 @@ func getInstanceIDWithColor(id int, state CORE.State) string {
 }
 
 // getInstanceOwnerWithColor returns owner name with color tags
-func getInstanceOwnerWithColor(meta *CORE.InstanceMeta) string {
+func getInstanceOwnerWithColor(meta *CORE.InstanceMeta, before bool) string {
 	if meta == nil {
 		return "{s-}unknown{!}"
 	}
@@ -321,7 +321,12 @@ func getInstanceOwnerWithColor(meta *CORE.InstanceMeta) string {
 
 	if userExistenceCache[owner] {
 		if CORE.User.RealName == owner {
-			return owner + " {g}•{!}"
+			switch before {
+			case true:
+				return "{g}•{!} " + owner
+			default:
+				return owner + " {g}•{!}"
+			}
 		}
 
 		return owner
@@ -379,8 +384,6 @@ func showInstanceBasicInfoCard(id int, state CORE.State) error {
 		return err
 	}
 
-	owner := getInstanceOwnerWithColor(meta)
-
 	t := table.NewTable().SetSizes(14, 96)
 
 	t.Separator()
@@ -388,7 +391,7 @@ func showInstanceBasicInfoCard(id int, state CORE.State) error {
 	t.Separator()
 
 	t.Print("ID", id)
-	t.Print("Owner", owner)
+	t.Print("Owner", getInstanceOwnerWithColor(meta, false))
 	t.Print("Description", meta.Desc)
 	t.Print("State", getInstanceStateWithColor(state))
 	t.Print("Created", timeutil.Format(time.Unix(meta.Created, 0), "%Y/%m/%d %H:%M:%S"))

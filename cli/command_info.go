@@ -194,7 +194,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	t.Separator()
 
 	t.Print("ID", id)
-	t.Print("Owner", getInstanceOwnerWithColor(meta))
+	t.Print("Owner", getInstanceOwnerWithColor(meta, false))
 	t.Print("Description", getInstanceDescWithTags(meta))
 	t.Print("State", getInstanceStateWithColor(state))
 	t.Print("Created", timeutil.Format(created, "%Y/%m/%d %H:%M:%S"))
