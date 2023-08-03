@@ -364,7 +364,7 @@ func renderTags(tags ...string) string {
 		case "m", "magenta":
 			result = append(result, "{m}["+tagName+"]{!}")
 		default:
-			result = append(result, "{s-}["+tagName+"]{!}")
+			result = append(result, "{s}["+tagName+"]{!}")
 		}
 	}
 
