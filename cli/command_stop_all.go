@@ -100,8 +100,8 @@ func StopAllPropCommand(args CommandArgs) int {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// stopAllInstances stops all instances from given slice
 func stopAllInstances(idList []int) int {
-	var err error
 	var hasErrors bool
 
 	if len(idList) == 0 {
@@ -112,7 +112,14 @@ func stopAllInstances(idList []int) int {
 	log.Info("(%s) Initiated the stopping of all working instances", CORE.User.RealName)
 
 	for _, id := range idList {
-		spinner.Show("Stopping instance %d", id)
+		meta, err := CORE.GetInstanceMeta(id)
+
+		if err == nil {
+			spinner.Show("Stopping instance %d {s}(%s){!}", id, meta.Desc)
+		} else {
+			spinner.Show("Stopping instance %d", id)
+		}
+
 		err = CORE.StopInstance(id, false)
 
 		if err != nil {
@@ -126,7 +133,7 @@ func stopAllInstances(idList []int) int {
 
 	log.Info("(%s) Stopped all working instances", CORE.User.RealName)
 
-	err = CORE.SaveStates(CORE.GetStatesFilePath())
+	err := CORE.SaveStates(CORE.GetStatesFilePath())
 
 	if err != nil {
 		fmtc.NewLine()

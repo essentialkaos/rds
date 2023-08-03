@@ -24,8 +24,6 @@ import (
 
 // StartAllCommand is "start-all" command handler
 func StartAllCommand(args CommandArgs) int {
-	var err error
-
 	ec := checkForStartAll()
 
 	if ec != EC_OK {
@@ -49,7 +47,14 @@ func StartAllCommand(args CommandArgs) int {
 	hasErrors := false
 
 	for _, id := range idList {
-		spinner.Show("Starting instance %d", id)
+		meta, err := CORE.GetInstanceMeta(id)
+
+		if err == nil {
+			spinner.Show("Starting instance %d {s}(%s){!}", id, meta.Desc)
+		} else {
+			spinner.Show("Starting instance %d", id)
+		}
+
 		state, err := CORE.GetInstanceState(id, false)
 
 		if err != nil {

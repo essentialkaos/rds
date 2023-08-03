@@ -76,7 +76,14 @@ func RestartAllCommand(args CommandArgs) int {
 	hasErrors := false
 
 	for _, id := range idList {
-		spinner.Show("Restarting instance %d", id)
+		meta, err := CORE.GetInstanceMeta(id)
+
+		if err == nil {
+			spinner.Show("Restarting instance %d {s}(%s){!}", id, meta.Desc)
+		} else {
+			spinner.Show("Restarting instance %d", id)
+		}
+
 		state, err := CORE.GetInstanceState(id, false)
 
 		if err != nil {
