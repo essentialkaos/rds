@@ -79,8 +79,16 @@ func regenerateInstanceConfig(id int) int {
 
 	fmtc.NewLine()
 
-	spinner.Show("Regenerating configuration file for instance %d", id)
+	meta, err := CORE.GetInstanceMeta(id)
+
+	if err == nil {
+		spinner.Show("Regenerating configuration file for instance %d {s}(%s){!}", id, meta.Desc)
+	} else {
+		spinner.Show("Regenerating configuration file for instance %d", id)
+	}
+
 	err = CORE.RegenerateInstanceConfig(id)
+
 	spinner.Done(err == nil)
 
 	if err != nil {
@@ -94,6 +102,7 @@ func regenerateInstanceConfig(id int) int {
 	return EC_OK
 }
 
+// regenerateAllConfigs regenerates configuration files for all instances
 func regenerateAllConfigs() int {
 	ok, err := terminal.ReadAnswer("Do you want to regenerate configuration files for all instances?", "N")
 
@@ -104,8 +113,16 @@ func regenerateAllConfigs() int {
 	fmtc.NewLine()
 
 	for _, id := range CORE.GetInstanceIDList() {
-		spinner.Show("Regenerating configuration file for instance %d", id)
-		err := CORE.RegenerateInstanceConfig(id)
+		meta, err := CORE.GetInstanceMeta(id)
+
+		if err == nil {
+			spinner.Show("Regenerating configuration file for instance %d {s}(%s){!}", id, meta.Desc)
+		} else {
+			spinner.Show("Regenerating configuration file for instance %d", id)
+		}
+
+		err = CORE.RegenerateInstanceConfig(id)
+
 		spinner.Done(err == nil)
 
 		if err != nil {
