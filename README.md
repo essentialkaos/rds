@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://kaos.sh/r/rds"><img src="https://kaos.sh/r/rds.svg" alt="GoReportCard" /></a>
-  <a href="https://kaos.sh/l/rds"><img src="https://kaos.sh/l/xxxxxxxxxxxxxxx.svg" alt="Code Climate Maintainability" /></a>
+  <a href="https://kaos.sh/l/rds"><img src="https://kaos.sh/l/b1568323e77e3a605a24.svg" alt="Code Climate Maintainability" /></a>
   <a href="https://kaos.sh/b/rds"><img src="https://kaos.sh/b/xxxxxxxxxxxxxxx.svg" alt="codebeat badge" /></a>
   <a href="https://kaos.sh/w/rds/ci"><img src="https://kaos.sh/w/rds/ci.svg" alt="GitHub Actions CI Status" /></a>
   <a href="https://kaos.sh/w/rds/codeql"><img src="https://kaos.sh/w/rds/codeql.svg" alt="GitHub Actions CodeQL Status" /></a>
