@@ -16,7 +16,7 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.st/demo.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rds-100.gif)](#usage-demo)
 
 ### Installation
 
