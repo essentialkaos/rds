@@ -112,14 +112,14 @@ func runSyncLoop() {
 func sendHelloCommand() bool {
 	connectedToMaster = false
 
-	log.Info("Sending hello to master on %s...", CORE.Config.GetS(CORE.REPLICATION_MASTER_IP))
+	log.Info("Sending hello to master on %s…", CORE.Config.GetS(CORE.REPLICATION_MASTER_IP))
 
 	hostname, _ := os.Hostname()
 
 	helloRequest := &API.HelloRequest{
 		Version:  daemonVersion + "/" + CORE.VERSION,
 		Hostname: hostname,
-		Type:     CORE.ROLE_MINION,
+		Role:     CORE.ROLE_MINION,
 	}
 
 	helloResponse := &API.HelloResponse{}
@@ -169,7 +169,7 @@ func sendHelloCommand() bool {
 
 // sendFetchCommand send fetch command to master
 func sendFetchCommand() {
-	log.Info("Fetching info about all instances on master...")
+	log.Info("Fetching info about all instances on master…")
 
 	fetchRequest := &API.DefaultRequest{CID: cid}
 	fetchResponse := &API.FetchResponse{}
@@ -210,7 +210,7 @@ func sendFetchCommand() {
 
 // sendPullCommand send pull command to master
 func sendPullCommand() {
-	log.Debug("Pulling commands on master...")
+	log.Debug("Pulling commands on master…")
 
 	pullRequest := &API.DefaultRequest{CID: cid}
 	pullResponse := &API.PullResponse{}
@@ -520,7 +520,7 @@ func processInstanceData(info *CORE.InstanceInfo) {
 		meta, err := CORE.GetInstanceMeta(id)
 
 		if err != nil {
-			log.Error("(%3d) Can't read local meta. Skipping instance...", id)
+			log.Error("(%3d) Can't read local meta. Skipping instance…", id)
 			return
 		}
 
@@ -1052,12 +1052,12 @@ func syncBlocker(id int) {
 
 	hasReplica := config.Get("replicaof") != "" || config.Get("slaveof") != ""
 
-	// Instance is not a replica (standby), go to next...
+	// Instance is not a replica (standby), go to next…
 	if !hasReplica {
 		return
 	}
 
-	log.Info("(%3d) Starting sync with master instance...", id)
+	log.Info("(%3d) Starting sync with master instance…", id)
 
 	time.Sleep(CORE.Config.GetD(CORE.REPLICATION_INIT_SYNC_DELAY, 3*time.Second))
 
@@ -1071,7 +1071,7 @@ func syncingWaitLoop(id int) {
 	deadline := time.Now().Add(maxWait)
 
 	log.Info(
-		"(%3d) Instance is syncing with master (deadline: %s)...",
+		"(%3d) Instance is syncing with master (deadline: %s)…",
 		id, timeutil.Format(deadline, "%Y/%m/%d %H:%M:%S"),
 	)
 
@@ -1080,14 +1080,14 @@ func syncingWaitLoop(id int) {
 
 	for now := range time.Tick(time.Second) {
 		if now.After(deadline) {
-			log.Warn("(%3d) Max wait time is reached (%g sec) but instance is still syncing. Continue anyway...", id, maxWait.Seconds())
+			log.Warn("(%3d) Max wait time is reached (%g sec) but instance is still syncing. Continue anyway…", id, maxWait.Seconds())
 			break
 		}
 
 		state := getInstanceSyncState(id)
 
 		if state.IsLoading && !loadingFlag {
-			log.Info("(%3d) Instance is loading data in memory...", id)
+			log.Info("(%3d) Instance is loading data in memory…", id)
 			loadingFlag = true
 		}
 
@@ -1097,7 +1097,7 @@ func syncingWaitLoop(id int) {
 		}
 
 		if !state.IsConnected && state.IsWaiting && syncLeftBytesPrev > 0 {
-			log.Error("(%3d) It looks like instance can't load received data (possible version mismatch). Continue node syncing...", id)
+			log.Error("(%3d) It looks like instance can't load received data (possible version mismatch). Continue node syncing…", id)
 			break
 		}
 
@@ -1108,13 +1108,13 @@ func syncingWaitLoop(id int) {
 				if disklessFlag {
 					syncSpeed := float64(mathutil.Abs(state.SyncLeftBytes)) - float64(syncLeftBytesPrev)
 					log.Info(
-						"(%3d) Receiving data from master (%s/s), %s was received...", id,
+						"(%3d) Receiving data from master (%s/s), %s was received…", id,
 						fmtutil.PrettySize(math.Max(0, syncSpeed)), fmtutil.PrettySize(mathutil.Abs(state.SyncLeftBytes)),
 					)
 				} else {
 					syncSpeed := float64(syncLeftBytesPrev) - float64(state.SyncLeftBytes)
 					log.Info(
-						"(%3d) Receiving data from master (%s/s), %s is left...", id,
+						"(%3d) Receiving data from master (%s/s), %s is left…", id,
 						fmtutil.PrettySize(math.Max(0, syncSpeed)), fmtutil.PrettySize(state.SyncLeftBytes),
 					)
 				}

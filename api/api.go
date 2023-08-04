@@ -85,7 +85,7 @@ type MasterInfo struct {
 
 type ClientInfo struct {
 	CID            string      `json:"cid"`
-	Type           string      `json:"type"`
+	Role           string      `json:"role"`
 	Version        string      `json:"version"`
 	Hostname       string      `json:"hostname"`
 	IP             string      `json:"ip"`
@@ -111,7 +111,7 @@ const (
 	STATUS_UNKNOWN_CLIENT            StatusCode = 3
 	STATUS_WRONG_METHOD              StatusCode = 4
 	STATUS_WRONG_ARGS                StatusCode = 5
-	STATUS_INCORRECT_REQUEST          StatusCode = 6
+	STATUS_INCORRECT_REQUEST         StatusCode = 6
 	STATUS_UNKNOWN_INSTANCE          StatusCode = 7
 	STATUS_INCOMPATIBLE_CORE_VERSION StatusCode = 8
 	STATUS_UNKNOWN_ERROR             StatusCode = 99
@@ -147,7 +147,7 @@ type DefaultResponse struct {
 type HelloRequest struct {
 	Version  string `json:"version"`
 	Hostname string `json:"hostname"`
-	Type     string `json:"type"`
+	Role     string `json:"role"`
 }
 
 type HelloResponse struct {

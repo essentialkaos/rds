@@ -284,7 +284,7 @@ func startSyncDaemon(gitRev string) int {
 	role := CORE.Config.GetS(CORE.REPLICATION_ROLE)
 
 	if role == "" {
-		log.Warn("Replication is disabled. Shutdown...")
+		log.Warn("Replication is disabled. Shutdown…")
 		return EC_ERROR
 	}
 
@@ -352,19 +352,19 @@ func printError(f string, a ...any) {
 
 // termSignalHandler is handler for TERM signal
 func termSignalHandler() {
-	log.Info("Got TERM signal, shutdown...")
+	log.Info("Got TERM signal, shutdown…")
 	shutdown(EC_OK)
 }
 
 // intSignalHandler is handler for INT signal
 func intSignalHandler() {
-	log.Info("Got INT signal, shutdown...")
+	log.Info("Got INT signal, shutdown…")
 	shutdown(EC_OK)
 }
 
 // hupSignalHandler is handler for HUP signal
 func hupSignalHandler() {
-	log.Info("Got HUP signal, log will be reopened...")
+	log.Info("Got HUP signal, log will be reopened…")
 	CORE.ReopenLog()
 	log.Info("Log was reopened by HUP signal")
 }

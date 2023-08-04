@@ -44,7 +44,7 @@ const (
 
 type ClientInfo struct {
 	CID            string
-	Type           string
+	Role           string
 	Version        string
 	Hostname       string
 	IP             string
@@ -560,7 +560,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UnixNano()
 
 	for _, client := range clients {
-		switch client.Type {
+		switch client.Role {
 		case CORE.ROLE_MINION:
 			statsInfo.Minions++
 		case CORE.ROLE_SENTINEL:
@@ -658,7 +658,7 @@ func restoreInstancesState() error {
 		return nil
 	}
 
-	log.Info("Restoring states...")
+	log.Info("Restoring states…")
 
 	for _, stateInfo := range statesInfo.States {
 		if !CORE.IsInstanceExist(stateInfo.ID) {
@@ -779,7 +779,7 @@ func registerClient(ip string, request *API.HelloRequest, cid string) {
 		CID:            cid,
 		Version:        request.Version,
 		Hostname:       request.Hostname,
-		Type:           request.Type,
+		Role:           request.Role,
 		IP:             ip,
 		State:          API.STATE_ONLINE,
 		LastSeen:       now,
@@ -833,7 +833,7 @@ func getClientsInfo() []*API.ClientInfo {
 	for _, client := range clients {
 		result = append(result, &API.ClientInfo{
 			CID:            client.CID,
-			Type:           client.Type,
+			Role:           client.Role,
 			Version:        client.Version,
 			Hostname:       client.Hostname,
 			IP:             client.IP,
@@ -1019,13 +1019,13 @@ func genCID() string {
 func renderClientInfo(client *ClientInfo) string {
 	if client.Hostname == "" {
 		return fmt.Sprintf(
-			"Type: %s | Version: %s | IP: %s",
-			client.Type, client.Version, client.IP,
+			"Role: %s | Version: %s | IP: %s",
+			client.Role, client.Version, client.IP,
 		)
 	}
 
 	return fmt.Sprintf(
-		"Type: %s | Version: %s | Hostname: %s | IP: %s",
-		client.Type, client.Version, client.Hostname, client.IP,
+		"Role: %s | Version: %s | Hostname: %s | IP: %s",
+		client.Role, client.Version, client.Hostname, client.IP,
 	)
 }

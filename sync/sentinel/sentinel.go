@@ -102,14 +102,14 @@ func runSyncLoop() {
 func sendHelloCommand() bool {
 	connectedToMaster = false
 
-	log.Info("Sending hello to master on %s...", CORE.Config.GetS(CORE.REPLICATION_MASTER_IP))
+	log.Info("Sending hello to master on %s…", CORE.Config.GetS(CORE.REPLICATION_MASTER_IP))
 
 	hostname, _ := os.Hostname()
 
 	helloRequest := &API.HelloRequest{
 		Version:  daemonVersion + "/" + CORE.VERSION,
 		Hostname: hostname,
-		Type:     CORE.ROLE_SENTINEL,
+		Role:     CORE.ROLE_SENTINEL,
 	}
 
 	helloResponse := &API.HelloResponse{}
@@ -155,7 +155,7 @@ func sendHelloCommand() bool {
 
 // sendFetchCommand send fetch command to master
 func sendFetchCommand() {
-	log.Info("Fetching info about all instances on master...")
+	log.Info("Fetching info about all instances on master…")
 
 	fetchRequest := &API.DefaultRequest{CID: cid}
 	fetchResponse := &API.FetchResponse{}
@@ -194,7 +194,7 @@ func sendFetchCommand() {
 
 // sendPullCommand send pull command to master
 func sendPullCommand() {
-	log.Debug("Pulling commands from master...")
+	log.Debug("Pulling commands from master…")
 
 	pullRequest := &API.DefaultRequest{CID: cid}
 	pullResponse := &API.PullResponse{}

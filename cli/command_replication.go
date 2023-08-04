@@ -81,7 +81,7 @@ func ReplicationCommand(args CommandArgs) int {
 
 // renderReplicationInfo print info about master and clients
 func renderReplicationInfo(info *API.ReplicationInfo) {
-	t := table.NewTable("CID", "TYPE", "STATE", "VERSION", "HOST")
+	t := table.NewTable("CID", "ROLE", "STATE", "VERSION", "HOST")
 
 	t.SetSizes(8, 12, 14, 14)
 	t.SetAlignments(
@@ -98,13 +98,13 @@ func renderReplicationInfo(info *API.ReplicationInfo) {
 	}
 
 	for _, client := range info.Clients {
-		if client.Type == CORE.ROLE_MINION {
+		if client.Role == CORE.ROLE_MINION {
 			printSyncClientInfo(t, client, info.SuppliantCID)
 		}
 	}
 
 	for _, client := range info.Clients {
-		if client.Type != CORE.ROLE_MINION {
+		if client.Role != CORE.ROLE_MINION {
 			printSyncClientInfo(t, client, info.SuppliantCID)
 		}
 	}
@@ -117,7 +117,7 @@ func printSyncMasterInfo(t *table.Table, master *API.MasterInfo, suppliantCID st
 	isSuppliant := suppliantCID == ""
 
 	t.Print(
-		"{s-}--------{!}", getSyncClientType("master", isSuppliant), "{g}online{!}",
+		"{s-}--------{!}", getSyncClientRole("master", isSuppliant), "{g}online{!}",
 		master.Version, getSyncClientHost(master.Hostname, master.IP),
 	).Separator()
 }
@@ -127,7 +127,7 @@ func printSyncClientInfo(t *table.Table, client *API.ClientInfo, suppliantCID st
 	isSuppliant := client.CID == suppliantCID
 
 	t.Print(
-		client.CID, getSyncClientType(client.Type, isSuppliant),
+		client.CID, getSyncClientRole(client.Role, isSuppliant),
 		getSyncClientState(client.State), client.Version,
 		getSyncClientHost(client.Hostname, client.IP),
 	)
@@ -165,8 +165,8 @@ func getSyncClientHost(hostname, ip string) string {
 	return result
 }
 
-// getSyncClientType returns client type for command output
-func getSyncClientType(typ string, isSuppliant bool) string {
+// getSyncClientRole returns client role for command output
+func getSyncClientRole(typ string, isSuppliant bool) string {
 	if !isSuppliant {
 		return typ
 	}
@@ -185,7 +185,7 @@ func renderReplicationInfoText(info *API.ReplicationInfo) {
 	for _, c := range info.Clients {
 		fmt.Printf(
 			"%s %s %s %s %s %s %d\n",
-			c.CID, c.Type, c.IP, c.Hostname, strutil.Exclude(c.Version, " "),
+			c.CID, c.Role, c.IP, c.Hostname, strutil.Exclude(c.Version, " "),
 			c.State, c.ConnectionDate,
 		)
 	}
@@ -205,8 +205,8 @@ func renderReplicationInfoXML(info *API.ReplicationInfo) {
 
 	for _, c := range info.Clients {
 		fmt.Printf(
-			"    <client cid=\"%s\" type=\"%s\" ip=\"%s\" hostname=\"%s\" version=\"%s\" state=\"%s\" connected=\"%d\" />\n",
-			c.CID, c.Type, c.IP, c.Hostname, c.Version, c.State, c.ConnectionDate,
+			"    <client cid=\"%s\" role=\"%s\" ip=\"%s\" hostname=\"%s\" version=\"%s\" state=\"%s\" connected=\"%d\" />\n",
+			c.CID, c.Role, c.IP, c.Hostname, c.Version, c.State, c.ConnectionDate,
 		)
 	}
 
