@@ -27,9 +27,7 @@ sudo yum install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /e
 sudo yum install rds rds-sync
 ```
 
-```bash
-sudo rds go
-```
+Run `sudo rds go` command and follow the instructions.
 
 ### Usage
 
