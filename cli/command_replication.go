@@ -34,7 +34,7 @@ func ReplicationCommand(args CommandArgs) int {
 		case FORMAT_XML:
 			fmt.Sprintln(`<?xml version="1.0" encoding="UTF-8" ?>\n<replication></replication>`)
 		default:
-			terminal.Warn("Can't show replication info: sync daemon is not works")
+			terminal.Warn("Can't show replication info: sync daemon is not working")
 		}
 
 		return EC_WARN
