@@ -361,8 +361,9 @@ func helpCommandInfo() {
 			{getNiceOptions(OPT_FORMAT), "Output format (json|text|xml)", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1", "Show all available info for instance with ID 1"},
+			{"", "1", "Show basic info about instance with ID 1"},
 			{"", "1 memory", "Show info memory section for instance with ID 1"},
+			{"", "1 all", "Show all info (including non-default sections) about instance with ID 1"},
 		},
 	}.render()
 }
