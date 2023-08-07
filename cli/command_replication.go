@@ -10,6 +10,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/options"
@@ -118,7 +119,7 @@ func printSyncMasterInfo(t *table.Table, master *API.MasterInfo, suppliantCID st
 
 	t.Print(
 		"{s-}--------{!}", getSyncClientRole("master", isSuppliant), "{g}online{!}",
-		master.Version, getSyncClientHost(master.Hostname, master.IP),
+		getColoredVersion(master.Version), getSyncClientHost(master.Hostname, master.IP),
 	).Separator()
 }
 
@@ -128,12 +129,23 @@ func printSyncClientInfo(t *table.Table, client *API.ClientInfo, suppliantCID st
 
 	t.Print(
 		client.CID, getSyncClientRole(client.Role, isSuppliant),
-		getSyncClientState(client.State), client.Version,
+		getSyncClientState(client.State), getColoredVersion(client.Version),
 		getSyncClientHost(client.Hostname, client.IP),
 	)
 }
 
-// getSyncClientState return client state for command output
+// getColoredVersion returns colored version info
+func getColoredVersion(version string) string {
+	app, core, ok := strings.Cut(version, "/")
+
+	if !ok {
+		return version
+	}
+
+	return fmt.Sprintf("%s{s}/%s{!}", app, core)
+}
+
+// getSyncClientState returns client state for command output
 func getSyncClientState(state API.ClientState) string {
 	switch state {
 	case API.STATE_SYNCING:
@@ -147,7 +159,7 @@ func getSyncClientState(state API.ClientState) string {
 	}
 }
 
-// getClientHost return client hostname for command output
+// getClientHost returns client hostname for command output
 func getSyncClientHost(hostname, ip string) string {
 	var result string
 
