@@ -1104,7 +1104,9 @@ func syncingWaitLoop(id int) {
 		if state.IsSyncing && !state.IsLoading {
 			loadingFlag = false
 
-			if !syncingFlag || (now.Unix()-start)%60 == 0 {
+			syncingTime := now.Unix() - start
+
+			if !syncingFlag || syncingTime%15 == 0 {
 				if disklessFlag {
 					syncSpeed := float64(mathutil.Abs(state.SyncLeftBytes)) - float64(syncLeftBytesPrev)
 					log.Info(
