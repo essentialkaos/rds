@@ -105,17 +105,17 @@ Common commands
 
 Options
 
-  --secure, -s                  Create secure Redis instance with auth support
-  --disable-saves, -ds          Disable saves for created instance
-  --private, -p                 Force access to private data
-  --tags, -t tag                List of tags
-  --format, -f text|json|xml    Data output format
-  --yes, -y                     Automatically answer yes for all questions
-  --simple, -S                  Simplify output (useful for copy-paste)
-  --no-color, -nc               Disable colors in output
-  --help, -h                    Show this help message
-  --version, -v                 Show information about version
-  --verbose-version, -vv        Show verbose information about version
+  --secure, -s              Create secure Redis instance with auth support
+  --disable-saves, -ds      Disable saves for created instance
+  --private, -p             Force access to private data
+  --tags, -t tag            List of tags
+  --format, -f format       Output format (text/json/xml)
+  --yes, -y                 Automatically answer yes for all questions
+  --simple, -S              Simplify output (useful for copy-paste)
+  --no-color, -nc           Disable colors in output
+  --help, -h                Show this help message
+  --version, -v             Show information about version
+  --verbose-version, -vv    Show verbose information about version
 ```
 
 ### CI Status
