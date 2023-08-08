@@ -77,6 +77,7 @@ Superuser commands
   regen id                     Regenerate configuration file for one or all instances
   state-save file              Save state of all instances
   state-restore file           Restore state of all instances
+  maintenance flag             Enable or disable maintenance mode
 
 Replication commands
 

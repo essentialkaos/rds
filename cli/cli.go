@@ -890,7 +890,7 @@ func showSmartUsage() {
 	}
 
 	if isMaster || (isMinion && allowCommands) {
-		info.AddCommand(COMMAND_MAINTENANCE, "Enable or disable maintenance mode")
+		info.AddCommand(COMMAND_MAINTENANCE, "Enable or disable maintenance mode", "flag")
 		info.AddCommand(COMMAND_STOP_ALL, "Stop all instances")
 		info.AddCommand(COMMAND_START_ALL, "Start all instances")
 		info.AddCommand(COMMAND_RESTART_ALL, "Restart all instances")
@@ -1013,6 +1013,7 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_REGEN, "Regenerate configuration file for one or all instances", "id")
 	info.AddCommand(COMMAND_STATE_SAVE, "Save state of all instances", "file")
 	info.AddCommand(COMMAND_STATE_RESTORE, "Restore state of all instances", "?file")
+	info.AddCommand(COMMAND_MAINTENANCE, "Enable or disable maintenance mode", "flag")
 
 	info.AddGroup("Replication commands")
 	info.AddCommand(COMMAND_REPLICATION, "Show replication info")
