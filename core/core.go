@@ -56,7 +56,7 @@ import (
 const VERSION = "A1"
 
 // META_VERSION is current meta version
-const META_VERSION = 3
+const META_VERSION = 1
 
 const (
 	MIN_INSTANCES        = 16
@@ -148,7 +148,6 @@ const (
 	SENTINEL_DOWN_AFTER       = "sentinel:down-after-milliseconds"
 	SENTINEL_PARALLEL_SYNCS   = "sentinel:parallel-syncs"
 	SENTINEL_FAILOVER_TIMEOUT = "sentinel:failover-timeout"
-	SENTINEL_MODE             = "sentinel:mode"
 
 	TEMPLATES_REDIS    = "templates:redis"
 	TEMPLATES_SENTINEL = "templates:sentinel"
@@ -176,6 +175,12 @@ const (
 	DELAY_STOP  = "delay:stop"
 )
 
+const (
+	REDIS_USER_ADMIN   = "admin"
+	REDIS_USER_SYNC    = "sync"
+	REDIS_USER_SERVICE = "service"
+)
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type State uint16
@@ -199,13 +204,6 @@ const (
 	REPL_TYPE_STANDBY ReplicationType = "standby"
 )
 
-type SentinelMode string
-
-const (
-	SENTINEL_MODE_ALWAYS   SentinelMode = "always"
-	SENTINEL_MODE_TARGETED SentinelMode = "targeted"
-)
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type SystemStatus struct {
@@ -216,28 +214,15 @@ type SystemStatus struct {
 	HasFSIssues     bool
 }
 
-type InstancePreferencies struct {
-	ID             int    `json:"id"`               // Instance ID
-	Password       string `json:"password"`         // Redis password for secure instance
-	Prefix         string `json:"prefix"`           // Commands prefix
-	IsSecure       bool   `json:"secure"`           // Secure instance flag
-	IsSaveDisabled bool   `json:"is_save_disabled"` // Disabled saves flag
-}
-
-type SuperuserAuthInfo struct {
+type SuperuserAuth struct {
 	Hash   string `json:"hash"`
 	Pepper string `json:"pepper"`
 }
 
-type InstanceAuthInfo struct {
-	Pepper string `json:"pepper"`
-	Hash   string `json:"hash"`
+type InstanceAuth struct {
 	User   string `json:"user"`
-}
-
-type InstanceConfigInfo struct {
-	Hash string `json:"hash"`
-	Date int64  `json:"date"`
+	Pepper string `json:"pepper"`
+	Hash   string `json:"hash"`
 }
 
 type InstanceMeta struct {
@@ -250,10 +235,23 @@ type InstanceMeta struct {
 	ID              int                   `json:"id"`                // Instance ID
 	Created         int64                 `json:"created"`           // Date of creation (unix timestamp)
 	Preferencies    *InstancePreferencies `json:"preferencies"`      // Config data
-	AuthInfo        *InstanceAuthInfo     `json:"auth"`              // Instance auth info
-	ConfigInfo      *InstanceConfigInfo   `json:"config"`            // Config info (hash + creation date)
+	Config          *InstanceConfigInfo   `json:"config"`            // Config info (hash + creation date)
+	Auth            *InstanceAuth         `json:"auth"`              // Instance auth info
 	Storage         Storage               `json:"storage,omitempty"` // Core version agnostic data storage
-	Sentinel        bool                  `json:"sentinel"`          // Sentinel monitoring flag
+}
+
+type InstanceConfigInfo struct {
+	Hash string `json:"hash"`
+	Date int64  `json:"date"`
+}
+
+type InstancePreferencies struct {
+	ID              int    `json:"id"`               // Instance ID
+	AdminPassword   string `json:"admin_password"`   // Admin user password
+	SyncPassword    string `json:"sync_password"`    // Sync user password
+	ServicePassword string `json:"service_password"` // Service user password
+	IsSecure        bool   `json:"is_secure"`        // Secure instance flag
+	IsSaveDisabled  bool   `json:"is_save_disabled"` // Disabled saves flag
 }
 
 type InstanceInfo struct {
@@ -337,25 +335,17 @@ type Stats struct {
 }
 
 // aligo:ignore
-type InstanceConfig struct {
-	Redis             version.Version
-	RDS               *InstanceRDSConfig
-	Password          string
-	Prefix            string
-	ID                int
-	IsSecure          bool
-	IsSaveDisabled    bool
-	IsSentinelEnabled bool
-	IsReplica         bool
+type InstanceConfigData struct {
+	Redis           version.Version
+	ID              int
+	AdminPassword   string
+	SyncPassword    string
+	ServicePassword string
+	IsSecure        bool
+	IsSaveDisabled  bool
+	IsReplica       bool
 
 	tags []string
-}
-
-type InstanceRDSConfig struct {
-	Role       string
-	IsMaster   bool
-	IsMinion   bool
-	IsSentinel bool
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -414,7 +404,6 @@ var redisVersion version.Version
 
 // supportedVersions is map with supported Redis versions
 var supportedVersions = map[string]bool{
-	"5.0": true,
 	"6.0": true,
 	"6.2": true,
 	"7.0": true,
@@ -553,7 +542,7 @@ func HasSUAuth() bool {
 }
 
 // SaveSUAuth save superuser auth data
-func SaveSUAuth(auth *SuperuserAuthInfo, rewrite bool) error {
+func SaveSUAuth(auth *SuperuserAuth, rewrite bool) error {
 	if HasSUAuth() && !rewrite {
 		return ErrSUAuthAlreadyExist
 	}
@@ -576,12 +565,12 @@ func SaveSUAuth(auth *SuperuserAuthInfo, rewrite bool) error {
 }
 
 // ReadSUAuth read superuser auth data
-func ReadSUAuth() (*SuperuserAuthInfo, error) {
+func ReadSUAuth() (*SuperuserAuth, error) {
 	if !HasSUAuth() {
 		return nil, ErrSUAuthNoData
 	}
 
-	auth := &SuperuserAuthInfo{}
+	auth := &SuperuserAuth{}
 	err := readAndDecode(auth, Config.GetS(MAIN_DIR)+"/"+SU_DATA_FILE)
 
 	return auth, err
@@ -815,21 +804,54 @@ func GetInstanceConfigHash(id int) (string, error) {
 	return fmt.Sprintf("%064x", hasher.Sum(nil)), nil
 }
 
-// NewInstanceMeta generate meta struct for new instance
-func NewInstanceMeta() *InstanceMeta {
+// NewAuthInfo generates new instance auth struct
+func NewInstanceAuth(password string) (*InstanceAuth, error) {
+	pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
+	hash, err := passwd.Encrypt(password, pepper)
+
+	if err != nil {
+		return nil, fmt.Errorf("Can't generate encrypted password hash: %w", err)
+	}
+
+	return &InstanceAuth{
+		User:   User.RealName,
+		Hash:   hash,
+		Pepper: pepper,
+	}, nil
+}
+
+// NewInstanceMeta generates meta struct for new instance
+func NewInstanceMeta(instancePassword, servicePassword string) (*InstanceMeta, error) {
 	id := GetAvailableInstanceID()
+
+	if id == -1 {
+		return nil, errors.New("No available ID for usage")
+	}
+
+	auth, err := NewInstanceAuth(instancePassword)
+
+	if err != nil {
+		return nil, err
+	}
+
+	preferencies := &InstancePreferencies{
+		ID:              id,
+		AdminPassword:   passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
+		SyncPassword:    passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
+		ServicePassword: servicePassword,
+		IsSecure:        servicePassword != "",
+	}
 
 	return &InstanceMeta{
 		MetaVersion:     META_VERSION,
 		ID:              id,
 		ReplicationType: ReplicationType(knf.GetS(REPLICATION_DEFAULT_ROLE, string(REPL_TYPE_REPLICA))),
 		UUID:            uuid.GenUUID4(),
-		Sentinel:        Config.GetS(SENTINEL_MODE) == string(SENTINEL_MODE_ALWAYS),
-		Preferencies:    &InstancePreferencies{ID: id, Prefix: passwd.GenPassword(8, passwd.STRENGTH_MEDIUM)},
-		AuthInfo:        &InstanceAuthInfo{},
-		ConfigInfo:      &InstanceConfigInfo{},
+		Preferencies:    preferencies,
+		Auth:            auth,
+		Config:          &InstanceConfigInfo{},
 		Storage:         make(map[string]string),
-	}
+	}, nil
 }
 
 // CreateInstance create instance by instance meta
@@ -933,11 +955,6 @@ func UpdateInstance(newMeta *InstanceMeta) error {
 		return err
 	}
 
-	if oldMeta.Sentinel != newMeta.Sentinel {
-		oldMeta.Sentinel = newMeta.Sentinel
-		hasChanges = true
-	}
-
 	if oldMeta.ReplicationType != newMeta.ReplicationType {
 		if newMeta.ReplicationType != REPL_TYPE_REPLICA && newMeta.ReplicationType != REPL_TYPE_STANDBY {
 			return ErrUnknownReplicationType
@@ -948,20 +965,20 @@ func UpdateInstance(newMeta *InstanceMeta) error {
 		hasChanges = true
 	}
 
-	if newMeta.AuthInfo != nil {
-		if newMeta.AuthInfo.Pepper != "" && newMeta.AuthInfo.Hash != "" {
-			if newMeta.AuthInfo.Pepper != oldMeta.AuthInfo.Pepper &&
-				newMeta.AuthInfo.Hash != oldMeta.AuthInfo.Hash {
+	if newMeta.Auth != nil {
+		if newMeta.Auth.Pepper != "" && newMeta.Auth.Hash != "" {
+			if newMeta.Auth.Pepper != oldMeta.Auth.Pepper &&
+				newMeta.Auth.Hash != oldMeta.Auth.Hash {
 
-				oldMeta.AuthInfo.Pepper = newMeta.AuthInfo.Pepper
-				oldMeta.AuthInfo.Hash = newMeta.AuthInfo.Hash
+				oldMeta.Auth.Pepper = newMeta.Auth.Pepper
+				oldMeta.Auth.Hash = newMeta.Auth.Hash
 
 				hasChanges = true
 			}
 		}
 
-		if newMeta.AuthInfo.User != "" && newMeta.AuthInfo.User != oldMeta.AuthInfo.User {
-			oldMeta.AuthInfo.User = newMeta.AuthInfo.User
+		if newMeta.Auth.User != "" && newMeta.Auth.User != oldMeta.Auth.User {
+			oldMeta.Auth.User = newMeta.Auth.User
 			hasChanges = true
 		}
 	}
@@ -1062,12 +1079,6 @@ func GetInstanceConfig(id int, timeout time.Duration) (*REDIS.Config, error) {
 		return nil, fmt.Errorf("Instance with ID %d doesn't exist", id)
 	}
 
-	rn, err := GetInstanceRenamedCommands(id)
-
-	if err != nil {
-		return nil, err
-	}
-
 	meta, err := GetInstanceMeta(id)
 
 	if err != nil {
@@ -1076,11 +1087,10 @@ func GetInstanceConfig(id int, timeout time.Duration) (*REDIS.Config, error) {
 
 	return REDIS.GetConfig(
 		&REDIS.Request{
-			Command:   []string{"CONFIG", "GET", "*"},
-			Port:      GetInstancePort(id),
-			Password:  meta.Preferencies.Password,
-			Timeout:   timeout,
-			Renamings: rn,
+			Command: []string{"CONFIG", "GET", "*"},
+			Port:    GetInstancePort(id),
+			Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+			Timeout: timeout,
 		},
 	)
 }
@@ -1178,12 +1188,6 @@ func GetInstanceInfo(id int, timeout time.Duration, all bool) (*REDIS.Info, erro
 		return info, fmt.Errorf("Instance with ID %d doesn't exist", id)
 	}
 
-	rn, err := GetInstanceRenamedCommands(id)
-
-	if err != nil {
-		return nil, err
-	}
-
 	meta, err := GetInstanceMeta(id)
 
 	if err != nil {
@@ -1198,51 +1202,15 @@ func GetInstanceInfo(id int, timeout time.Duration, all bool) (*REDIS.Info, erro
 
 	return REDIS.GetInfo(
 		&REDIS.Request{
-			Command:   command,
-			Port:      GetInstancePort(id),
-			Password:  meta.Preferencies.Password,
-			Timeout:   timeout,
-			Renamings: rn,
+			Command: command,
+			Port:    GetInstancePort(id),
+			Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+			Timeout: timeout,
 		},
 	)
 }
 
-// GetInstanceRenamedCommands returns map with renamed commands
-// r1: base -> ranamed
-// r2: renamed -> base
-func GetInstanceRenamedCommands(id int) (map[string]string, error) {
-	if !IsInstanceExist(id) {
-		return nil, fmt.Errorf("Instance with ID %d doesn't exist", id)
-	}
-
-	config, err := ReadInstanceConfig(id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]string)
-	renamings, ok := config.Data["rename-command"]
-
-	if !ok {
-		return result, nil
-	}
-
-	for _, rn := range renamings {
-		sc := strutil.ReadField(rn, 0, false, " ")
-		rc := strutil.ReadField(rn, 1, false, " ")
-
-		if sc == "" || rc == "" {
-			continue
-		}
-
-		result[strings.ToUpper(sc)] = rc
-	}
-
-	return result, nil
-}
-
-// ExecCommand execute redis command on given instance
+// ExecCommand executes Redis command on given instance
 func ExecCommand(id int, req *REDIS.Request) (*REDIS.Resp, error) {
 	if !IsInstanceExist(id) {
 		return nil, fmt.Errorf("Instance with ID %d doesn't exist", id)
@@ -1252,24 +1220,14 @@ func ExecCommand(id int, req *REDIS.Request) (*REDIS.Resp, error) {
 		req.Port = GetInstancePort(id)
 	}
 
-	if req.Password == "" {
+	if req.Auth.User == "" {
 		meta, err := GetInstanceMeta(id)
 
 		if err != nil {
 			return nil, fmt.Errorf("Can't read instance meta: %v", err)
 		}
 
-		req.Password = meta.Preferencies.Password
-	}
-
-	if req.Renamings == nil {
-		rn, err := GetInstanceRenamedCommands(id)
-
-		if err != nil {
-			return nil, fmt.Errorf("Can't read instance config: %v", err)
-		}
-
-		req.Renamings = rn
+		req.Auth = REDIS.Auth{"admin", meta.Preferencies.AdminPassword}
 	}
 
 	resp, err := REDIS.ExecCommand(req)
@@ -1374,8 +1332,8 @@ func StartInstance(id int, controlLoading bool) error {
 
 		// Sentinel monitoring works only with replicas
 		if meta.ReplicationType == REPL_TYPE_REPLICA {
-			if IsSentinelEnabled() && meta.Sentinel && !SENTINEL.IsSentinelEnabled(Config.GetI(SENTINEL_PORT), id) {
-				err = StartSentinelMonitoring(id, meta.Preferencies.Prefix)
+			if IsSentinelEnabled() {
+				err = StartSentinelMonitoring(id)
 
 				if err != nil {
 					return err
@@ -1556,7 +1514,17 @@ func SentinelStart() []error {
 		return []error{err}
 	}
 
-	sentinelConfig := Config.GetS(PATH_CONFIG_DIR) + "/sentinel.conf"
+	sentinelConfigDir := Config.GetS(PATH_CONFIG_DIR) + "/sentinel"
+
+	if fsutil.IsExist(sentinelConfigDir) {
+		err = os.Mkdir(sentinelConfigDir, 0770)
+
+		if err != nil {
+			return []error{err}
+		}
+	}
+
+	sentinelConfig := sentinelConfigDir + "/sentinel.conf"
 	sentinelLogFile := Config.GetS(PATH_LOG_DIR) + "/sentinel.log"
 
 	err = runAsUser(
@@ -1574,7 +1542,7 @@ func SentinelStart() []error {
 		return []error{ErrSentinelCantStart}
 	}
 
-	return addAllSlavesToSentinelMonitoring()
+	return addAllReplicasToSentinelMonitoring()
 }
 
 // SentinelStop stop (shutdown) Sentinel daemon
@@ -1685,18 +1653,8 @@ func SentinelMasterSwitch(id int) error {
 	return runSentinelFailoverSwitch(id, priority)
 }
 
-// EnableSentinelMonitoring enable Sentinel monitoring for given instance
-func EnableSentinelMonitoring(id int) error {
-	return setSentinelMonitoringFlag(id, true)
-}
-
-// DisableSentinelMonitoring disable Sentinel monitoring for given instance
-func DisableSentinelMonitoring(id int) error {
-	return setSentinelMonitoringFlag(id, false)
-}
-
 // StartSentinelMonitoring add instance to Sentinel monitoring
-func StartSentinelMonitoring(id int, commandPrefix string) error {
+func StartSentinelMonitoring(id int) error {
 	// Check for enabled sentinel only if node works as master or minion
 	if !IsSentinel() && !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
@@ -1719,8 +1677,6 @@ func StartSentinelMonitoring(id int, commandPrefix string) error {
 		DownAfterMilliseconds: Config.GetI(SENTINEL_DOWN_AFTER, 10000),
 		FailoverTimeout:       Config.GetI(SENTINEL_FAILOVER_TIMEOUT, 180000),
 		ParallelSyncs:         Config.GetI(SENTINEL_PARALLEL_SYNCS, 1),
-
-		CommandPrefix: commandPrefix,
 	}
 
 	return SENTINEL.Monitor(Config.GetI(SENTINEL_PORT), cfg)
@@ -1742,18 +1698,6 @@ func StopSentinelMonitoring(id int) error {
 	}
 
 	return SENTINEL.Remove(Config.GetI(SENTINEL_PORT), id)
-}
-
-// GetSentinelMode returns current used Sentinel mode
-func GetSentinelMode() SentinelMode {
-	switch Config.GetS(SENTINEL_MODE) {
-
-	case string(SENTINEL_MODE_TARGETED):
-		return SENTINEL_MODE_TARGETED
-
-	default:
-		return SENTINEL_MODE_ALWAYS
-	}
 }
 
 // SaveStates save all instances states to file
@@ -2171,13 +2115,13 @@ func (m *InstanceMeta) Validate() error {
 	case m == nil:
 		return ErrMetaIsNil
 
-	case m.AuthInfo == nil:
+	case m.Auth == nil:
 		return ErrMetaNoAuth
 
 	case m.Preferencies == nil:
 		return ErrMetaNoPrefs
 
-	case m.ConfigInfo == nil:
+	case m.Config == nil:
 		return ErrMetaNoConfigInfo
 
 	case m.MetaVersion < 1 || m.MetaVersion > META_VERSION:
@@ -2194,52 +2138,52 @@ func (m *InstanceMeta) Validate() error {
 }
 
 // Port returns instance port
-func (p *InstanceConfig) Port() int {
+func (p *InstanceConfigData) Port() int {
 	return GetInstancePort(p.ID)
 }
 
 // MetaFile returns path to meta file for instance with given ID
-func (p *InstanceConfig) MetaFile() string {
+func (p *InstanceConfigData) MetaFile() string {
 	return GetInstanceMetaFilePath(p.ID)
 }
 
 // ConfigFile returns path to config file for instance with given ID
-func (p *InstanceConfig) ConfigFile() string {
+func (p *InstanceConfigData) ConfigFile() string {
 	return GetInstanceConfigFilePath(p.ID)
 }
 
 // DataDir returns path to data directory for instance with given ID
-func (p *InstanceConfig) DataDir() string {
+func (p *InstanceConfigData) DataDir() string {
 	return GetInstanceDataDirPath(p.ID)
 }
 
 // LogDir returns path to logs directory for instance with given ID
-func (p *InstanceConfig) LogDir() string {
+func (p *InstanceConfigData) LogDir() string {
 	return GetInstanceLogDirPath(p.ID)
 }
 
 // LogFile returns path to log file for instance with given ID
-func (p *InstanceConfig) LogFile() string {
+func (p *InstanceConfigData) LogFile() string {
 	return GetInstanceLogFilePath(p.ID)
 }
 
 // PidFile returns path to PID file for instance with given ID
-func (p *InstanceConfig) PidFile() string {
+func (p *InstanceConfigData) PidFile() string {
 	return GetInstancePIDFilePath(p.ID)
 }
 
 // MasterHost returns redis master host (IP)
-func (p *InstanceConfig) MasterHost() string {
+func (p *InstanceConfigData) MasterHost() string {
 	return Config.GetS(REPLICATION_MASTER_IP)
 }
 
 // MasterPort returns redis master port
-func (p *InstanceConfig) MasterPort() int {
+func (p *InstanceConfigData) MasterPort() int {
 	return GetInstancePort(p.ID)
 }
 
 // HasTag return true if configuration has given tag
-func (c *InstanceConfig) HasTag(tag string) bool {
+func (c *InstanceConfigData) HasTag(tag string) bool {
 	if len(c.tags) == 0 {
 		return false
 	}
@@ -2256,12 +2200,12 @@ func (c *InstanceConfig) HasTag(tag string) bool {
 }
 
 // Version returns struct with Redis version info
-func (c *InstanceConfig) Version() version.Version {
+func (c *InstanceConfigData) Version() version.Version {
 	return c.Redis
 }
 
 // RedisVersionLess returns true if instance Redis version is less than given
-func (c *InstanceConfig) RedisVersionLess(v string) bool {
+func (c *InstanceConfigData) RedisVersionLess(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
@@ -2272,7 +2216,7 @@ func (c *InstanceConfig) RedisVersionLess(v string) bool {
 }
 
 // RedisVersionGreater returns true if instance Redis version is greater than given
-func (c *InstanceConfig) RedisVersionGreater(v string) bool {
+func (c *InstanceConfigData) RedisVersionGreater(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
@@ -2283,7 +2227,7 @@ func (c *InstanceConfig) RedisVersionGreater(v string) bool {
 }
 
 // RedisVersionEquals returns true if instance Redis version is equal to given
-func (c *InstanceConfig) RedisVersionEquals(v string) bool {
+func (c *InstanceConfigData) RedisVersionEquals(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
@@ -2291,6 +2235,21 @@ func (c *InstanceConfig) RedisVersionEquals(v string) bool {
 	}
 
 	return c.Redis.Equal(ver)
+}
+
+// AdminPasswordHash returns SHA-256 hash for admin user password
+func (c *InstanceConfigData) AdminPasswordHash() string {
+	return getSHA256Hash(c.AdminPassword)
+}
+
+// SyncPasswordHash returns SHA-256 hash for sync user password
+func (c *InstanceConfigData) SyncPasswordHash() string {
+	return getSHA256Hash(c.SyncPassword)
+}
+
+// ServicePasswordHash returns SHA-256 hash for service user password
+func (c *InstanceConfigData) ServicePasswordHash() string {
+	return getSHA256Hash(c.ServicePassword)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -2394,9 +2353,6 @@ func validateConfig(c *knf.Config) []error {
 		{SENTINEL_PARALLEL_SYNCS, knfv.Empty, nil},
 		{SENTINEL_PORT, knfv.Less, MIN_PORT},
 		{SENTINEL_PORT, knfv.Greater, MAX_PORT},
-		{SENTINEL_MODE, knfv.NotContains, []string{
-			string(SENTINEL_MODE_ALWAYS), string(SENTINEL_MODE_TARGETED),
-		}},
 
 		// TEMPLATES //
 
@@ -2542,8 +2498,8 @@ func createInstanceConfig(meta *InstanceMeta) error {
 	hasher := sha256.New()
 	hasher.Write(bf.Bytes())
 
-	meta.ConfigInfo.Hash = fmt.Sprintf("%064x", hasher.Sum(nil))
-	meta.ConfigInfo.Date = time.Now().Unix()
+	meta.Config.Hash = fmt.Sprintf("%064x", hasher.Sum(nil))
+	meta.Config.Date = time.Now().Unix()
 
 	return nil
 }
@@ -2771,8 +2727,8 @@ func updateConfigInfo(id int) error {
 		return err
 	}
 
-	meta.ConfigInfo.Date = mtime.Unix()
-	meta.ConfigInfo.Hash = hash
+	meta.Config.Date = mtime.Unix()
+	meta.Config.Hash = hash
 
 	metaCache.Set(meta.ID, meta)
 
@@ -2888,8 +2844,8 @@ func getConfigTemplateData(sentinel bool) (string, error) {
 	return string(data), nil
 }
 
-// addAllSlavesToSentinelMonitoring adds all relicas to Sentinel monitoring
-func addAllSlavesToSentinelMonitoring() []error {
+// addAllReplicasToSentinelMonitoring adds all relicas to Sentinel monitoring
+func addAllReplicasToSentinelMonitoring() []error {
 	if !HasInstances() {
 		return nil
 	}
@@ -2915,16 +2871,11 @@ func addAllSlavesToSentinelMonitoring() []error {
 			continue
 		}
 
-		// Skip instance if targeted mode is enabled and instance doesn't use Sentinel monitoring
-		if GetSentinelMode() == SENTINEL_MODE_TARGETED && !meta.Sentinel {
-			continue
-		}
-
 		if meta.ReplicationType != REPL_TYPE_REPLICA {
 			continue
 		}
 
-		err = StartSentinelMonitoring(id, meta.Preferencies.Prefix)
+		err = StartSentinelMonitoring(id)
 
 		if err != nil {
 			errs = append(errs, err)
@@ -3115,39 +3066,8 @@ func getRedisTreePIDs(id, instancePID int) ([]int, error) {
 	return pids, nil
 }
 
-// setSentinelMonitoringFlag set Sentinel monitoring flag in meta
-func setSentinelMonitoringFlag(id int, flag bool) error {
-	if !IsInstanceExist(id) {
-		return fmt.Errorf("Instance with ID %d doesn't exist", id)
-	}
-
-	meta, err := GetInstanceMeta(id)
-
-	if err != nil {
-		return err
-	}
-
-	meta.Sentinel = flag
-
-	err = saveInstanceMeta(meta)
-
-	if err != nil {
-		return err
-	}
-
-	metaCache.Set(meta.ID, meta)
-
-	return nil
-}
-
 // runSentinelFailoverSwitch run failover on sentinel for switching master
 func runSentinelFailoverSwitch(id int, priority string) error {
-	renamings, err := GetInstanceRenamedCommands(id)
-
-	if err != nil {
-		return err
-	}
-
 	meta, err := GetInstanceMeta(id)
 
 	if err != nil {
@@ -3155,10 +3075,9 @@ func runSentinelFailoverSwitch(id int, priority string) error {
 	}
 
 	req := &REDIS.Request{
-		Port:      GetInstancePort(id),
-		Password:  meta.Preferencies.Password,
-		Timeout:   time.Second,
-		Renamings: renamings,
+		Port:    GetInstancePort(id),
+		Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Timeout: time.Second,
 	}
 
 	// Set instance priority to 1 (will be preferred by Sentinel)
@@ -3233,14 +3152,14 @@ func appendStatsData(info *REDIS.Info, prop string, value *uint64) {
 }
 
 // createConfigFromMeta create config struct based on instance preferencies
-func createConfigFromMeta(meta *InstanceMeta) *InstanceConfig {
-	result := &InstanceConfig{
-		ID:                meta.ID,
-		Password:          meta.Preferencies.Password,
-		Prefix:            meta.Preferencies.Prefix,
-		IsSecure:          meta.Preferencies.IsSecure,
-		IsSaveDisabled:    meta.Preferencies.IsSaveDisabled,
-		IsSentinelEnabled: meta.Sentinel,
+func createConfigFromMeta(meta *InstanceMeta) *InstanceConfigData {
+	result := &InstanceConfigData{
+		ID:              meta.ID,
+		AdminPassword:   meta.Preferencies.AdminPassword,
+		SyncPassword:    meta.Preferencies.SyncPassword,
+		ServicePassword: meta.Preferencies.ServicePassword,
+		IsSecure:        meta.Preferencies.IsSecure,
+		IsSaveDisabled:  meta.Preferencies.IsSaveDisabled,
 
 		tags: meta.Tags,
 	}
@@ -3255,34 +3174,11 @@ func createConfigFromMeta(meta *InstanceMeta) *InstanceConfig {
 		result.IsReplica = true
 	}
 
-	if GetSentinelMode() == SENTINEL_MODE_ALWAYS {
-		result.IsSentinelEnabled = true
-	}
-
-	if !IsSentinelEnabled() {
-		result.IsSentinelEnabled = false
-	}
-
-	role := Config.GetS(REPLICATION_ROLE)
-
-	result.RDS = &InstanceRDSConfig{
-		Role:       role,
-		IsMaster:   role == ROLE_MASTER || role == "",
-		IsMinion:   role == ROLE_MINION,
-		IsSentinel: role == ROLE_SENTINEL,
-	}
-
 	return result
 }
 
 // applyChangedConfigProps apply changed config props
 func applyChangedConfigProps(id int, diff []REDIS.ConfigPropDiff) []error {
-	renamings, err := GetInstanceRenamedCommands(id)
-
-	if err != nil {
-		return []error{err}
-	}
-
 	meta, err := GetInstanceMeta(id)
 
 	if err != nil {
@@ -3292,10 +3188,9 @@ func applyChangedConfigProps(id int, diff []REDIS.ConfigPropDiff) []error {
 	var errs []error
 
 	req := &REDIS.Request{
-		Port:      GetInstancePort(id),
-		Password:  meta.Preferencies.Password,
-		Timeout:   time.Second,
-		Renamings: renamings,
+		Port:    GetInstancePort(id),
+		Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Timeout: time.Second,
 	}
 
 	for _, info := range diff {
@@ -3383,17 +3278,18 @@ func getSysctlSetting(key string) (int, error) {
 
 // execShutdownCommand execute SHUTDOWN command on instance
 func execShutdownCommand(id int) error {
-	// We use a small timeout because SHUTDOWN is synchronous command
-	// and we don't want to wait for a response
-	req := &REDIS.Request{
-		Command: []string{"SHUTDOWN"},
-		Timeout: time.Second * 1,
-	}
-
 	meta, err := GetInstanceMeta(id)
 
 	if err != nil {
 		return err
+	}
+
+	// We use a small timeout because SHUTDOWN is synchronous command
+	// and we don't want to wait for a response
+	req := &REDIS.Request{
+		Command: []string{"SHUTDOWN"},
+		Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Timeout: time.Second * 1,
 	}
 
 	if knf.GetB(REDIS_SAVE_ON_STOP, true) && !meta.Preferencies.IsSaveDisabled {
@@ -3518,4 +3414,9 @@ func findDirDeviceInfo(path string, info map[string]*system.FSUsage) *system.FSU
 	}
 
 	return info["/"]
+}
+
+// getSHA256Hash returns SHA-256 hash for given data
+func getSHA256Hash(data string) string {
+	return fmt.Sprintf("%064x", sha256.Sum256([]byte(data)))
 }

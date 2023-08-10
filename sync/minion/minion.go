@@ -159,12 +159,12 @@ func sendHelloCommand() bool {
 	// Start or stop sentinel monitoring
 	syncSentinelState(sentinelWorks)
 
-	if helloResponse.SUAuth == nil {
+	if helloResponse.Auth == nil {
 		log.Warn("Looks like master is not initialized (superuser data not generated) - hello response contains empty superuser auth data")
 		return true
 	}
 
-	return CORE.SaveSUAuth(helloResponse.SUAuth, true) == nil
+	return CORE.SaveSUAuth(helloResponse.Auth, true) == nil
 }
 
 // sendFetchCommand send fetch command to master
@@ -321,10 +321,6 @@ func processCommands(items []*API.CommandQueueItem) {
 			sentinelStartCommandHandler(item)
 		case API.COMMAND_SENTINEL_STOP:
 			sentinelStopCommandHandler(item)
-		case API.COMMAND_SENTINEL_ENABLE:
-			sentinelEnableCommandHandler(item)
-		case API.COMMAND_SENTINEL_DISABLE:
-			sentinelDisableCommandHandler(item)
 		default:
 			log.Error("Received unknown command %s", item.Command)
 		}
@@ -446,50 +442,6 @@ func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	}
 
 	stopSentinel()
-}
-
-// sentinelEnableCommandHandler handler for "sentinel-enable" command
-func sentinelEnableCommandHandler(item *API.CommandQueueItem) {
-	err := CORE.EnableSentinelMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't enable Sentinel monitoring: %v", item.InstanceID, err)
-		return
-	}
-
-	ok, info := sendInfoCommand(item.InstanceID, item.InstanceUUID)
-
-	if !ok {
-		return
-	}
-
-	if info.State.IsWorks() {
-		enableSentinelMonitoring(info.Meta)
-	}
-
-	log.Info("(%3d) Sentinel monitoring enabled", item.InstanceID)
-}
-
-// sentinelDisableCommandHandler handler for "sentinel-disable" command
-func sentinelDisableCommandHandler(item *API.CommandQueueItem) {
-	err := CORE.DisableSentinelMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't disable Sentinel monitoring: %v", item.InstanceID, err)
-		return
-	}
-
-	ok, info := sendInfoCommand(item.InstanceID, item.InstanceUUID)
-
-	if !ok {
-		return
-	}
-
-	if info.State.IsWorks() {
-		disableSentinelMonitoring(item.InstanceID)
-	}
-
-	log.Info("(%3d) Sentinel monitoring enabled", item.InstanceID)
 }
 
 // processFetchedData process fetched data
@@ -872,35 +824,6 @@ func stopSentinel() bool {
 	sentinelWorks = false
 
 	log.Info("Sentinel stopped")
-
-	return true
-}
-
-// enableSentinelMonitoring enables Sentinel monitoring for instance
-func enableSentinelMonitoring(meta *CORE.InstanceMeta) bool {
-	id := meta.ID
-	err := CORE.StartSentinelMonitoring(id, meta.Preferencies.Prefix)
-
-	if err != nil {
-		log.Error("(%3d) Can't start Sentinel monitoring: %v", id, err)
-		return false
-	}
-
-	log.Info("(%3d) Sentinel monitoring enabled and started", id)
-
-	return true
-}
-
-// disableSentinelMonitoring disables Sentinel monitoring for instance
-func disableSentinelMonitoring(id int) bool {
-	err := CORE.StopSentinelMonitoring(id)
-
-	if err != nil {
-		log.Error("(%3d) Can't stop Sentinel monitoring: %v", id, err)
-		return false
-	}
-
-	log.Info("(%3d) Sentinel monitoring stopped and disabled", id)
 
 	return true
 }
@@ -1300,10 +1223,9 @@ func isMetaEqual(m1, m2 *CORE.InstanceMeta) bool {
 	switch {
 	case m1.Desc != m2.Desc,
 		m1.ReplicationType != m2.ReplicationType,
-		m1.Sentinel != m2.Sentinel,
-		m1.AuthInfo.User != m2.AuthInfo.User,
-		m1.AuthInfo.Pepper != m2.AuthInfo.Pepper,
-		m1.AuthInfo.Hash != m2.AuthInfo.Hash,
+		m1.Auth.User != m2.Auth.User,
+		m1.Auth.Pepper != m2.Auth.Pepper,
+		m1.Auth.Hash != m2.Auth.Hash,
 		isMapsEqual(m1.Storage, m2.Storage) == false,
 		strings.Join(m1.Tags, " ") != strings.Join(m2.Tags, " "):
 		return false

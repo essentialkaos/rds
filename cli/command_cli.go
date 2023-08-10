@@ -21,6 +21,8 @@ import (
 
 // CliCommand is "cli" command handler
 func CliCommand(args CommandArgs) int {
+	var cliCfg *RC.Cfg
+
 	err := args.Check(true)
 
 	if err != nil {
@@ -36,23 +38,24 @@ func CliCommand(args CommandArgs) int {
 	}
 
 	port := CORE.GetInstancePort(id)
-	meta, err := CORE.GetInstanceMeta(id)
 
-	if err != nil {
-		terminal.Error(err.Error())
-		return EC_ERROR
+	if len(args) == 1 {
+		cliCfg = &RC.Cfg{
+			ID:          id,
+			Port:        port,
+			DB:          db,
+			HistoryFile: fmt.Sprintf("%s/.rediscli_history", CORE.User.HomeDir),
+		}
+	} else {
+		cliCfg = &RC.Cfg{
+			Port:      port,
+			DB:        db,
+			Command:   args[1:],
+			RawOutput: useRawOutput,
+		}
 	}
 
-	var disableMonitor bool
-
-	renamings, err := CORE.GetInstanceRenamedCommands(id)
-
-	if err != nil {
-		terminal.Error(err.Error())
-		return EC_ERROR
-	}
-
-	if args.Has(1) || args.Get(1) == renamings["MONITOR"] {
+	if args.Has(1) || args.Get(1) == "MONITOR" {
 		ops, err := getCurrentInstanceTraffic(id)
 
 		if err != nil {
@@ -60,32 +63,25 @@ func CliCommand(args CommandArgs) int {
 			return EC_ERROR
 		}
 
-		disableMonitor = ops > RC.MONITOR_MAX_OPS
+		cliCfg.DisableMonitor = ops > RC.MONITOR_MAX_OPS
 	}
 
-	if len(args) == 1 {
-		err = RC.RunRedisCli(&RC.CLIProps{
-			ID:             id,
-			Port:           port,
-			DB:             db,
-			Password:       meta.Preferencies.Password,
-			HistoryFile:    fmt.Sprintf("%s/.rediscli_history", CORE.User.HomeDir),
-			Renamings:      renamings,
-			DisableMonitor: disableMonitor,
-			Secure:         options.GetB(OPT_PRIVATE),
-		})
-	} else {
-		err = RC.ExecRedisCmd(&RC.CLIProps{
-			Port:           port,
-			DB:             db,
-			Password:       meta.Preferencies.Password,
-			Command:        args[1:],
-			Renamings:      renamings,
-			DisableMonitor: disableMonitor,
-			Secure:         options.GetB(OPT_PRIVATE),
-			RawOutput:      useRawOutput,
-		})
+	meta, err := CORE.GetInstanceMeta(id)
+
+	if err != nil {
+		terminal.Error(err.Error())
+		return EC_ERROR
 	}
+
+	if options.GetB(OPT_PRIVATE) {
+		cliCfg.User = CORE.REDIS_USER_ADMIN
+		cliCfg.Password = meta.Preferencies.AdminPassword
+	} else if meta.Preferencies.IsSecure {
+		cliCfg.User = CORE.REDIS_USER_SERVICE
+		cliCfg.Password = meta.Preferencies.ServicePassword
+	}
+
+	err = RC.RunRedisCli(cliCfg)
 
 	if err != nil {
 		terminal.Error(err.Error())

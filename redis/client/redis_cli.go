@@ -28,19 +28,18 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// CLIProps contains cli properties
-type CLIProps struct {
-	ID             int
-	Port           int
-	DB             int
-	Password       string
-	Command        []string
-	Renamings      map[string]string
-	HistoryFile    string
-	Timeout        int
-	DisableMonitor bool
-	Secure         bool
-	RawOutput      bool
+// Cfg contains cli configuration
+type Cfg struct {
+	ID             int      // Instance ID
+	Port           int      // Redis port
+	DB             int      // DB index
+	User           string   // ACL password
+	Password       string   // ACL password
+	Command        []string // Command
+	HistoryFile    string   // Path to history file
+	Timeout        int      // Connection timeout
+	DisableMonitor bool     // Disable MONITOR command flag
+	RawOutput      bool     // Raw output flag
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -72,33 +71,32 @@ var client *redy.Client
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // ExecRedisCmd simply execute given command
-func ExecRedisCmd(props *CLIProps) error {
-	if len(props.Command) == 0 {
+func ExecRedisCmd(cfg *Cfg) error {
+	if len(cfg.Command) == 0 {
 		return errors.New("Not enough command arguments")
 	}
 
-	reverseRenamings := getReversedRenamings(props.Renamings)
-	origCommand := getOriginalCommand(reverseRenamings, props.Command[0])
+	cmd := cfg.Command[0]
 
-	if unsupportedCommands[origCommand] {
-		return fmt.Errorf("RDS currently doesn't have native support of %s command", origCommand)
+	if unsupportedCommands[cmd] {
+		return fmt.Errorf("RDS currently doesn't have native support of %s command", cmd)
 	}
 
-	if origCommand == "MONITOR" {
-		if props.DisableMonitor {
+	if cmd == "MONITOR" {
+		if cfg.DisableMonitor {
 			return fmt.Errorf("Traffic on instance is too high (> %d op/s) for using monitor command", MONITOR_MAX_OPS)
 		}
 
-		return execMonitor(props, props.Command[0])
+		return execMonitor(cfg, cmd)
 	}
 
-	return execCommand(props)
+	return execCommand(cfg)
 }
 
 // RunRedisCli run interactive cli
-func RunRedisCli(props *CLIProps) error {
-	prompt := getPrompt(props.ID, props.Port, props.DB)
-	client := getClient(props.Port, time.Second*time.Duration(props.Timeout))
+func RunRedisCli(cfg *Cfg) error {
+	prompt := getPrompt(cfg.ID, cfg.Port, cfg.DB)
+	client := getClient(cfg.Port, time.Second*time.Duration(cfg.Timeout))
 
 	err := client.Connect()
 
@@ -108,11 +106,9 @@ func RunRedisCli(props *CLIProps) error {
 
 	defer client.Close()
 
-	reverseRenamings := getReversedRenamings(props.Renamings)
-
-	configureClient(client, props)
+	configureClient(client, cfg)
 	updateCommandsSupport(client)
-	initCLIFeatures(props)
+	initCLIFeatures(cfg)
 
 	var resp *redy.Resp
 
@@ -129,47 +125,42 @@ func RunRedisCli(props *CLIProps) error {
 
 		linenoise.AddHistory(input)
 
-		command := strutil.Fields(input)
-		origCommand := getOriginalCommand(reverseRenamings, command[0])
+		cmd := strutil.Fields(input)
 
-		if props.Secure {
-			command[0] = getRenamedCommand(props.Renamings, command[0])
-		}
-
-		if unsupportedCommands[origCommand] {
-			fmt.Printf("\nRDS currently doesn't have native support of %s command\n\n", origCommand)
+		if unsupportedCommands[cmd[0]] {
+			fmt.Printf("\nRDS currently doesn't have native support of %s command\n\n", cmd[0])
 			continue
 		}
 
-		if origCommand == "MONITOR" {
-			if props.DisableMonitor {
+		if cmd[0] == "MONITOR" {
+			if cfg.DisableMonitor {
 				fmt.Printf("\nTraffic on instance is too high (> %d op/s) for using monitor command\n\n", MONITOR_MAX_OPS)
 			} else {
 				fmt.Println("")
-				execMonitor(props, command[0])
+				execMonitor(cfg, cmd[0])
 			}
 
 			continue
 		}
 
-		switch len(command) {
+		switch len(cmd) {
 		case 1:
-			resp = client.Cmd(command[0])
+			resp = client.Cmd(cmd[0])
 		default:
-			resp = client.Cmd(command[0], convertCommandSlice(command[1:]))
+			resp = client.Cmd(cmd[0], convertCommandSlice(cmd[1:]))
 		}
 
 		fmt.Printf("\n" + formatResp(resp, false) + "\n")
 
-		if origCommand == "SELECT" && !resp.HasType(redy.ERR) {
+		if cmd[0] == "SELECT" && !resp.HasType(redy.ERR) {
 			// Ignore error because redis return ok response
-			db, _ := strconv.Atoi(command[1])
-			prompt = getPrompt(props.ID, props.Port, db)
+			db, _ := strconv.Atoi(cmd[1])
+			prompt = getPrompt(cfg.ID, cfg.Port, db)
 		}
 	}
 
-	if props.HistoryFile != "" {
-		linenoise.SaveHistory(props.HistoryFile)
+	if cfg.HistoryFile != "" {
+		linenoise.SaveHistory(cfg.HistoryFile)
 	}
 
 	return nil
@@ -178,8 +169,8 @@ func RunRedisCli(props *CLIProps) error {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // execCommand exec one command
-func execCommand(props *CLIProps) error {
-	client := getClient(props.Port, time.Second*time.Duration(props.Timeout))
+func execCommand(cfg *Cfg) error {
+	client := getClient(cfg.Port, time.Second*time.Duration(cfg.Timeout))
 
 	err := client.Connect()
 
@@ -191,22 +182,18 @@ func execCommand(props *CLIProps) error {
 
 	var resp *redy.Resp
 
-	if props.Secure {
-		props.Command[0] = getRenamedCommand(props.Renamings, props.Command[0])
-	}
-
-	switch len(props.Command) {
+	switch len(cfg.Command) {
 	case 1:
-		resp = client.Cmd(props.Command[0])
+		resp = client.Cmd(cfg.Command[0])
 	default:
-		resp = client.Cmd(props.Command[0], convertCommandSlice(props.Command[1:]))
+		resp = client.Cmd(cfg.Command[0], convertCommandSlice(cfg.Command[1:]))
 	}
 
 	if resp.Err != nil {
 		return resp.Err
 	}
 
-	fmt.Print(formatResp(resp, props.RawOutput))
+	fmt.Print(formatResp(resp, cfg.RawOutput))
 
 	return nil
 }
@@ -231,38 +218,33 @@ func getClient(port int, timeout time.Duration) *redy.Client {
 }
 
 // configureClient configure client
-func configureClient(client *redy.Client, props *CLIProps) error {
+func configureClient(client *redy.Client, cfg *Cfg) error {
 	var resp *redy.Resp
 
-	// Automatic auth only available in secure mode
-	if props.Password != "" && props.Secure {
-		resp = client.Cmd(getRenamedCommand(props.Renamings, "AUTH"), props.Password)
+	if cfg.User != "" && cfg.Password != "" {
+		resp = client.Cmd("AUTH", cfg.User, cfg.Password)
 
 		if resp.Err != nil {
 			return resp.Err
 		}
 	}
 
-	if props.DB != 0 {
-		resp = client.Cmd(getRenamedCommand(props.Renamings, "SELECT"), props.DB)
+	if cfg.DB != 0 {
+		resp = client.Cmd("SELECT", cfg.DB)
 
 		if resp.Err != nil {
 			return resp.Err
 		}
-	}
-
-	if props.Secure && len(props.Command) != 0 {
-		props.Command[0] = getRenamedCommand(props.Renamings, props.Command[0])
 	}
 
 	return nil
 }
 
 // execMonitor exec monitor command (connection not be closed)
-func execMonitor(props *CLIProps, cmd string) error {
+func execMonitor(cfg *Cfg, cmd string) error {
 	conn, err := net.DialTimeout(
-		"tcp", "127.0.0.1:"+strconv.Itoa(props.Port),
-		time.Second*time.Duration(props.Timeout),
+		"tcp", "127.0.0.1:"+strconv.Itoa(cfg.Port),
+		time.Second*time.Duration(cfg.Timeout),
 	)
 
 	if err != nil {
@@ -271,8 +253,8 @@ func execMonitor(props *CLIProps, cmd string) error {
 
 	defer conn.Close()
 
-	if props.Password != "" {
-		conn.Write([]byte(getRenamedCommand(props.Renamings, "AUTH") + " " + props.Password + "\n"))
+	if cfg.Password != "" {
+		conn.Write([]byte("AUTH " + cfg.User + " " + cfg.Password + "\n"))
 	}
 
 	conn.Write([]byte(cmd + "\n"))
@@ -420,12 +402,12 @@ func formatArrayResp(r *redy.Resp, prefixSize int, raw bool) string {
 }
 
 // initCLIFeatures add autocompele and hints for user input
-func initCLIFeatures(props *CLIProps) {
+func initCLIFeatures(cfg *Cfg) {
 	linenoise.SetCompletionHandler(autocompleteHandler)
 	linenoise.SetHintHandler(hintHandler)
 
-	if props.HistoryFile != "" && fsutil.CheckPerms("FRS", props.HistoryFile) {
-		linenoise.LoadHistory(props.HistoryFile)
+	if cfg.HistoryFile != "" && fsutil.CheckPerms("FRS", cfg.HistoryFile) {
+		linenoise.LoadHistory(cfg.HistoryFile)
 	}
 }
 
@@ -490,39 +472,6 @@ func getSuggestions(input string) []string {
 		if strings.HasPrefix(command.Name, strings.ToUpper(input)) {
 			result = append(result, command.Name)
 		}
-	}
-
-	return result
-}
-
-// getRenamedCommand return renamed command by original command
-func getRenamedCommand(r map[string]string, command string) string {
-	renamedCommand, ok := r[strings.ToUpper(command)]
-
-	if ok {
-		return renamedCommand
-	}
-
-	return command
-}
-
-// getOriginalCommand return original command by renamed command
-func getOriginalCommand(r map[string]string, command string) string {
-	originalCommand, ok := r[command]
-
-	if ok {
-		return originalCommand
-	}
-
-	return strings.ToUpper(command)
-}
-
-// getReversedRenamings convert
-func getReversedRenamings(rn map[string]string) map[string]string {
-	result := make(map[string]string)
-
-	for k, v := range rn {
-		result[v] = k
 	}
 
 	return result

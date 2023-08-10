@@ -15,7 +15,6 @@ import (
 
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/log"
-	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/pluralize"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/strutil"
@@ -55,7 +54,7 @@ func BatchEditCommand(args CommandArgs) int {
 
 	fmtc.NewLine()
 
-	_, pass, user, replType, err := readEditInfo(false, true, true, true)
+	info, err := readEditInfo(false, true, true, true)
 
 	if err != nil {
 		if err == terminal.ErrKillSignal {
@@ -85,9 +84,8 @@ func BatchEditCommand(args CommandArgs) int {
 			continue
 		}
 
-		if pass != "" {
-			pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
-			hash, err := passwd.Encrypt(pass, pepper)
+		if info.InstancePassword != "" {
+			auth, err := CORE.NewInstanceAuth(info.InstancePassword)
 
 			if err != nil {
 				spinner.Done(false)
@@ -97,16 +95,16 @@ func BatchEditCommand(args CommandArgs) int {
 				continue
 			}
 
-			meta.AuthInfo.Pepper = pepper
-			meta.AuthInfo.Hash = hash
+			meta.Auth.Pepper = auth.Pepper
+			meta.Auth.Hash = auth.Hash
 		}
 
-		if user != "" {
-			meta.AuthInfo.User = user
+		if info.Owner != "" {
+			meta.Auth.User = info.Owner
 		}
 
-		if replType != "" {
-			meta.ReplicationType = CORE.ReplicationType(replType)
+		if info.ReplicationType != "" {
+			meta.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 		}
 
 		err = CORE.UpdateInstance(meta)

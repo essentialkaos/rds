@@ -113,8 +113,6 @@ const (
 	COMMAND_RESTART_ALL_PROP     = "@" + COMMAND_RESTART_ALL
 	COMMAND_RESTART_PROP         = "@" + COMMAND_RESTART
 	COMMAND_SENTINEL_CHECK       = "sentinel-check"
-	COMMAND_SENTINEL_DISABLE     = "sentinel-disable"
-	COMMAND_SENTINEL_ENABLE      = "sentinel-enable"
 	COMMAND_SENTINEL_INFO        = "sentinel-info"
 	COMMAND_SENTINEL_MASTER      = "sentinel-master"
 	COMMAND_SENTINEL_RESET       = "sentinel-reset"
@@ -460,7 +458,7 @@ func initCommands() {
 
 	if options.GetB(OPT_PRIVATE) {
 		commands[COMMAND_CONF] = &CommandRoutine{ConfCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true, true}
-		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, useRawOutput == false}
+		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true, useRawOutput == false}
 
 		if CORE.HasSUAuth() {
 			commands[COMMAND_SETTINGS] = &CommandRoutine{SettingsCommand, AUTH_SUPERUSER, true, true}
@@ -469,7 +467,7 @@ func initCommands() {
 		}
 	} else {
 		commands[COMMAND_CONF] = &CommandRoutine{ConfCommand, AUTH_NO, false, true}
-		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_NO, false, useRawOutput == false}
+		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_NO, true, useRawOutput == false}
 		commands[COMMAND_SETTINGS] = &CommandRoutine{SettingsCommand, AUTH_NO, false, true}
 	}
 
@@ -502,11 +500,6 @@ func initCommands() {
 		if isMaster {
 			commands[COMMAND_SENTINEL_START] = &CommandRoutine{SentinelStartCommand, AUTH_SUPERUSER, true, true}
 			commands[COMMAND_SENTINEL_STOP] = &CommandRoutine{SentinelStopCommand, AUTH_SUPERUSER, true, true}
-
-			if CORE.GetSentinelMode() == CORE.SENTINEL_MODE_TARGETED {
-				commands[COMMAND_SENTINEL_ENABLE] = &CommandRoutine{SentinelEnableCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true, true}
-				commands[COMMAND_SENTINEL_DISABLE] = &CommandRoutine{SentinelDisableCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true, true}
-			}
 
 			if CORE.IsSentinelActive() {
 				commands[COMMAND_SENTINEL_SWITCH] = &CommandRoutine{SentinelSwitchMasterCommand, AUTH_SUPERUSER, true, true}
@@ -644,8 +637,8 @@ func executeCommandRoutine(cr *CommandRoutine, args []string) {
 
 // authenticate authenticate user
 func authenticate(authType AuthType, strict bool, instanceID string) (bool, error) {
-	var iAuth *CORE.InstanceAuthInfo
-	var sAuth *CORE.SuperuserAuthInfo
+	var iAuth *CORE.InstanceAuth
+	var sAuth *CORE.SuperuserAuth
 
 	var password string
 	var err error
@@ -670,7 +663,7 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 			return false, nil
 		}
 
-		iAuth = meta.AuthInfo
+		iAuth = meta.Auth
 
 		if !strict && !CORE.Config.GetB(CORE.MAIN_STRICT_SECURE) {
 			if CORE.User.RealName == iAuth.User {
@@ -720,11 +713,10 @@ func getSpellcheckModel() *spellcheck.Model {
 		COMMAND_MEMORY, COMMAND_REGEN, COMMAND_RELEASE, COMMAND_RELOAD,
 		COMMAND_REMOVE, COMMAND_REPLICATION, COMMAND_REPLICATION_ROLE_SET,
 		COMMAND_RESTART, COMMAND_RESTART_ALL, COMMAND_RESTART_ALL_PROP,
-		COMMAND_RESTART_PROP, COMMAND_SENTINEL_CHECK, COMMAND_SENTINEL_DISABLE,
-		COMMAND_SENTINEL_ENABLE, COMMAND_SENTINEL_INFO, COMMAND_SENTINEL_MASTER,
-		COMMAND_SENTINEL_RESET, COMMAND_SENTINEL_START, COMMAND_SENTINEL_STATUS,
-		COMMAND_SENTINEL_STOP, COMMAND_SENTINEL_SWITCH, COMMAND_SETTINGS,
-		COMMAND_SLOWLOG_GET, COMMAND_SLOWLOG_RESET, COMMAND_START,
+		COMMAND_RESTART_PROP, COMMAND_SENTINEL_CHECK, COMMAND_SENTINEL_INFO,
+		COMMAND_SENTINEL_MASTER, COMMAND_SENTINEL_RESET, COMMAND_SENTINEL_START,
+		COMMAND_SENTINEL_STATUS, COMMAND_SENTINEL_STOP, COMMAND_SENTINEL_SWITCH,
+		COMMAND_SETTINGS, COMMAND_SLOWLOG_GET, COMMAND_SLOWLOG_RESET, COMMAND_START,
 		COMMAND_START_ALL, COMMAND_START_ALL_PROP, COMMAND_START_PROP,
 		COMMAND_STATE_RESTORE, COMMAND_STATE_SAVE, COMMAND_STATS,
 		COMMAND_STATS_COMMAND, COMMAND_STATS_LATENCY, COMMAND_STATS_ERROR,
@@ -923,11 +915,6 @@ func showSmartUsage() {
 
 		info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
 
-		if isMaster && CORE.GetSentinelMode() == CORE.SENTINEL_MODE_TARGETED {
-			info.AddCommand(COMMAND_SENTINEL_ENABLE, "Enable Sentinel monitoring for instance", "id")
-			info.AddCommand(COMMAND_SENTINEL_DISABLE, "Disable Sentinel monitoring for instance", "id")
-		}
-
 		if CORE.IsSentinelActive() {
 			info.AddCommand(COMMAND_SENTINEL_INFO, "Show info from Sentinel for some instance", "id")
 			info.AddCommand(COMMAND_SENTINEL_MASTER, "Show IP of master instance", "id")
@@ -1023,8 +1010,6 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_SENTINEL_START, "Start Redis Sentinel daemon")
 	info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Redis Sentinel daemon")
 	info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
-	info.AddCommand(COMMAND_SENTINEL_ENABLE, "Enable Sentinel monitoring for instance", "id")
-	info.AddCommand(COMMAND_SENTINEL_DISABLE, "Disable Sentinel monitoring for instance", "id")
 	info.AddCommand(COMMAND_SENTINEL_INFO, "Show info from Sentinel for some instance", "id")
 	info.AddCommand(COMMAND_SENTINEL_MASTER, "Show IP of master instance", "id")
 	info.AddCommand(COMMAND_SENTINEL_CHECK, "Check Sentinel configuration", "id")

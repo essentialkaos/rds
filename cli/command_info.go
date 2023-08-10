@@ -179,16 +179,6 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 		host, CORE.GetInstancePort(id), db,
 	)
 
-	sentinelStatus := "Disabled"
-
-	if meta.Sentinel {
-		if CORE.IsSentinelActive() {
-			sentinelStatus = "Enabled {s-}(Sentinel is works){!}"
-		} else {
-			sentinelStatus = "Enabled {s-}(Sentinel is stopped){!}"
-		}
-	}
-
 	t.Separator()
 	fmtc.Println(" ▾ {*}INSTANCE{!}")
 	t.Separator()
@@ -199,7 +189,6 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	t.Print("State", getInstanceStateWithColor(state))
 	t.Print("Created", timeutil.Format(created, "%Y/%m/%d %H:%M:%S"))
 	t.Print("Replication type", meta.ReplicationType)
-	t.Print("Sentinel", sentinelStatus)
 	t.Print("URI", uri)
 	t.Print("Compatibility", compatible+" {s-}"+redisVersionInfo+"{!}")
 

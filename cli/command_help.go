@@ -77,8 +77,6 @@ func HelpCommand(args CommandArgs) int {
 		COMMAND_RESTART_ALL_PROP:     helpCommandRestartAll,
 		COMMAND_RESTART_PROP:         helpCommandRestart,
 		COMMAND_SENTINEL_CHECK:       helpCommandSentinelCheck,
-		COMMAND_SENTINEL_DISABLE:     helpCommandSentinelDisable,
-		COMMAND_SENTINEL_ENABLE:      helpCommandSentinelEnable,
 		COMMAND_SENTINEL_INFO:        helpCommandSentinelInfo,
 		COMMAND_SENTINEL_MASTER:      helpCommandSentinelMaster,
 		COMMAND_SENTINEL_RESET:       helpCommandSentinelReset,
@@ -133,7 +131,7 @@ func helpCommandCreate() {
 		desc:    "Command read user input and create a new instance.",
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_TAGS), "List of tags", false},
-			{getNiceOptions(OPT_SECURE), "Create secure Redis instance with authentication support", false},
+			{getNiceOptions(OPT_SECURE), "Create instance with ACL", false},
 			{getNiceOptions(OPT_DISABLE_SAVES), "Disable saves for created instance", false},
 		},
 		examples: []helpInfoExample{
@@ -865,34 +863,6 @@ func helpCommandSentinelMaster() {
 		},
 		examples: []helpInfoExample{
 			{"", "1", "Show IP of master instance with ID 1"},
-		},
-	}.render()
-}
-
-// helpCommandSentinelInfo prints info about "sentinel-enable" command usage
-func helpCommandSentinelEnable() {
-	helpInfo{
-		command: COMMAND_SENTINEL_ENABLE,
-		desc:    "Enable Sentinel monitoring for some instance.",
-		arguments: []helpInfoArgument{
-			{"id", "Instance unique ID", false},
-		},
-		examples: []helpInfoExample{
-			{"", "1", "Enable Sentinel monitoring for instance with ID 1"},
-		},
-	}.render()
-}
-
-// helpCommandSentinelInfo prints info about "sentinel-disable" command usage
-func helpCommandSentinelDisable() {
-	helpInfo{
-		command: COMMAND_SENTINEL_DISABLE,
-		desc:    "Disable Sentinel monitoring for some instance.",
-		arguments: []helpInfoArgument{
-			{"id", "Instance unique ID", false},
-		},
-		examples: []helpInfoExample{
-			{"", "1", "Disable Sentinel monitoring for instance with ID 1"},
 		},
 	}.render()
 }

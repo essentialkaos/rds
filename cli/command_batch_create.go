@@ -19,7 +19,6 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/options"
-	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
@@ -79,22 +78,16 @@ func BatchCreateCommand(args CommandArgs) int {
 			continue
 		}
 
-		meta := CORE.NewInstanceMeta()
-		pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
-		hash, _ := passwd.Encrypt(info.Password, pepper)
+		meta, err := CORE.NewInstanceMeta(info.InstancePassword, info.ServicePassword)
+
+		if err != nil {
+			spinner.Done(false)
+			hasErrors = true
+			continue
+		}
 
 		meta.Desc = info.Desc
 		meta.ReplicationType = CORE.ReplicationType(info.ReplicationType)
-
-		meta.AuthInfo.User = info.Owner
-		meta.AuthInfo.Hash = hash
-		meta.AuthInfo.Pepper = pepper
-
-		if info.Auth != "" {
-			meta.Preferencies.Password = info.Auth
-			meta.Preferencies.IsSecure = true
-		}
-
 		meta.Preferencies.IsSaveDisabled = options.GetB(OPT_DISABLE_SAVES)
 
 		err = CORE.CreateInstance(meta)
@@ -126,8 +119,8 @@ func BatchCreateCommand(args CommandArgs) int {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // readInstanceList read instances info from csv file
-func readInstanceList(file string) ([]instanceBasicInfo, error) {
-	var result []instanceBasicInfo
+func readInstanceList(file string) ([]*instanceBasicInfo, error) {
+	var result []*instanceBasicInfo
 
 	err := fsutil.ValidatePerms("FRS", file)
 
@@ -162,12 +155,12 @@ func readInstanceList(file string) ([]instanceBasicInfo, error) {
 			return nil, err
 		}
 
-		result = append(result, instanceBasicInfo{
-			Owner:           rec[0],
-			Password:        rec[1],
-			ReplicationType: rec[2],
-			Auth:            rec[3],
-			Desc:            rec[4],
+		result = append(result, &instanceBasicInfo{
+			Owner:            rec[0],
+			InstancePassword: rec[1],
+			ReplicationType:  rec[2],
+			ServicePassword:  rec[3],
+			Desc:             rec[4],
 		})
 	}
 
@@ -225,7 +218,7 @@ func validateInstanceListRecord(rec []string) error {
 }
 
 // showInstanceList show table with instances info
-func showInstanceList(infoList []instanceBasicInfo) {
+func showInstanceList(infoList []*instanceBasicInfo) {
 	t := table.NewTable(
 		"OWNER", "PASSWORD", "REPLICATION TYPE",
 		"AUTH PASSWORD", "DESCRIPTION",
@@ -237,12 +230,12 @@ func showInstanceList(infoList []instanceBasicInfo) {
 		if !options.GetB(OPT_PRIVATE) {
 			t.Add(
 				info.Owner, "{s-}[hidden]{!}", info.ReplicationType,
-				strutil.Q(info.Auth, "{s-}—{!}"), info.Desc,
+				strutil.Q(info.ServicePassword, "{s-}—{!}"), info.Desc,
 			)
 		} else {
 			t.Add(
-				info.Owner, info.Password, info.ReplicationType,
-				strutil.Q(info.Auth, "{s-}—{!}"), info.Desc,
+				info.Owner, info.InstancePassword, info.ReplicationType,
+				strutil.Q(info.ServicePassword, "{s-}—{!}"), info.Desc,
 			)
 		}
 	}

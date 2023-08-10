@@ -95,12 +95,6 @@
   # Property failover-timeout which will be set for each instance
   failover-timeout: 60000
 
-  # Sentinel monitoring mode (always|targeted)
-  # always - monitoring will be enabled for all started instances by default
-  # targeted - user must use "sentinel-enable" and "sentinel-disable" commands
-  # for working with Sentinel
-  mode: always
-
 [templates]
 
   # Path to directory with Redis configuration files templates

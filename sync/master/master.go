@@ -209,7 +209,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	suAuth, err := CORE.ReadSUAuth()
+	auth, err := CORE.ReadSUAuth()
 
 	if err != nil {
 		log.Error("Can't read superuser auth data: %v", err)
@@ -220,7 +220,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		Version:       daemonVersion + "/" + CORE.VERSION,
 		CID:           genCID(),
 		SentinelWorks: CORE.IsSentinelActive(),
-		SUAuth:        suAuth,
+		Auth:          auth,
 	}
 
 	if coreCompat == API.CORE_COMPAT_PARTIAL {

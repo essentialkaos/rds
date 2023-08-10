@@ -18,19 +18,17 @@ import (
 type MasterCommand string
 
 const (
-	COMMAND_CREATE           MasterCommand = "create"
-	COMMAND_DESTROY          MasterCommand = "destroy"
-	COMMAND_EDIT             MasterCommand = "edit"
-	COMMAND_START            MasterCommand = "start"
-	COMMAND_STOP             MasterCommand = "stop"
-	COMMAND_RESTART          MasterCommand = "restart"
-	COMMAND_START_ALL        MasterCommand = "start-all"
-	COMMAND_STOP_ALL         MasterCommand = "stop-all"
-	COMMAND_RESTART_ALL      MasterCommand = "restart-all"
-	COMMAND_SENTINEL_START   MasterCommand = "sentinel-start"
-	COMMAND_SENTINEL_STOP    MasterCommand = "sentinel-stop"
-	COMMAND_SENTINEL_ENABLE  MasterCommand = "sentinel-enable"
-	COMMAND_SENTINEL_DISABLE MasterCommand = "sentinel-disable"
+	COMMAND_CREATE         MasterCommand = "create"
+	COMMAND_DESTROY        MasterCommand = "destroy"
+	COMMAND_EDIT           MasterCommand = "edit"
+	COMMAND_START          MasterCommand = "start"
+	COMMAND_STOP           MasterCommand = "stop"
+	COMMAND_RESTART        MasterCommand = "restart"
+	COMMAND_START_ALL      MasterCommand = "start-all"
+	COMMAND_STOP_ALL       MasterCommand = "stop-all"
+	COMMAND_RESTART_ALL    MasterCommand = "restart-all"
+	COMMAND_SENTINEL_START MasterCommand = "sentinel-start"
+	COMMAND_SENTINEL_STOP  MasterCommand = "sentinel-stop"
 )
 
 type ClientState uint8
@@ -151,11 +149,11 @@ type HelloRequest struct {
 }
 
 type HelloResponse struct {
-	Status        ResponseStatus          `json:"status"`
-	Version       string                  `json:"version"`
-	CID           string                  `json:"cid"`
-	SUAuth        *CORE.SuperuserAuthInfo `json:"suauth"`
-	SentinelWorks bool                    `json:"sentinel_works"`
+	Status        ResponseStatus      `json:"status"`
+	Version       string              `json:"version"`
+	CID           string              `json:"cid"`
+	Auth          *CORE.SuperuserAuth `json:"auth"`
+	SentinelWorks bool                `json:"sentinel_works"`
 }
 
 type InfoRequest struct {

@@ -57,12 +57,16 @@ type ConfigPropDiff struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type Request struct {
-	Command   []string
-	Port      int
-	DB        int
-	Password  string
-	Timeout   time.Duration
-	Renamings map[string]string
+	Command []string
+	Auth    Auth
+	Port    int
+	DB      int
+	Timeout time.Duration
+}
+
+type Auth struct {
+	User     string
+	Password string
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -224,23 +228,29 @@ func execCmd(req *Request) (*redy.Resp, error) {
 
 	defer rc.Close()
 
-	if req.Password != "" {
-		rc.Cmd(getRenamedCommand(rc, req.Renamings, "AUTH"), req.Password)
+	var resp *redy.Resp
+
+	if req.Auth.User != "" && req.Auth.Password != "" {
+		resp = rc.Cmd("AUTH", req.Auth.User, req.Auth.Password)
+
+		if resp.Err != nil {
+			return nil, resp.Err
+		}
 	}
 
 	if req.DB != 0 {
-		rc.Cmd(getRenamedCommand(rc, req.Renamings, "SELECT"), req.DB)
+		resp = rc.Cmd("SELECT", req.DB)
+
+		if resp.Err != nil {
+			return nil, resp.Err
+		}
 	}
-
-	var resp *redy.Resp
-
-	cmd := getRenamedCommand(rc, req.Renamings, req.Command[0])
 
 	switch len(req.Command) {
 	case 1:
-		resp = rc.Cmd(cmd)
+		resp = rc.Cmd(req.Command[0])
 	default:
-		resp = rc.Cmd(cmd, sliceutil.StringToInterface(req.Command[1:]))
+		resp = rc.Cmd(req.Command[0], sliceutil.StringToInterface(req.Command[1:]))
 	}
 
 	if resp.Err != nil {

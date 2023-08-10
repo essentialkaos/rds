@@ -211,7 +211,7 @@ func isConfigUpdated(id int) bool {
 
 	mtime, _ := fsutil.GetMTime(CORE.GetInstanceConfigFilePath(id))
 
-	if mtime.Unix() == meta.ConfigInfo.Date {
+	if mtime.Unix() == meta.Config.Date {
 		return false
 	}
 
@@ -221,7 +221,7 @@ func isConfigUpdated(id int) bool {
 		return false
 	}
 
-	if meta.ConfigInfo.Hash != hash {
+	if meta.Config.Hash != hash {
 		return true
 	}
 
@@ -307,7 +307,7 @@ func getInstanceOwnerWithColor(meta *CORE.InstanceMeta, before bool) string {
 		return "{s-}unknown{!}"
 	}
 
-	owner := meta.AuthInfo.User
+	owner := meta.Auth.User
 
 	if userExistenceCache == nil {
 		userExistenceCache = make(map[string]bool)

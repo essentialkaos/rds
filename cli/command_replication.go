@@ -104,9 +104,12 @@ func renderReplicationInfo(info *API.ReplicationInfo) {
 		}
 	}
 
-	for _, client := range info.Clients {
-		if client.Role != CORE.ROLE_MINION {
-			printSyncClientInfo(t, client, info.SuppliantCID)
+	if hasSentinelNodes(info.Clients) {
+		t.Separator()
+		for _, client := range info.Clients {
+			if client.Role == CORE.ROLE_SENTINEL {
+				printSyncClientInfo(t, client, info.SuppliantCID)
+			}
 		}
 	}
 
@@ -184,6 +187,17 @@ func getSyncClientRole(typ string, isSuppliant bool) string {
 	}
 
 	return "{s}•{!} " + typ
+}
+
+// hasSentinelNodes returns true if given slice contains sentinel node
+func hasSentinelNodes(clients []*API.ClientInfo) bool {
+	for _, client := range clients {
+		if client.Role == CORE.ROLE_SENTINEL {
+			return true
+		}
+	}
+
+	return false
 }
 
 // renderReplicationInfoText prints replication info in text format

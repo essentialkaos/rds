@@ -150,7 +150,7 @@ func sendHelloCommand() bool {
 	// Start or stop sentinel monitoring
 	syncSentinelState(sentinelWorks)
 
-	return CORE.SaveSUAuth(helloResponse.SUAuth, true) == nil
+	return CORE.SaveSUAuth(helloResponse.Auth, true) == nil
 }
 
 // sendFetchCommand send fetch command to master
@@ -296,10 +296,6 @@ func processCommands(items []*API.CommandQueueItem) {
 			sentinelStartCommandHandler(item)
 		case API.COMMAND_SENTINEL_STOP:
 			sentinelStopCommandHandler(item)
-		case API.COMMAND_SENTINEL_ENABLE:
-			sentinelEnableCommandHandler(item)
-		case API.COMMAND_SENTINEL_DISABLE:
-			sentinelDisableCommandHandler(item)
 		default:
 			log.Error("Received unknown command %s", item.Command)
 		}
@@ -320,12 +316,7 @@ func createCommandHandler(item *API.CommandQueueItem) {
 
 	infoStore[item.InstanceID] = info
 
-	// Sentinel is disabled, nothing to do
-	if !info.Meta.Sentinel {
-		return
-	}
-
-	err := CORE.StartSentinelMonitoring(item.InstanceID, info.Meta.Preferencies.Prefix)
+	err := CORE.StartSentinelMonitoring(item.InstanceID)
 
 	if err != nil {
 		log.Error("(%3d) Can't start Sentinel monitoring: %v", item.InstanceID, err)
@@ -377,7 +368,7 @@ func startCommandHandler(item *API.CommandQueueItem) {
 
 	info.State = CORE.INSTANCE_STATE_WORKS
 
-	err := CORE.StartSentinelMonitoring(item.InstanceID, info.Meta.Preferencies.Prefix)
+	err := CORE.StartSentinelMonitoring(item.InstanceID)
 
 	if err != nil {
 		log.Error("(%3d) Can't start Sentinel monitoring: %v", item.InstanceID, err)
@@ -435,7 +426,7 @@ func startAllCommandHandler(item *API.CommandQueueItem) {
 			continue
 		}
 
-		err := CORE.StartSentinelMonitoring(info.Meta.ID, info.Meta.Preferencies.Prefix)
+		err := CORE.StartSentinelMonitoring(info.Meta.ID)
 
 		if err != nil {
 			log.Error("(%3d) Can't start Sentinel monitoring: %v", info.Meta.ID, err)
@@ -511,66 +502,6 @@ func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	log.Info("Sentinel stopped")
 }
 
-// sentinelEnableCommandHandler handler for "sentinel-enable" command
-func sentinelEnableCommandHandler(item *API.CommandQueueItem) {
-	err := CORE.EnableSentinelMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't enable Sentinel monitoring: %v", item.InstanceID, err)
-		return
-	}
-
-	ok, info := sendInfoCommand(item.InstanceID, item.InstanceUUID)
-
-	if !ok {
-		return
-	}
-
-	if info.State.IsWorks() {
-		err = CORE.StartSentinelMonitoring(item.InstanceID, info.Meta.Preferencies.Prefix)
-
-		if err != nil {
-			log.Error("(%3d) Can't start Sentinel monitoring: %v", item.InstanceID, err)
-			return
-		}
-
-		log.Info("(%3d) Sentinel monitoring enabled and started", item.InstanceID)
-		return
-	}
-
-	log.Info("(%3d) Sentinel monitoring enabled", item.InstanceID)
-}
-
-// sentinelDisableCommandHandler handler for "sentinel-disable" command
-func sentinelDisableCommandHandler(item *API.CommandQueueItem) {
-	err := CORE.DisableSentinelMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't disable Sentinel monitoring: %v", item.InstanceID, err)
-		return
-	}
-
-	ok, info := sendInfoCommand(item.InstanceID, item.InstanceUUID)
-
-	if !ok {
-		return
-	}
-
-	if info.State.IsWorks() {
-		err = CORE.StopSentinelMonitoring(item.InstanceID)
-
-		if err != nil {
-			log.Error("(%3d) Can't stop Sentinel monitoring: %v", item.InstanceID, err)
-			return
-		}
-
-		log.Info("(%3d) Sentinel monitoring stopped and disabled", item.InstanceID)
-		return
-	}
-
-	log.Info("(%3d) Sentinel monitoring enabled", item.InstanceID)
-}
-
 // isValidCommandItem validates command item from queue
 func isValidCommandItem(item *API.CommandQueueItem) bool {
 	info, isExist := infoStore[item.InstanceID]
@@ -606,8 +537,8 @@ func processFetchedData(instances []*CORE.InstanceInfo) {
 
 		infoStore[info.Meta.ID] = info
 
-		if info.Meta.Sentinel && info.State.IsWorks() {
-			err := CORE.StartSentinelMonitoring(id, info.Meta.Preferencies.Prefix)
+		if info.State.IsWorks() {
+			err := CORE.StartSentinelMonitoring(id)
 
 			if err != nil {
 				log.Error("(%3d) Can't start Sentinel monitoring: %v", id, err)

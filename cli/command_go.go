@@ -222,17 +222,15 @@ func generateSUAuthData() {
 		return
 	}
 
-	pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
 	password := passwd.GenPassword(CORE.Config.GetI(CORE.MAIN_SU_PASS_LENGTH), passwd.STRENGTH_MEDIUM)
-
-	hash, err := passwd.Encrypt(password, pepper)
+	auth, err := CORE.NewInstanceAuth(password)
 
 	if err != nil {
 		terminal.Error(err.Error())
 		return
 	}
 
-	err = CORE.SaveSUAuth(&CORE.SuperuserAuthInfo{Hash: hash, Pepper: pepper}, false)
+	err = CORE.SaveSUAuth(&CORE.SuperuserAuth{Hash: auth.Hash, Pepper: auth.Pepper}, false)
 
 	if err != nil {
 		terminal.Error(err.Error())

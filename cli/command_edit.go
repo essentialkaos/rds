@@ -10,7 +10,6 @@ package cli
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/log"
-	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
@@ -69,7 +68,7 @@ func EditCommand(args CommandArgs) int {
 
 	fmtc.NewLine()
 
-	desc, pass, user, replType, err := readEditInfo(true, true, true, true)
+	info, err := readEditInfo(true, true, true, true)
 
 	if err != nil {
 		if err == terminal.ErrKillSignal {
@@ -82,29 +81,28 @@ func EditCommand(args CommandArgs) int {
 
 	// It's safe to modify this metadata, because GetInstanceMeta returns
 	// copy of metadata
-	if pass != "" {
-		pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
-		hash, err := passwd.Encrypt(pass, pepper)
+	if info.InstancePassword != "" {
+		auth, err := CORE.NewInstanceAuth(info.InstancePassword)
 
 		if err != nil {
 			terminal.Error(err.Error())
 			return EC_ERROR
 		}
 
-		meta.AuthInfo.Pepper = pepper
-		meta.AuthInfo.Hash = hash
+		meta.Auth.Pepper = auth.Pepper
+		meta.Auth.Hash = auth.Hash
 	}
 
-	if user != "" {
-		meta.AuthInfo.User = user
+	if info.Owner != "" {
+		meta.Auth.User = info.Owner
 	}
 
-	if desc != "" {
-		meta.Desc = desc
+	if info.Desc != "" {
+		meta.Desc = info.Desc
 	}
 
-	if replType != "" {
-		meta.ReplicationType = CORE.ReplicationType(replType)
+	if info.ReplicationType != "" {
+		meta.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 	}
 
 	err = CORE.UpdateInstance(meta)
@@ -130,15 +128,16 @@ func EditCommand(args CommandArgs) int {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Read user input for edit command
-func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (string, string, string, string, error) {
-	var desc, pass, user, replType string
+func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (*instanceBasicInfo, error) {
 	var err error
 
+	info := &instanceBasicInfo{}
+
 	if readDesc {
-		desc, err = terminal.Read("Please enter a new description (or leave blank to keep existing)", false)
+		info.Desc, err = terminal.Read("Please enter a new description (or leave blank to keep existing)", false)
 
 		if err != nil {
-			return "", "", "", "", err
+			return nil, err
 		}
 
 		fmtc.NewLine()
@@ -146,13 +145,13 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (string, str
 
 	if readPass {
 		for {
-			pass, err = terminal.ReadPassword("Please enter a new password (or leave blank to keep existing)", false)
+			info.InstancePassword, err = terminal.ReadPassword("Please enter a new password (or leave blank to keep existing)", false)
 
 			if err != nil {
-				return "", "", "", "", err
+				return nil, err
 			}
 
-			if pass != "" && len(pass) < CORE.Config.GetI(CORE.MAIN_MIN_PASS_LENGTH) {
+			if info.InstancePassword != "" && len(info.InstancePassword) < CORE.Config.GetI(CORE.MAIN_MIN_PASS_LENGTH) {
 				terminal.Error("\nPassword can't be less than %s symbols.\n", CORE.Config.GetS(CORE.MAIN_MIN_PASS_LENGTH))
 				continue
 			}
@@ -165,16 +164,16 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (string, str
 
 	if readOwner {
 		for {
-			user, err = terminal.Read("Please enter a new owner name (or leave blank to keep existing)", false)
+			info.Owner, err = terminal.Read("Please enter a new owner name (or leave blank to keep existing)", false)
 
 			if err != nil {
-				return "", "", "", "", err
+				return nil, err
 			}
 
-			if user == "" || system.IsUserExist(user) {
+			if info.Owner == "" || system.IsUserExist(info.Owner) {
 				break
 			} else {
-				terminal.Error("\nUser %s doesn't exist on this system\n", user)
+				terminal.Error("\nUser %s doesn't exist on this system\n", info.Owner)
 				continue
 			}
 		}
@@ -186,13 +185,13 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (string, str
 		supportedReplTypes := []string{string(CORE.REPL_TYPE_REPLICA), string(CORE.REPL_TYPE_STANDBY)}
 
 		for {
-			replType, err = terminal.Read("Please enter a new replication type (or leave blank to keep existing)", false)
+			info.ReplicationType, err = terminal.Read("Please enter a new replication type (or leave blank to keep existing)", false)
 
 			if err != nil {
-				return "", "", "", "", err
+				return nil, err
 			}
 
-			if replType == "" || sliceutil.Contains(supportedReplTypes, replType) {
+			if info.ReplicationType == "" || sliceutil.Contains(supportedReplTypes, info.ReplicationType) {
 				break
 			} else {
 				terminal.Error(
@@ -206,5 +205,5 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (string, str
 		fmtc.NewLine()
 	}
 
-	return desc, pass, user, replType, nil
+	return info, nil
 }

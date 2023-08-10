@@ -105,7 +105,7 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 	for _, filterValue := range filter {
 		switch filterValue {
 		case "my":
-			fit = meta.AuthInfo.User == CORE.User.RealName
+			fit = meta.Auth.User == CORE.User.RealName
 		case "works", "on":
 			fit = state.IsWorks()
 		case "stopped", "stop", "off":
@@ -135,12 +135,10 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 			fit = meta.ReplicationType == CORE.REPL_TYPE_STANDBY
 		case "replica", "slave":
 			fit = meta.ReplicationType == CORE.REPL_TYPE_REPLICA
-		case "sentinel":
-			fit = CORE.IsSentinelEnabled() && (meta.Sentinel || CORE.GetSentinelMode() == CORE.SENTINEL_MODE_ALWAYS)
 		case "secure":
 			fit = meta.Preferencies.IsSecure
 		default:
-			fit = (meta.AuthInfo.User == filterValue || isMetaContainsTag(meta, filterValue))
+			fit = (meta.Auth.User == filterValue || isMetaContainsTag(meta, filterValue))
 		}
 
 		if !fit {

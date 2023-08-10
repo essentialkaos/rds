@@ -48,12 +48,11 @@ func ClientsCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	cmd := meta.Preferencies.Prefix + "_CLIENT"
 	req := &REDIS.Request{
-		Command:  []string{cmd, "LIST", "TYPE", "NORMAL"},
-		Port:     CORE.GetInstancePort(id),
-		Password: meta.Preferencies.Password,
-		Timeout:  time.Second,
+		Command: []string{"CLIENT", "LIST", "TYPE", "NORMAL"},
+		Port:    CORE.GetInstancePort(id),
+		Auth:    REDIS.Auth{CORE.REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Timeout: time.Second,
 	}
 
 	resp, err := REDIS.ExecCommand(req)
