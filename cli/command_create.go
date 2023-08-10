@@ -259,7 +259,7 @@ func showInstanceInfo(meta *CORE.InstanceMeta, tags []string) {
 	t.Separator()
 	fmtc.NewLine()
 
-	fmtc.Println("{y}Please save your passwords in a safe place{!}")
+	fmtc.Println("{y}▲ Please save your passwords in a safe place!{!}")
 }
 
 // parseTagsOption parses tags option
