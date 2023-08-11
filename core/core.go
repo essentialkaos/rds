@@ -28,6 +28,7 @@ import (
 	"github.com/essentialkaos/ek/v12/errutil"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/initsystem"
+	"github.com/essentialkaos/ek/v12/jsonutil"
 	"github.com/essentialkaos/ek/v12/knf"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/mathutil"
@@ -58,6 +59,7 @@ const VERSION = "A1"
 // META_VERSION is current meta version
 const META_VERSION = 1
 
+// Limits
 const (
 	MIN_INSTANCES        = 16
 	MAX_INSTANCES        = 1024
@@ -180,6 +182,9 @@ const (
 	REDIS_USER_SYNC    = "sync"
 	REDIS_USER_SERVICE = "service"
 )
+
+// DEFAULT_FILE_PERMS is default permissions for files created by core
+const DEFAULT_FILE_PERMS = 0640
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -561,7 +566,7 @@ func SaveSUAuth(auth *SuperuserAuth, rewrite bool) error {
 		}
 	}
 
-	return encodeAndSave(auth, authFile)
+	return jsonutil.Write(authFile, auth, DEFAULT_FILE_PERMS)
 }
 
 // ReadSUAuth read superuser auth data
@@ -571,7 +576,7 @@ func ReadSUAuth() (*SuperuserAuth, error) {
 	}
 
 	auth := &SuperuserAuth{}
-	err := readAndDecode(auth, Config.GetS(MAIN_DIR)+"/"+SU_DATA_FILE)
+	err := jsonutil.Read(Config.GetS(MAIN_DIR)+"/"+SU_DATA_FILE, auth)
 
 	return auth, err
 }
@@ -659,7 +664,7 @@ func GetInstanceMeta(id int) (*InstanceMeta, error) {
 	}
 
 	meta = &InstanceMeta{}
-	err := readAndDecode(meta, GetInstanceMetaFilePath(id))
+	err := jsonutil.Read(GetInstanceMetaFilePath(id), meta)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error while instance meta data decoding: %v", err)
@@ -1739,7 +1744,7 @@ func SaveStates(file string) error {
 		}
 	}
 
-	return encodeAndSave(statesInfo, file)
+	return jsonutil.Write(file, statesInfo, DEFAULT_FILE_PERMS)
 }
 
 // ReadStates read states info from file
@@ -1753,7 +1758,7 @@ func ReadStates(file string) (*StatesInfo, error) {
 	}
 
 	statesInfo := &StatesInfo{}
-	err := readAndDecode(statesInfo, file)
+	err := jsonutil.Read(file, statesInfo)
 
 	if err != nil {
 		return nil, err
@@ -1981,7 +1986,7 @@ func GetRedisVersion() (version.Version, error) {
 	}
 
 	if !cacheExist {
-		encodeAndSave(info, versionCacheFile)
+		jsonutil.Write(versionCacheFile, info, DEFAULT_FILE_PERMS)
 	}
 
 	return redisVersion, nil
@@ -2462,7 +2467,7 @@ func createInstanceData(meta *InstanceMeta) error {
 
 // saveInstanceMeta save meta data to file
 func saveInstanceMeta(meta *InstanceMeta) error {
-	return encodeAndSave(meta, GetInstanceMetaFilePath(meta.ID))
+	return jsonutil.Write(GetInstanceMetaFilePath(meta.ID), meta, DEFAULT_FILE_PERMS)
 }
 
 // createInstanceConfig create redis config from template
@@ -2530,7 +2535,7 @@ func getUnusedInstanceID() int {
 	if fsutil.IsExist(dataFile) {
 		info := &IDSInfo{}
 
-		if readAndDecode(info, dataFile) != nil {
+		if jsonutil.Read(dataFile, info) != nil {
 			return -1
 		}
 
@@ -2549,7 +2554,7 @@ func updateIDSInfo(id int) error {
 	info := &IDSInfo{id}
 	dataFile := Config.GetS(MAIN_DIR) + "/" + IDS_DATA_FILE
 
-	return encodeAndSave(info, dataFile)
+	return jsonutil.Write(dataFile, info, DEFAULT_FILE_PERMS)
 }
 
 // getInstanceExtendedState returns extended instance state
@@ -2623,9 +2628,9 @@ func getMemoryUsageFromProcFS(id int) (uint64, uint64, uint64) {
 }
 
 // getRedisVersionFromCache read current redis version info from cache
-func getRedisVersionFromCache(cache string) (*RedisVersionInfo, error) {
+func getRedisVersionFromCache(cacheFile string) (*RedisVersionInfo, error) {
 	info := &RedisVersionInfo{}
-	err := readAndDecode(info, cache)
+	err := jsonutil.Read(cacheFile, info)
 
 	if err != nil {
 		return nil, err
