@@ -1494,7 +1494,7 @@ func DestroyInstance(id int) error {
 
 // SentinelStart start (run) Sentinel daemon
 func SentinelStart() []error {
-	// Check for enabled sentinel only if node works as master or minion
+	// Check for enabled Sentinel only if node works as master or minion
 	if !IsSentinel() && !IsSentinelEnabled() {
 		return []error{ErrSentinelIsDisabled}
 	}
@@ -1552,7 +1552,7 @@ func SentinelStart() []error {
 
 // SentinelStop stop (shutdown) Sentinel daemon
 func SentinelStop() error {
-	// Check for enabled sentinel only if node works as master or minion
+	// Check for enabled Sentinel only if node works as master or minion
 	if !IsSentinel() && !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
 	}
@@ -1596,7 +1596,7 @@ func SentinelCheck(id int) (string, bool) {
 
 // SentinelReset reset master state in Sentinel for all instances
 func SentinelReset() error {
-	// Check for enabled sentinel only if node works as master or minion
+	// Check for enabled Sentinel only if node works as master or minion
 	if !IsSentinel() && !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
 	}
@@ -1612,7 +1612,7 @@ func SentinelReset() error {
 // local instance to master. This command temporary set slave priority to
 // 1 and force failover.
 func SentinelMasterSwitch(id int) error {
-	// Check for enabled sentinel only if node works as master or minion
+	// Check for enabled Sentinel only if node works as master or minion
 	if !IsSentinel() && !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
 	}
@@ -1636,7 +1636,7 @@ func SentinelMasterSwitch(id int) error {
 	}
 
 	if !state.IsWorks() {
-		return fmt.Errorf("Can't switch sentinel master to instance %d - instance doesn't work", id)
+		return fmt.Errorf("Can't switch Sentinel master to instance %d - instance doesn't work", id)
 	}
 
 	info, err := GetInstanceInfo(id, time.Second, false)
@@ -1660,7 +1660,7 @@ func SentinelMasterSwitch(id int) error {
 
 // StartSentinelMonitoring add instance to Sentinel monitoring
 func StartSentinelMonitoring(id int) error {
-	// Check for enabled sentinel only if node works as master or minion
+	// Check for enabled Sentinel only if node works as master or minion
 	if !IsSentinel() && !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
 	}
@@ -1689,7 +1689,7 @@ func StartSentinelMonitoring(id int) error {
 
 // StopSentinelMonitoring remove instance from Sentinel monitoring
 func StopSentinelMonitoring(id int) error {
-	// Check for enabled sentinel only if node works as master or minion
+	// Check for enabled Sentinel only if node works as master or minion
 	if !IsSentinel() && !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
 	}
@@ -3071,7 +3071,7 @@ func getRedisTreePIDs(id, instancePID int) ([]int, error) {
 	return pids, nil
 }
 
-// runSentinelFailoverSwitch run failover on sentinel for switching master
+// runSentinelFailoverSwitch run failover on Sentinel for switching master
 func runSentinelFailoverSwitch(id int, priority string) error {
 	meta, err := GetInstanceMeta(id)
 
@@ -3094,7 +3094,7 @@ func runSentinelFailoverSwitch(id int, priority string) error {
 		return fmt.Errorf("Can't set slave priority: %v", err)
 	}
 
-	// Force sentinel failover
+	// Force Sentinel failover
 	sentinelErr := SENTINEL.Failover(Config.GetI(SENTINEL_PORT), id)
 
 	if sentinelErr == nil {

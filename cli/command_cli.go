@@ -21,7 +21,7 @@ import (
 
 // CliCommand is "cli" command handler
 func CliCommand(args CommandArgs) int {
-	var cliCfg *RC.Cfg
+	var cliCfg *RC.Config
 
 	err := args.Check(true)
 
@@ -40,14 +40,14 @@ func CliCommand(args CommandArgs) int {
 	port := CORE.GetInstancePort(id)
 
 	if len(args) == 1 {
-		cliCfg = &RC.Cfg{
+		cliCfg = &RC.Config{
 			ID:          id,
 			Port:        port,
 			DB:          db,
 			HistoryFile: fmt.Sprintf("%s/.rediscli_history", CORE.User.HomeDir),
 		}
 	} else {
-		cliCfg = &RC.Cfg{
+		cliCfg = &RC.Config{
 			Port:      port,
 			DB:        db,
 			Command:   args[1:],

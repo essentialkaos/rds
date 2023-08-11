@@ -28,8 +28,8 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Cfg contains cli configuration
-type Cfg struct {
+// Config contains cli configuration
+type Config struct {
 	ID             int      // Instance ID
 	Port           int      // Redis port
 	DB             int      // DB index
@@ -71,7 +71,7 @@ var client *redy.Client
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // ExecRedisCmd simply execute given command
-func ExecRedisCmd(cfg *Cfg) error {
+func ExecRedisCmd(cfg *Config) error {
 	if len(cfg.Command) == 0 {
 		return errors.New("Not enough command arguments")
 	}
@@ -94,7 +94,7 @@ func ExecRedisCmd(cfg *Cfg) error {
 }
 
 // RunRedisCli run interactive cli
-func RunRedisCli(cfg *Cfg) error {
+func RunRedisCli(cfg *Config) error {
 	prompt := getPrompt(cfg.ID, cfg.Port, cfg.DB)
 	client := getClient(cfg.Port, time.Second*time.Duration(cfg.Timeout))
 
@@ -169,7 +169,7 @@ func RunRedisCli(cfg *Cfg) error {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // execCommand exec one command
-func execCommand(cfg *Cfg) error {
+func execCommand(cfg *Config) error {
 	client := getClient(cfg.Port, time.Second*time.Duration(cfg.Timeout))
 
 	err := client.Connect()
@@ -218,7 +218,7 @@ func getClient(port int, timeout time.Duration) *redy.Client {
 }
 
 // configureClient configure client
-func configureClient(client *redy.Client, cfg *Cfg) error {
+func configureClient(client *redy.Client, cfg *Config) error {
 	var resp *redy.Resp
 
 	if cfg.User != "" && cfg.Password != "" {
@@ -241,7 +241,7 @@ func configureClient(client *redy.Client, cfg *Cfg) error {
 }
 
 // execMonitor exec monitor command (connection not be closed)
-func execMonitor(cfg *Cfg, cmd string) error {
+func execMonitor(cfg *Config, cmd string) error {
 	conn, err := net.DialTimeout(
 		"tcp", "127.0.0.1:"+strconv.Itoa(cfg.Port),
 		time.Second*time.Duration(cfg.Timeout),
@@ -402,7 +402,7 @@ func formatArrayResp(r *redy.Resp, prefixSize int, raw bool) string {
 }
 
 // initCLIFeatures add autocompele and hints for user input
-func initCLIFeatures(cfg *Cfg) {
+func initCLIFeatures(cfg *Config) {
 	linenoise.SetCompletionHandler(autocompleteHandler)
 	linenoise.SetHintHandler(hintHandler)
 
