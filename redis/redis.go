@@ -75,6 +75,14 @@ var ErrNotEnoughArgs error = errors.New("Not enough command arguments")
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+var filteredProps = []string{
+	"masterauth",
+	"masteruser",
+	"rename-command",
+	"requirepass",
+	"user",
+}
+
 var client *redy.Client
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -123,7 +131,7 @@ func GetInfo(req *Request) (*redy.Info, error) {
 	return info, nil
 }
 
-// GetConfigsDiff returns difference between file and mem configs
+// GetConfigsDiff returns difference between file and in memory configurations
 func GetConfigsDiff(fileConfig, memConfig *Config) []ConfigPropDiff {
 	var result []ConfigPropDiff
 
@@ -148,26 +156,23 @@ func GetConfigsDiff(fileConfig, memConfig *Config) []ConfigPropDiff {
 			}
 		}
 
-		switch prop {
-		case "always-show-logo", "rename-command":
+		if sliceutil.Contains(filteredProps, prop) {
 			continue
+		}
+
+		switch prop {
 		case "slaveof", "replicaof":
 			fp = getConfPropAny(fileConfig, "slaveof", "replicaof")
 			mp = getConfPropAny(memConfig, "slaveof", "replicaof")
-		case "appendfilename":
-			if fileConfig.Get("appendonly") == "no" && memConfig.Get("appendonly") == "no" {
-				continue
-			}
 		case "client-output-buffer-limit":
-			if strings.Contains(memConfig.Get(prop), " replica ") {
-				fp = strings.ReplaceAll(fp, " slave ", " replica ")
-			}
+			fp = strings.ReplaceAll(fp, " slave ", " replica ")
+			mp = strings.ReplaceAll(mp, " slave ", " replica ")
 		}
 
 		switch {
 		case fp == "\"\"" && mp == "":
 			continue
-		case fp != "" && fp != mp:
+		case fp != "" && strings.Trim(fp, `"`) != strings.Trim(mp, `"`):
 			result = append(
 				result, ConfigPropDiff{
 					PropName:  prop,

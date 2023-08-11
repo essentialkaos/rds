@@ -95,10 +95,6 @@ func printConfInfo(fileConfig *REDIS.Config, diff []REDIS.ConfigPropDiff, filter
 	t := table.NewTable("NAME", "VALUE")
 
 	for _, prop := range fileConfig.Props {
-		if prop == "always-show-logo" {
-			continue
-		}
-
 		if !options.GetB(OPT_PRIVATE) && sliceutil.Contains(FilteredProps, prop) {
 			continue
 		}
