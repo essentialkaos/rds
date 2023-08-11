@@ -80,7 +80,7 @@ func InfoCommand(args CommandArgs) int {
 		return EC_OK
 	}
 
-	info, err := CORE.GetInstanceInfo(id, 5*time.Second, sliceutil.Contains(sections, "all"))
+	info, err := CORE.GetInstanceInfo(id, 5*time.Second, len(sections) != 0)
 
 	if err != nil {
 		renderInfoDataError(format, err.Error())
