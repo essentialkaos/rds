@@ -22,6 +22,17 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// FilteredProps is a slice with props that must not be shown in the command output
+var FilteredProps = []string{
+	"masterauth",
+	"masteruser",
+	"rename-command",
+	"requirepass",
+	"user",
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // ConfCommand is "conf" command handler
 func ConfCommand(args CommandArgs) int {
 	err := args.Check(false)
@@ -88,11 +99,8 @@ func printConfInfo(fileConfig *REDIS.Config, diff []REDIS.ConfigPropDiff, filter
 			continue
 		}
 
-		if !options.GetB(OPT_PRIVATE) {
-			switch prop {
-			case "rename-command", "requirepass", "masterauth":
-				continue
-			}
+		if !options.GetB(OPT_PRIVATE) && sliceutil.Contains(FilteredProps, prop) {
+			continue
 		}
 
 		if hasFilter && !sliceutil.Contains(filter, prop) {
@@ -101,7 +109,7 @@ func printConfInfo(fileConfig *REDIS.Config, diff []REDIS.ConfigPropDiff, filter
 
 		hasData = true
 
-		if len(diff) == 0 {
+		if len(diff) == 0 || prop == "user" {
 			printConfProps(t, prop, fileConfig.Data[prop], "", true)
 			continue
 		}
