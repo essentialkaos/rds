@@ -181,7 +181,7 @@ var optMap = options.Map{
 	OPT_SIMPLE:          {Type: options.BOOL},
 	OPT_YES:             {Type: options.BOOL},
 	OPT_HELP:            {Type: options.BOOL},
-	OPT_VERSION:         {Type: options.BOOL},
+	OPT_VERSION:         {Type: options.MIXED},
 	OPT_VERBOSE_VERSION: {Type: options.BOOL},
 
 	OPT_GENERATE_MAN: {Type: options.BOOL},
@@ -241,7 +241,7 @@ func Init(gitRev string, gomod []byte) {
 	}
 
 	if options.GetB(OPT_VERSION) {
-		genAbout(gitRev).Print()
+		genAbout(gitRev).Print(options.GetS(OPT_VERSION))
 		os.Exit(EC_OK)
 	}
 
