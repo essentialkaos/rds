@@ -23,7 +23,7 @@ const NAME_PREFIX = "instance"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Request contains data for Sentinel configuration
+// Config contains data for Sentinel configuration
 type Config struct {
 	ID   int
 	IP   string
@@ -34,7 +34,13 @@ type Config struct {
 	FailoverTimeout       int
 	ParallelSyncs         int
 
-	CommandPrefix string
+	Auth Auth
+}
+
+// Auth contains info for authorization
+type Auth struct {
+	User     string
+	Password string
 }
 
 // InfoItem is info key/value struct
@@ -43,11 +49,13 @@ type InfoItem struct {
 	Value string
 }
 
-// Info contains info about all sentinels and redis instances
+type InfoSlice []InfoItem
+
+// Info contains info about all Sentinels and Redis instances
 type Info struct {
-	Master    []InfoItem
-	Replicas  [][]InfoItem
-	Sentinels [][]InfoItem
+	Master    InfoSlice
+	Replicas  []InfoSlice
+	Sentinels []InfoSlice
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -65,8 +73,8 @@ var protectedCommands = []string{
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Monitor adds instance to Sentinel monitoring
-func Monitor(port int, cfg *Config) error {
-	rc := getClient(port, 3*time.Second)
+func Monitor(sentinelPort int, cfg *Config) error {
+	rc := getClient(sentinelPort, 3*time.Second)
 	err := rc.Connect()
 
 	if err != nil {
@@ -76,11 +84,7 @@ func Monitor(port int, cfg *Config) error {
 	defer rc.Close()
 
 	name := NAME_PREFIX + strconv.Itoa(cfg.ID)
-
-	resp := rc.Cmd(
-		"SENTINEL",
-		[]any{"MONITOR", name, cfg.IP, cfg.Port, cfg.Quorum},
-	)
+	resp := rc.Cmd("SENTINEL", []any{"MONITOR", name, cfg.IP, cfg.Port, cfg.Quorum})
 
 	if resp.Err != nil {
 		return resp.Err
@@ -92,15 +96,15 @@ func Monitor(port int, cfg *Config) error {
 		return err
 	}
 
-	return configureCommands(rc, cfg)
+	return nil
 }
 
 // CheckQuorum checks if the current Sentinel configuration is able to
 // reach the quorum needed to failover a master, and the majority
 // needed to authorize the failover
-func CheckQuorum(port, id int) (string, bool) {
-	cmd := []any{"CKQUORUM", "instance" + strconv.Itoa(id)}
-	resp, err := execSentinelCommand(port, cmd)
+func CheckQuorum(sentinelPort, instanceID int) (string, bool) {
+	cmd := []any{"CKQUORUM", "instance" + strconv.Itoa(instanceID)}
+	resp, err := execSentinelCommand(sentinelPort, cmd)
 
 	if err != nil {
 		return err.Error(), false
@@ -112,33 +116,33 @@ func CheckQuorum(port, id int) (string, bool) {
 }
 
 // Remove removes instance from Sentinel monitoring
-func Remove(port, id int) error {
-	cmd := []any{"REMOVE", "instance" + strconv.Itoa(id)}
-	_, err := execSentinelCommand(port, cmd)
+func Remove(sentinelPort, instanceID int) error {
+	cmd := []any{"REMOVE", "instance" + strconv.Itoa(instanceID)}
+	_, err := execSentinelCommand(sentinelPort, cmd)
 
 	return err
 }
 
 // Reset sends RESET command to Sentinel
-func Reset(port int) error {
+func Reset(sentinelPort int) error {
 	cmd := []any{"RESET", "*"}
-	_, err := execSentinelCommand(port, cmd)
+	_, err := execSentinelCommand(sentinelPort, cmd)
 
 	return err
 }
 
 // Failover sends FAILOVER command to Sentinel
-func Failover(port, id int) error {
-	cmd := []any{"FAILOVER", "instance" + strconv.Itoa(id)}
-	_, err := execSentinelCommand(port, cmd)
+func Failover(sentinelPort, instanceID int) error {
+	cmd := []any{"FAILOVER", "instance" + strconv.Itoa(instanceID)}
+	_, err := execSentinelCommand(sentinelPort, cmd)
 
 	return err
 }
 
 // GetMasterIP returns master IP
-func GetMasterIP(port, id int) (string, error) {
-	cmd := []any{"GET-MASTER-ADDR-BY-NAME", "instance" + strconv.Itoa(id)}
-	resp, err := execSentinelCommand(port, cmd)
+func GetMasterIP(sentinelPort, instanceID int) (string, error) {
+	cmd := []any{"GET-MASTER-ADDR-BY-NAME", "instance" + strconv.Itoa(instanceID)}
+	resp, err := execSentinelCommand(sentinelPort, cmd)
 
 	if err != nil {
 		return "", err
@@ -162,16 +166,16 @@ func GetMasterIP(port, id int) (string, error) {
 }
 
 // IsSentinelEnabled returns true if instance already monitored by Sentinel
-func IsSentinelEnabled(port, id int) bool {
-	cmd := []any{"MASTER", "instance" + strconv.Itoa(id)}
-	_, err := execSentinelCommand(port, cmd)
+func IsSentinelEnabled(sentinelPort, instanceID int) bool {
+	cmd := []any{"MASTER", "instance" + strconv.Itoa(instanceID)}
+	_, err := execSentinelCommand(sentinelPort, cmd)
 
 	return err == nil
 }
 
 // GetInfo returns info about master, replicas and sentinels
-func GetInfo(port, id int) (*Info, error) {
-	rc := getClient(port, 3*time.Second)
+func GetInfo(sentinelPort, instanceID int) (*Info, error) {
+	rc := getClient(sentinelPort, 3*time.Second)
 	err := rc.Connect()
 
 	if err != nil {
@@ -180,11 +184,11 @@ func GetInfo(port, id int) (*Info, error) {
 
 	defer rc.Close()
 
-	name := "instance" + strconv.Itoa(id)
+	name := "instance" + strconv.Itoa(instanceID)
 
 	info := &Info{
-		Replicas:  make([][]InfoItem, 0),
-		Sentinels: make([][]InfoItem, 0),
+		Replicas:  make([]InfoSlice, 0),
+		Sentinels: make([]InfoSlice, 0),
 	}
 
 	resp := rc.Cmd("SENTINEL", []any{"MASTER", name})
@@ -235,6 +239,13 @@ func GetInfo(port, id int) (*Info, error) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// IsEmpty returns true if auth data is empty
+func (a Auth) IsEmpty() bool {
+	return a.User == "" || a.Password == ""
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // configureFailover configures failover for instance
 func configureFailover(rc *redy.Client, cfg *Config) error {
 	name := NAME_PREFIX + strconv.Itoa(cfg.ID)
@@ -263,30 +274,6 @@ func configureFailover(rc *redy.Client, cfg *Config) error {
 	)
 
 	return resp.Err
-}
-
-// configureCommands configures renamed commands for instance
-func configureCommands(rc *redy.Client, cfg *Config) error {
-	if cfg.CommandPrefix == "" {
-		return nil
-	}
-
-	var resp *redy.Resp
-
-	name := NAME_PREFIX + strconv.Itoa(cfg.ID)
-
-	for _, cmd := range protectedCommands {
-		resp = rc.Cmd(
-			"SENTINEL",
-			[]any{"SET", name, "rename-command", cmd, cfg.CommandPrefix + "_" + cmd},
-		)
-
-		if resp.Err != nil {
-			return resp.Err
-		}
-	}
-
-	return nil
 }
 
 // execSentinelCommand executes command on sentinel

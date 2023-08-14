@@ -222,6 +222,13 @@ func AppendSwapInfo(info *redy.Info) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// IsEmpty returns true if auth data is empty
+func (a Auth) IsEmpty() bool {
+	return a.User == "" || a.Password == ""
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // execCmd executes command on instance
 func execCmd(req *Request) (*redy.Resp, error) {
 	rc := getClient(req.Port, req.Timeout)
@@ -235,7 +242,7 @@ func execCmd(req *Request) (*redy.Resp, error) {
 
 	var resp *redy.Resp
 
-	if req.Auth.User != "" && req.Auth.Password != "" {
+	if !req.Auth.IsEmpty() {
 		resp = rc.Cmd("AUTH", req.Auth.User, req.Auth.Password)
 
 		if resp.Err != nil {
