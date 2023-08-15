@@ -1374,7 +1374,7 @@ func StopInstance(id int, force bool) error {
 	cmdStart := time.Now()
 	stopDelay := time.Second * time.Duration(Config.GetI(DELAY_STOP))
 
-	for range time.Tick(time.Second) {
+	for range time.NewTicker(time.Second).C {
 		if pid.IsProcessWorks(instancePID) {
 			if isInstanceSavingData(id) {
 				time.Sleep(3 * time.Second)
@@ -2910,7 +2910,7 @@ func isProcStarted(pidFile string, delay int) bool {
 	cmdStart := time.Now()
 	delaySec := time.Second * time.Duration(delay)
 
-	for range time.Tick(time.Second) {
+	for range time.NewTicker(time.Second).C {
 		if pid.IsWorks(pidFile) {
 			return true
 		}
@@ -2929,7 +2929,7 @@ func isProcStopped(appPID, delay int) bool {
 	cmdStart := time.Now()
 	delaySec := time.Second * time.Duration(delay)
 
-	for range time.Tick(time.Second) {
+	for range time.NewTicker(time.Second).C {
 		if !pid.IsProcessWorks(appPID) {
 			return true
 		}
