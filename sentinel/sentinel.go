@@ -19,7 +19,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // NAME_PREFIX used for instance name generation
-const NAME_PREFIX = "instance"
+const NAME_PREFIX = "rds-"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -83,11 +83,24 @@ func Monitor(sentinelPort int, cfg *Config) error {
 
 	defer rc.Close()
 
-	name := NAME_PREFIX + strconv.Itoa(cfg.ID)
-	resp := rc.Cmd("SENTINEL", []any{"MONITOR", name, cfg.IP, cfg.Port, cfg.Quorum})
+	instanceName := getInstanceName(cfg.ID)
+
+	resp := rc.Cmd("SENTINEL", []any{"SET", "auth-user", instanceName, cfg.Auth.User})
 
 	if resp.Err != nil {
-		return resp.Err
+		return fmt.Errorf("Can't set auth-user for instance %d: %v", cfg.ID, resp.Err)
+	}
+
+	resp = rc.Cmd("SENTINEL", []any{"SET", "auth-pass", instanceName, cfg.Auth.Password})
+
+	if resp.Err != nil {
+		return fmt.Errorf("Can't set auth-pass for instance %d: %v", cfg.ID, resp.Err)
+	}
+
+	resp = rc.Cmd("SENTINEL", []any{"MONITOR", instanceName, cfg.IP, cfg.Port, cfg.Quorum})
+
+	if resp.Err != nil {
+		return fmt.Errorf("Can't add instance %d to monitoring: %v", cfg.ID, resp.Err)
 	}
 
 	err = configureFailover(rc, cfg)
@@ -103,7 +116,7 @@ func Monitor(sentinelPort int, cfg *Config) error {
 // reach the quorum needed to failover a master, and the majority
 // needed to authorize the failover
 func CheckQuorum(sentinelPort, instanceID int) (string, bool) {
-	cmd := []any{"CKQUORUM", "instance" + strconv.Itoa(instanceID)}
+	cmd := []any{"CKQUORUM", getInstanceName(instanceID)}
 	resp, err := execSentinelCommand(sentinelPort, cmd)
 
 	if err != nil {
@@ -117,7 +130,7 @@ func CheckQuorum(sentinelPort, instanceID int) (string, bool) {
 
 // Remove removes instance from Sentinel monitoring
 func Remove(sentinelPort, instanceID int) error {
-	cmd := []any{"REMOVE", "instance" + strconv.Itoa(instanceID)}
+	cmd := []any{"REMOVE", getInstanceName(instanceID)}
 	_, err := execSentinelCommand(sentinelPort, cmd)
 
 	return err
@@ -133,7 +146,7 @@ func Reset(sentinelPort int) error {
 
 // Failover sends FAILOVER command to Sentinel
 func Failover(sentinelPort, instanceID int) error {
-	cmd := []any{"FAILOVER", "instance" + strconv.Itoa(instanceID)}
+	cmd := []any{"FAILOVER", getInstanceName(instanceID)}
 	_, err := execSentinelCommand(sentinelPort, cmd)
 
 	return err
@@ -141,7 +154,7 @@ func Failover(sentinelPort, instanceID int) error {
 
 // GetMasterIP returns master IP
 func GetMasterIP(sentinelPort, instanceID int) (string, error) {
-	cmd := []any{"GET-MASTER-ADDR-BY-NAME", "instance" + strconv.Itoa(instanceID)}
+	cmd := []any{"GET-MASTER-ADDR-BY-NAME", getInstanceName(instanceID)}
 	resp, err := execSentinelCommand(sentinelPort, cmd)
 
 	if err != nil {
@@ -167,7 +180,7 @@ func GetMasterIP(sentinelPort, instanceID int) (string, error) {
 
 // IsSentinelEnabled returns true if instance already monitored by Sentinel
 func IsSentinelEnabled(sentinelPort, instanceID int) bool {
-	cmd := []any{"MASTER", "instance" + strconv.Itoa(instanceID)}
+	cmd := []any{"MASTER", getInstanceName(instanceID)}
 	_, err := execSentinelCommand(sentinelPort, cmd)
 
 	return err == nil
@@ -184,14 +197,14 @@ func GetInfo(sentinelPort, instanceID int) (*Info, error) {
 
 	defer rc.Close()
 
-	name := "instance" + strconv.Itoa(instanceID)
+	instanceName := getInstanceName(instanceID)
 
 	info := &Info{
 		Replicas:  make([]InfoSlice, 0),
 		Sentinels: make([]InfoSlice, 0),
 	}
 
-	resp := rc.Cmd("SENTINEL", []any{"MASTER", name})
+	resp := rc.Cmd("SENTINEL", []any{"MASTER", instanceName})
 
 	if resp.Err != nil {
 		return nil, resp.Err
@@ -200,7 +213,7 @@ func GetInfo(sentinelPort, instanceID int) (*Info, error) {
 	masterProps, _ := resp.List()
 	info.Master = convertSliceToItemSlice(masterProps)
 
-	resp = rc.Cmd("SENTINEL", []any{"REPLICAS", name})
+	resp = rc.Cmd("SENTINEL", []any{"REPLICAS", instanceName})
 
 	if resp.Err != nil {
 		return nil, resp.Err
@@ -217,7 +230,7 @@ func GetInfo(sentinelPort, instanceID int) (*Info, error) {
 		info.Replicas = append(info.Replicas, convertSliceToItemSlice(replicaProps))
 	}
 
-	resp = rc.Cmd("SENTINEL", []any{"SENTINELS", name})
+	resp = rc.Cmd("SENTINEL", []any{"SENTINELS", instanceName})
 
 	if resp.Err != nil {
 		return nil, resp.Err
@@ -246,13 +259,18 @@ func (a Auth) IsEmpty() bool {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// getInstanceName generates instance name
+func getInstanceName(instanceID int) string {
+	return NAME_PREFIX + strconv.Itoa(instanceID)
+}
+
 // configureFailover configures failover for instance
 func configureFailover(rc *redy.Client, cfg *Config) error {
-	name := NAME_PREFIX + strconv.Itoa(cfg.ID)
+	instanceName := getInstanceName(cfg.ID)
 
 	resp := rc.Cmd(
 		"SENTINEL",
-		[]any{"SET", name, "down-after-milliseconds", cfg.DownAfterMilliseconds},
+		[]any{"SET", instanceName, "down-after-milliseconds", cfg.DownAfterMilliseconds},
 	)
 
 	if resp.Err != nil {
@@ -261,7 +279,7 @@ func configureFailover(rc *redy.Client, cfg *Config) error {
 
 	resp = rc.Cmd(
 		"SENTINEL",
-		[]any{"SET", name, "failover-timeout", cfg.FailoverTimeout},
+		[]any{"SET", instanceName, "failover-timeout", cfg.FailoverTimeout},
 	)
 
 	if resp.Err != nil {
@@ -270,7 +288,7 @@ func configureFailover(rc *redy.Client, cfg *Config) error {
 
 	resp = rc.Cmd(
 		"SENTINEL",
-		[]any{"SET", name, "parallel-syncs", cfg.ParallelSyncs},
+		[]any{"SET", instanceName, "parallel-syncs", cfg.ParallelSyncs},
 	)
 
 	return resp.Err

@@ -178,9 +178,10 @@ const (
 )
 
 const (
-	REDIS_USER_ADMIN   = "admin"
-	REDIS_USER_SYNC    = "sync"
-	REDIS_USER_SERVICE = "service"
+	REDIS_USER_ADMIN    = "admin"
+	REDIS_USER_SYNC     = "sync"
+	REDIS_USER_SERVICE  = "service"
+	REDIS_USER_SENTINEL = "sentinel"
 )
 
 // DEFAULT_FILE_PERMS is default permissions for files created by core
@@ -231,18 +232,18 @@ type InstanceAuth struct {
 }
 
 type InstanceMeta struct {
-	Tags            []string              `json:"tags,omitempty"`    // List of tags
-	Desc            string                `json:"desc"`              // Description
-	ReplicationType ReplicationType       `json:"replication_type"`  // Replication type
-	UUID            string                `json:"uuid"`              // UUID
-	Compatible      string                `json:"compatible"`        // Compatible redis version
-	MetaVersion     int                   `json:"meta_version"`      // Meta information version
-	ID              int                   `json:"id"`                // Instance ID
-	Created         int64                 `json:"created"`           // Date of creation (unix timestamp)
-	Preferencies    *InstancePreferencies `json:"preferencies"`      // Config data
-	Config          *InstanceConfigInfo   `json:"config"`            // Config info (hash + creation date)
-	Auth            *InstanceAuth         `json:"auth"`              // Instance auth info
-	Storage         Storage               `json:"storage,omitempty"` // Core version agnostic data storage
+	Tags            []string              `json:"tags,omitempty"`       // List of tags
+	Desc            string                `json:"desc"`                 // Description
+	ReplicationType ReplicationType       `json:"replication_type"`     // Replication type
+	UUID            string                `json:"uuid"`                 // UUID
+	Compatible      string                `json:"compatible,omitempty"` // Compatible redis version
+	MetaVersion     int                   `json:"meta_version"`         // Meta information version
+	ID              int                   `json:"id"`                   // Instance ID
+	Created         int64                 `json:"created"`              // Date of creation (unix timestamp)
+	Preferencies    *InstancePreferencies `json:"preferencies"`         // Config data
+	Config          *InstanceConfigInfo   `json:"config"`               // Config info (hash + creation date)
+	Auth            *InstanceAuth         `json:"auth"`                 // Instance auth info
+	Storage         Storage               `json:"storage,omitempty"`    // Core version agnostic data storage
 }
 
 type InstanceConfigInfo struct {
@@ -251,12 +252,12 @@ type InstanceConfigInfo struct {
 }
 
 type InstancePreferencies struct {
-	ID              int    `json:"id"`               // Instance ID
-	AdminPassword   string `json:"admin_password"`   // Admin user password
-	SyncPassword    string `json:"sync_password"`    // Sync user password
-	ServicePassword string `json:"service_password"` // Service user password
-	IsSecure        bool   `json:"is_secure"`        // Secure instance flag
-	IsSaveDisabled  bool   `json:"is_save_disabled"` // Disabled saves flag
+	ID               int    `json:"id"`                         // Instance ID
+	AdminPassword    string `json:"admin_password"`             // Admin user password
+	SyncPassword     string `json:"sync_password"`              // Sync user password
+	ServicePassword  string `json:"service_password,omitempty"` // Service user password
+	SentinelPassword string `json:"sentinel_password"`          // Sentinel user password
+	IsSaveDisabled   bool   `json:"is_save_disabled"`           // Disabled saves flag
 }
 
 type InstanceInfo struct {
@@ -341,14 +342,15 @@ type Stats struct {
 
 // aligo:ignore
 type InstanceConfigData struct {
-	Redis           version.Version
-	ID              int
-	AdminPassword   string
-	SyncPassword    string
-	ServicePassword string
-	IsSecure        bool
-	IsSaveDisabled  bool
-	IsReplica       bool
+	Redis            version.Version
+	ID               int
+	AdminPassword    string
+	SyncPassword     string
+	SentinelPassword string
+	ServicePassword  string
+	IsSecure         bool
+	IsSaveDisabled   bool
+	IsReplica        bool
 
 	tags []string
 }
@@ -812,7 +814,7 @@ func GetInstanceConfigHash(id int) (string, error) {
 // NewAuthInfo generates new instance auth struct
 func NewInstanceAuth(password string) (*InstanceAuth, error) {
 	pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
-	hash, err := passwd.Encrypt(password, pepper)
+	hash, err := passwd.Hash(password, pepper)
 
 	if err != nil {
 		return nil, fmt.Errorf("Can't generate encrypted password hash: %w", err)
@@ -840,11 +842,11 @@ func NewInstanceMeta(instancePassword, servicePassword string) (*InstanceMeta, e
 	}
 
 	preferencies := &InstancePreferencies{
-		ID:              id,
-		AdminPassword:   passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
-		SyncPassword:    passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
-		ServicePassword: servicePassword,
-		IsSecure:        servicePassword != "",
+		ID:               id,
+		ServicePassword:  servicePassword,
+		AdminPassword:    passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
+		SyncPassword:     passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
+		SentinelPassword: passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
 	}
 
 	return &InstanceMeta{
@@ -1673,10 +1675,18 @@ func StartSentinelMonitoring(id int) error {
 		return nil
 	}
 
+	meta, err := GetInstanceMeta(id)
+
+	if err != nil {
+		return err
+	}
+
 	cfg := &SENTINEL.Config{
 		ID:   id,
 		IP:   Config.GetS(REPLICATION_MASTER_IP, netutil.GetIP()),
 		Port: GetInstancePort(id),
+
+		Auth: SENTINEL.Auth{REDIS_USER_SENTINEL, meta.Preferencies.SentinelPassword},
 
 		Quorum:                Config.GetI(SENTINEL_QUORUM, 3),
 		DownAfterMilliseconds: Config.GetI(SENTINEL_DOWN_AFTER, 10000),
@@ -2250,6 +2260,11 @@ func (c *InstanceConfigData) AdminPasswordHash() string {
 // SyncPasswordHash returns SHA-256 hash for sync user password
 func (c *InstanceConfigData) SyncPasswordHash() string {
 	return getSHA256Hash(c.SyncPassword)
+}
+
+// SentinelPasswordHash returns SHA-256 hash for sentinel user password
+func (c *InstanceConfigData) SentinelPasswordHash() string {
+	return getSHA256Hash(c.SentinelPassword)
 }
 
 // ServicePasswordHash returns SHA-256 hash for service user password
@@ -3159,12 +3174,13 @@ func appendStatsData(info *REDIS.Info, prop string, value *uint64) {
 // createConfigFromMeta create config struct based on instance preferencies
 func createConfigFromMeta(meta *InstanceMeta) *InstanceConfigData {
 	result := &InstanceConfigData{
-		ID:              meta.ID,
-		AdminPassword:   meta.Preferencies.AdminPassword,
-		SyncPassword:    meta.Preferencies.SyncPassword,
-		ServicePassword: meta.Preferencies.ServicePassword,
-		IsSecure:        meta.Preferencies.IsSecure,
-		IsSaveDisabled:  meta.Preferencies.IsSaveDisabled,
+		ID:               meta.ID,
+		AdminPassword:    meta.Preferencies.AdminPassword,
+		SyncPassword:     meta.Preferencies.SyncPassword,
+		SentinelPassword: meta.Preferencies.SentinelPassword,
+		ServicePassword:  meta.Preferencies.ServicePassword,
+		IsSecure:         meta.Preferencies.ServicePassword != "",
+		IsSaveDisabled:   meta.Preferencies.IsSaveDisabled,
 
 		tags: meta.Tags,
 	}

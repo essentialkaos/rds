@@ -117,12 +117,12 @@ func (c *MetaCache) getClone(original *InstanceMeta) *InstanceMeta {
 		Created:         original.Created,
 		Tags:            append([]string(nil), original.Tags...),
 		Preferencies: &InstancePreferencies{
-			ID:              original.Preferencies.ID,
-			AdminPassword:   original.Preferencies.AdminPassword,
-			SyncPassword:    original.Preferencies.SyncPassword,
-			ServicePassword: original.Preferencies.ServicePassword,
-			IsSecure:        original.Preferencies.IsSecure,
-			IsSaveDisabled:  original.Preferencies.IsSaveDisabled,
+			ID:               original.Preferencies.ID,
+			AdminPassword:    original.Preferencies.AdminPassword,
+			SyncPassword:     original.Preferencies.SyncPassword,
+			ServicePassword:  original.Preferencies.ServicePassword,
+			SentinelPassword: original.Preferencies.SentinelPassword,
+			IsSaveDisabled:   original.Preferencies.IsSaveDisabled,
 		},
 		Auth: &InstanceAuth{
 			Pepper: original.Auth.Pepper,

@@ -76,7 +76,7 @@ func CliCommand(args CommandArgs) int {
 	if options.GetB(OPT_PRIVATE) {
 		cliCfg.User = CORE.REDIS_USER_ADMIN
 		cliCfg.Password = meta.Preferencies.AdminPassword
-	} else if meta.Preferencies.IsSecure {
+	} else if meta.Preferencies.ServicePassword != "" {
 		cliCfg.User = CORE.REDIS_USER_SERVICE
 		cliCfg.Password = meta.Preferencies.ServicePassword
 	}

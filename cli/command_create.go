@@ -270,7 +270,7 @@ func showInstanceInfo(meta *CORE.InstanceMeta, info *instanceBasicInfo, tags []s
 		)
 	}
 
-	if !info.CustomServicePassword {
+	if info.CustomServicePassword {
 		t.Print(
 			"Service Password",
 			fmtutil.ColorizePassword(info.ServicePassword, "{b}", "{g}", "{y}"),
