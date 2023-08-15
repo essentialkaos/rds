@@ -109,10 +109,10 @@ func calculateInstanceCPUUsage(u1, u2 []float64, period int) []float64 {
 
 // printInstanceCPUUsage print info about cpu usage
 func printInstanceCPUUsage(usage []float64) {
-	sysStr := fmtutil.PrettyPerc(mathutil.BetweenF(fmtutil.Float(usage[0]), 0.0, 100.0))
-	usrStr := fmtutil.PrettyPerc(mathutil.BetweenF(fmtutil.Float(usage[1]), 0.0, 100.0))
-	sysChStr := fmtutil.PrettyPerc(mathutil.BetweenF(fmtutil.Float(usage[2]), 0.0, 100.0))
-	usrChStr := fmtutil.PrettyPerc(mathutil.BetweenF(fmtutil.Float(usage[3]), 0.0, 100.0))
+	sysStr := fmtutil.PrettyPerc(mathutil.Between(fmtutil.Float(usage[0]), 0.0, 100.0))
+	usrStr := fmtutil.PrettyPerc(mathutil.Between(fmtutil.Float(usage[1]), 0.0, 100.0))
+	sysChStr := fmtutil.PrettyPerc(mathutil.Between(fmtutil.Float(usage[2]), 0.0, 100.0))
+	usrChStr := fmtutil.PrettyPerc(mathutil.Between(fmtutil.Float(usage[3]), 0.0, 100.0))
 
 	t := table.NewTable("TYPE", "VALUE").SetSizes(16)
 

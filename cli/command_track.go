@@ -97,7 +97,7 @@ func showInteractiveInfo(id, interval int) int {
 			interval,
 		)
 
-		cpu := fmt.Sprintf("%g%%", mathutil.BetweenF(fmtutil.Float(usage[0]+usage[1]), 0.0, 100.0))
+		cpu := fmt.Sprintf("%g%%", mathutil.Between(fmtutil.Float(usage[0]+usage[1]), 0.0, 100.0))
 		clients := i2.GetI("clients", "connected_clients")
 		mem := i2.GetI("memory", "used_memory")
 		memRSS := i2.GetI("memory", "used_memory_rss")

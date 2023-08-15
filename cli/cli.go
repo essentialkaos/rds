@@ -1050,11 +1050,11 @@ func genCompletion() int {
 
 	switch options.GetS(OPT_COMPLETION) {
 	case "bash":
-		fmt.Printf(bash.Generate(info, "rds"))
+		fmt.Print(bash.Generate(info, "rds"))
 	case "fish":
-		fmt.Printf(fish.Generate(info, "rds"))
+		fmt.Print(fish.Generate(info, "rds"))
 	case "zsh":
-		fmt.Printf(zsh.Generate(info, optMap, "rds"))
+		fmt.Print(zsh.Generate(info, optMap, "rds"))
 	default:
 		return 1
 	}
