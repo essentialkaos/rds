@@ -232,18 +232,17 @@ type InstanceAuth struct {
 }
 
 type InstanceMeta struct {
-	Tags            []string              `json:"tags,omitempty"`       // List of tags
-	Desc            string                `json:"desc"`                 // Description
-	ReplicationType ReplicationType       `json:"replication_type"`     // Replication type
-	UUID            string                `json:"uuid"`                 // UUID
-	Compatible      string                `json:"compatible,omitempty"` // Compatible redis version
-	MetaVersion     int                   `json:"meta_version"`         // Meta information version
-	ID              int                   `json:"id"`                   // Instance ID
-	Created         int64                 `json:"created"`              // Date of creation (unix timestamp)
-	Preferencies    *InstancePreferencies `json:"preferencies"`         // Config data
-	Config          *InstanceConfigInfo   `json:"config"`               // Config info (hash + creation date)
-	Auth            *InstanceAuth         `json:"auth"`                 // Instance auth info
-	Storage         Storage               `json:"storage,omitempty"`    // Core version agnostic data storage
+	Tags         []string              `json:"tags,omitempty"`       // List of tags
+	Desc         string                `json:"desc"`                 // Description
+	UUID         string                `json:"uuid"`                 // UUID
+	Compatible   string                `json:"compatible,omitempty"` // Compatible redis version
+	MetaVersion  int                   `json:"meta_version"`         // Meta information version
+	ID           int                   `json:"id"`                   // Instance ID
+	Created      int64                 `json:"created"`              // Date of creation (unix timestamp)
+	Preferencies *InstancePreferencies `json:"preferencies"`         // Config data
+	Config       *InstanceConfigInfo   `json:"config"`               // Config info (hash + creation date)
+	Auth         *InstanceAuth         `json:"auth"`                 // Instance auth info
+	Storage      Storage               `json:"storage,omitempty"`    // Core version agnostic data storage
 }
 
 type InstanceConfigInfo struct {
@@ -252,12 +251,12 @@ type InstanceConfigInfo struct {
 }
 
 type InstancePreferencies struct {
-	ID               int    `json:"id"`                         // Instance ID
-	AdminPassword    string `json:"admin_password"`             // Admin user password
-	SyncPassword     string `json:"sync_password"`              // Sync user password
-	ServicePassword  string `json:"service_password,omitempty"` // Service user password
-	SentinelPassword string `json:"sentinel_password"`          // Sentinel user password
-	IsSaveDisabled   bool   `json:"is_save_disabled"`           // Disabled saves flag
+	AdminPassword    string          `json:"admin_password"`             // Admin user password
+	SyncPassword     string          `json:"sync_password"`              // Sync user password
+	ServicePassword  string          `json:"service_password,omitempty"` // Service user password
+	SentinelPassword string          `json:"sentinel_password"`          // Sentinel user password
+	ReplicationType  ReplicationType `json:"replication_type"`           // Replication type
+	IsSaveDisabled   bool            `json:"is_save_disabled"`           // Disabled saves flag
 }
 
 type InstanceInfo struct {
@@ -842,22 +841,21 @@ func NewInstanceMeta(instancePassword, servicePassword string) (*InstanceMeta, e
 	}
 
 	preferencies := &InstancePreferencies{
-		ID:               id,
 		ServicePassword:  servicePassword,
 		AdminPassword:    passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
 		SyncPassword:     passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
 		SentinelPassword: passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
+		ReplicationType:  ReplicationType(knf.GetS(REPLICATION_DEFAULT_ROLE, string(REPL_TYPE_REPLICA))),
 	}
 
 	return &InstanceMeta{
-		MetaVersion:     META_VERSION,
-		ID:              id,
-		ReplicationType: ReplicationType(knf.GetS(REPLICATION_DEFAULT_ROLE, string(REPL_TYPE_REPLICA))),
-		UUID:            uuid.GenUUID4(),
-		Preferencies:    preferencies,
-		Auth:            auth,
-		Config:          &InstanceConfigInfo{},
-		Storage:         make(map[string]string),
+		ID:           id,
+		MetaVersion:  META_VERSION,
+		UUID:         uuid.GenUUID4(),
+		Preferencies: preferencies,
+		Auth:         auth,
+		Config:       &InstanceConfigInfo{},
+		Storage:      make(map[string]string),
 	}, nil
 }
 
@@ -962,12 +960,13 @@ func UpdateInstance(newMeta *InstanceMeta) error {
 		return err
 	}
 
-	if oldMeta.ReplicationType != newMeta.ReplicationType {
-		if newMeta.ReplicationType != REPL_TYPE_REPLICA && newMeta.ReplicationType != REPL_TYPE_STANDBY {
+	if oldMeta.Preferencies.ReplicationType != newMeta.Preferencies.ReplicationType {
+		if newMeta.Preferencies.ReplicationType != REPL_TYPE_REPLICA &&
+			newMeta.Preferencies.ReplicationType != REPL_TYPE_STANDBY {
 			return ErrUnknownReplicationType
 		}
 
-		oldMeta.ReplicationType = newMeta.ReplicationType
+		oldMeta.Preferencies.ReplicationType = newMeta.Preferencies.ReplicationType
 
 		hasChanges = true
 	}
@@ -1338,7 +1337,7 @@ func StartInstance(id int, controlLoading bool) error {
 		}
 
 		// Sentinel monitoring works only with replicas
-		if meta.ReplicationType == REPL_TYPE_REPLICA {
+		if meta.Preferencies.ReplicationType == REPL_TYPE_REPLICA {
 			if IsSentinelEnabled() {
 				err = StartSentinelMonitoring(id)
 
@@ -2891,7 +2890,7 @@ func addAllReplicasToSentinelMonitoring() []error {
 			continue
 		}
 
-		if meta.ReplicationType != REPL_TYPE_REPLICA {
+		if meta.Preferencies.ReplicationType != REPL_TYPE_REPLICA {
 			continue
 		}
 
@@ -3191,7 +3190,8 @@ func createConfigFromMeta(meta *InstanceMeta) *InstanceConfigData {
 		result.Redis, _ = GetRedisVersion()
 	}
 
-	if IsMinion() && meta.ReplicationType == REPL_TYPE_REPLICA && Config.GetB(REPLICATION_ALLOW_REPLICAS) {
+	if IsMinion() && meta.Preferencies.ReplicationType == REPL_TYPE_REPLICA &&
+		Config.GetB(REPLICATION_ALLOW_REPLICAS) {
 		result.IsReplica = true
 	}
 

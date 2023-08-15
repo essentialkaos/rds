@@ -132,9 +132,9 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 				fit = currentRedisVer.String() != meta.Compatible
 			}
 		case "standby", "duplicate":
-			fit = meta.ReplicationType == CORE.REPL_TYPE_STANDBY
+			fit = meta.Preferencies.ReplicationType == CORE.REPL_TYPE_STANDBY
 		case "replica", "slave":
-			fit = meta.ReplicationType == CORE.REPL_TYPE_REPLICA
+			fit = meta.Preferencies.ReplicationType == CORE.REPL_TYPE_REPLICA
 		case "secure":
 			fit = meta.Preferencies.ServicePassword != ""
 		default:

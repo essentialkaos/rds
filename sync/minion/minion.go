@@ -581,8 +581,8 @@ func editInstance(meta *CORE.InstanceMeta) bool {
 
 	log.Info("(%3d) Metadata updated", id)
 
-	if oldMeta.ReplicationType != meta.ReplicationType {
-		err = changeInstanceReplicationType(id, meta.ReplicationType)
+	if oldMeta.Preferencies.ReplicationType != meta.Preferencies.ReplicationType {
+		err = changeInstanceReplicationType(id, meta.Preferencies.ReplicationType)
 
 		if err != nil {
 			log.Error("(%3d) Error while changing replication type: %v", id, err)
@@ -591,7 +591,7 @@ func editInstance(meta *CORE.InstanceMeta) bool {
 
 		log.Info(
 			"(%3d) Replication type changed (%s → %s)",
-			id, oldMeta.ReplicationType, meta.ReplicationType,
+			id, oldMeta.Preferencies.ReplicationType, meta.Preferencies.ReplicationType,
 		)
 	}
 
@@ -1222,7 +1222,7 @@ func checkReplicaMode(id int) {
 func isMetaEqual(m1, m2 *CORE.InstanceMeta) bool {
 	switch {
 	case m1.Desc != m2.Desc,
-		m1.ReplicationType != m2.ReplicationType,
+		m1.Preferencies.ReplicationType != m2.Preferencies.ReplicationType,
 		m1.Auth.User != m2.Auth.User,
 		m1.Auth.Pepper != m2.Auth.Pepper,
 		m1.Auth.Hash != m2.Auth.Hash,

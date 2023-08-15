@@ -108,20 +108,19 @@ func (c *MetaCache) getClone(original *InstanceMeta) *InstanceMeta {
 	}
 
 	return &InstanceMeta{
-		MetaVersion:     original.MetaVersion,
-		ID:              original.ID,
-		Desc:            original.Desc,
-		ReplicationType: original.ReplicationType,
-		UUID:            original.UUID,
-		Compatible:      original.Compatible,
-		Created:         original.Created,
-		Tags:            append([]string(nil), original.Tags...),
+		MetaVersion: original.MetaVersion,
+		ID:          original.ID,
+		Desc:        original.Desc,
+		UUID:        original.UUID,
+		Compatible:  original.Compatible,
+		Created:     original.Created,
+		Tags:        append([]string(nil), original.Tags...),
 		Preferencies: &InstancePreferencies{
-			ID:               original.Preferencies.ID,
 			AdminPassword:    original.Preferencies.AdminPassword,
 			SyncPassword:     original.Preferencies.SyncPassword,
 			ServicePassword:  original.Preferencies.ServicePassword,
 			SentinelPassword: original.Preferencies.SentinelPassword,
+			ReplicationType:  original.Preferencies.ReplicationType,
 			IsSaveDisabled:   original.Preferencies.IsSaveDisabled,
 		},
 		Auth: &InstanceAuth{

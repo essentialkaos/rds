@@ -104,7 +104,7 @@ func BatchEditCommand(args CommandArgs) int {
 		}
 
 		if info.ReplicationType != "" {
-			meta.ReplicationType = CORE.ReplicationType(info.ReplicationType)
+			meta.Preferencies.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 		}
 
 		err = CORE.UpdateInstance(meta)

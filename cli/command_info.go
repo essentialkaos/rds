@@ -188,7 +188,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	t.Print("Description", getInstanceDescWithTags(meta))
 	t.Print("State", getInstanceStateWithColor(state))
 	t.Print("Created", timeutil.Format(created, "%Y/%m/%d %H:%M:%S"))
-	t.Print("Replication type", meta.ReplicationType)
+	t.Print("Replication type", meta.Preferencies.ReplicationType)
 	t.Print("URI", uri)
 	t.Print("Compatibility", compatible+" {s-}"+redisVersionInfo+"{!}")
 

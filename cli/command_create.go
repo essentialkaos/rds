@@ -101,7 +101,7 @@ func CreateCommand(args CommandArgs) int {
 	}
 
 	meta.Desc = info.Desc
-	meta.ReplicationType = CORE.ReplicationType(info.ReplicationType)
+	meta.Preferencies.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 	meta.Preferencies.IsSaveDisabled = options.GetB(OPT_DISABLE_SAVES)
 	meta.Tags = tags
 
@@ -257,7 +257,7 @@ func showInstanceInfo(meta *CORE.InstanceMeta, info *instanceBasicInfo, tags []s
 
 	t.Print("ID", meta.ID)
 	t.Print("Port", CORE.GetInstancePort(meta.ID))
-	t.Print("Replication Type", meta.ReplicationType)
+	t.Print("Replication Type", meta.Preferencies.ReplicationType)
 	t.Print(
 		"Description",
 		strutil.Ellipsis(meta.Desc, MAX_DESC_LENGTH)+" "+renderTags(tags...),
