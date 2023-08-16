@@ -519,7 +519,7 @@ func ReloadConfig() []error {
 
 // SetLogOutput setup log output
 func SetLogOutput(file, minLevel string, bufIO bool) error {
-	err := log.Set(Config.GetS(PATH_LOG_DIR)+"/"+file, 0644)
+	err := log.Set(path.Join(Config.GetS(PATH_LOG_DIR), file), 0644)
 
 	if err != nil {
 		return err
@@ -544,7 +544,7 @@ func GenerateToken() string {
 
 // HasSUAuth returns true if superuser auth data exists
 func HasSUAuth() bool {
-	return fsutil.CheckPerms("FRS", Config.GetS(MAIN_DIR)+"/"+SU_DATA_FILE)
+	return fsutil.CheckPerms("FRS", path.Join(Config.GetS(MAIN_DIR), SU_DATA_FILE))
 }
 
 // SaveSUAuth save superuser auth data
@@ -557,7 +557,7 @@ func SaveSUAuth(auth *SuperuserAuth, rewrite bool) error {
 		return ErrSUAuthIsEmpty
 	}
 
-	authFile := Config.GetS(MAIN_DIR) + "/" + SU_DATA_FILE
+	authFile := path.Join(Config.GetS(MAIN_DIR), SU_DATA_FILE)
 
 	if fsutil.IsExist(authFile) {
 		err := os.Remove(authFile)
@@ -577,7 +577,7 @@ func ReadSUAuth() (*SuperuserAuth, error) {
 	}
 
 	auth := &SuperuserAuth{}
-	err := jsonutil.Read(Config.GetS(MAIN_DIR)+"/"+SU_DATA_FILE, auth)
+	err := jsonutil.Read(path.Join(Config.GetS(MAIN_DIR), SU_DATA_FILE), auth)
 
 	return auth, err
 }
@@ -589,32 +589,32 @@ func HasInstances() bool {
 
 // GetInstanceMetaFilePath returns path to meta file for instance with given ID
 func GetInstanceMetaFilePath(id int) string {
-	return Config.GetS(PATH_META_DIR) + "/" + strconv.Itoa(id)
+	return path.Join(Config.GetS(PATH_META_DIR), strconv.Itoa(id))
 }
 
 // GetInstanceConfigFilePath returns path to config file for instance with given ID
 func GetInstanceConfigFilePath(id int) string {
-	return Config.GetS(PATH_CONFIG_DIR) + "/" + strconv.Itoa(id) + ".conf"
+	return path.Join(Config.GetS(PATH_CONFIG_DIR), strconv.Itoa(id)+".conf")
 }
 
 // GetInstanceDataDirPath returns path to data directory for instance with given ID
 func GetInstanceDataDirPath(id int) string {
-	return Config.GetS(PATH_DATA_DIR) + "/" + strconv.Itoa(id)
+	return path.Join(Config.GetS(PATH_DATA_DIR), strconv.Itoa(id))
 }
 
 // GetInstanceLogDirPath returns path to logs directory for instance with given ID
 func GetInstanceLogDirPath(id int) string {
-	return Config.GetS(PATH_LOG_DIR) + "/" + strconv.Itoa(id)
+	return path.Join(Config.GetS(PATH_LOG_DIR), strconv.Itoa(id))
 }
 
 // GetInstanceLogFilePath returns path to log file for instance with given ID
 func GetInstanceLogFilePath(id int) string {
-	return Config.GetS(PATH_LOG_DIR) + "/" + strconv.Itoa(id) + "/redis.log"
+	return path.Join(Config.GetS(PATH_LOG_DIR), strconv.Itoa(id), "redis.log")
 }
 
 // GetInstancePIDFilePath returns path to PID file for instance with given ID
 func GetInstancePIDFilePath(id int) string {
-	return Config.GetS(PATH_PID_DIR) + "/" + strconv.Itoa(id) + ".pid"
+	return path.Join(Config.GetS(PATH_PID_DIR), strconv.Itoa(id)+".pid")
 }
 
 // GetInstancePort returns port used by redis for given instance
@@ -643,7 +643,7 @@ func IsInstanceExist(id int) bool {
 		return false
 	}
 
-	return fsutil.IsExist(Config.GetS(PATH_META_DIR) + "/" + strconv.Itoa(id))
+	return fsutil.IsExist(path.Join(Config.GetS(PATH_META_DIR), strconv.Itoa(id)))
 }
 
 // GetInstanceMeta returns meta info struct for given instance
@@ -1155,16 +1155,16 @@ func GetInstanceRDBPath(id int) string {
 
 	// Return default path
 	if err != nil {
-		return dataDir + "/dump.rdb"
+		return path.Join(dataDir, "dump.rdb")
 	}
 
 	rdb := config.Get("dbfilename")
 
 	if rdb == "" {
-		return dataDir + "/dump.rdb"
+		return path.Join(dataDir, "dump.rdb")
 	}
 
-	return dataDir + "/" + rdb
+	return path.Join(dataDir, rdb)
 }
 
 // GetInstanceAOFPath returns path to the append only file
@@ -1174,16 +1174,16 @@ func GetInstanceAOFPath(id int) string {
 
 	// Return default path
 	if err != nil {
-		return dataDir + "/appendonly.aof"
+		return path.Join(dataDir, "appendonly.aof")
 	}
 
 	aof := config.Get("dbfilename")
 
 	if aof == "" {
-		return dataDir + "/appendonly.aof"
+		return path.Join(dataDir, "appendonly.aof")
 	}
 
-	return dataDir + "/" + aof
+	return path.Join(dataDir, aof)
 }
 
 // GetInstanceInfo returns info from instance
@@ -1514,13 +1514,7 @@ func SentinelStart() []error {
 		return []error{ErrSentinelWrongVersion}
 	}
 
-	err = generateSentinelConfig()
-
-	if err != nil {
-		return []error{err}
-	}
-
-	sentinelConfigDir := Config.GetS(PATH_CONFIG_DIR) + "/sentinel"
+	sentinelConfigDir := path.Join(Config.GetS(PATH_CONFIG_DIR) + "sentinel")
 
 	if fsutil.IsExist(sentinelConfigDir) {
 		err = os.Mkdir(sentinelConfigDir, 0770)
@@ -1530,8 +1524,15 @@ func SentinelStart() []error {
 		}
 	}
 
-	sentinelConfig := sentinelConfigDir + "/sentinel.conf"
-	sentinelLogFile := Config.GetS(PATH_LOG_DIR) + "/sentinel.log"
+	sentinelConfig := path.Join(sentinelConfigDir + "sentinel.conf")
+
+	err = generateSentinelConfig()
+
+	if err != nil {
+		return []error{err}
+	}
+
+	sentinelLogFile := path.Join(Config.GetS(PATH_LOG_DIR), "sentinel.log")
 
 	err = runAsUser(
 		Config.GetS(REDIS_USER),
@@ -1565,7 +1566,7 @@ func SentinelStop() error {
 	sentinelPID := pid.Get(PID_SENTINEL)
 
 	if sentinelPID == -1 {
-		sentinelPIDFile := Config.GetS(PATH_PID_DIR) + "/" + PID_SENTINEL
+		sentinelPIDFile := path.Join(Config.GetS(PATH_PID_DIR), PID_SENTINEL)
 		return fmt.Errorf("Can't read PID from PID file %s", sentinelPIDFile)
 	}
 
@@ -1579,7 +1580,7 @@ func SentinelStop() error {
 		return ErrSentinelCantStop
 	}
 
-	return nil
+	return os.RemoveAll(path.Join(Config.GetS(PATH_CONFIG_DIR), "sentinel"))
 }
 
 // SentinelCheck returns message about checking Sentinel quorum status
@@ -1880,7 +1881,7 @@ func ParseTag(tag string) (string, string) {
 
 // GetStatesFilePath returns path to global states file
 func GetStatesFilePath() string {
-	return Config.GetS(MAIN_DIR) + "/" + STATES_DATA_FILE
+	return path.Join(Config.GetS(MAIN_DIR), STATES_DATA_FILE)
 }
 
 // IsSyncDaemonActive returns true if sync daemon is works
@@ -1969,7 +1970,7 @@ func GetRedisVersion() (version.Version, error) {
 	var err error
 	var info *RedisVersionInfo
 
-	versionCacheFile := Config.GetS(MAIN_DIR) + "/" + REDIS_VERSION_DATA_FILE
+	versionCacheFile := path.Join(Config.GetS(MAIN_DIR), REDIS_VERSION_DATA_FILE)
 	cacheExist := fsutil.IsExist(versionCacheFile)
 
 	if cacheExist {
@@ -2528,7 +2529,7 @@ func getFreeInstanceID() int {
 	metaDir := Config.GetS(PATH_META_DIR)
 
 	for id := 1; id <= Config.GetI(MAIN_MAX_INSTANCES); id++ {
-		if !fsutil.IsExist(metaDir + "/" + strconv.Itoa(id)) {
+		if !fsutil.IsExist(path.Join(metaDir, strconv.Itoa(id))) {
 			return id
 		}
 	}
@@ -2544,7 +2545,7 @@ func getUnusedInstanceID() int {
 		return -1
 	}
 
-	dataFile := Config.GetS(MAIN_DIR) + "/" + IDS_DATA_FILE
+	dataFile := path.Join(Config.GetS(MAIN_DIR), IDS_DATA_FILE)
 
 	if fsutil.IsExist(dataFile) {
 		info := &IDSInfo{}
@@ -2566,7 +2567,7 @@ func getUnusedInstanceID() int {
 // updateIDSInfo update info about latest used ID
 func updateIDSInfo(id int) error {
 	info := &IDSInfo{id}
-	dataFile := Config.GetS(MAIN_DIR) + "/" + IDS_DATA_FILE
+	dataFile := path.Join(Config.GetS(MAIN_DIR), IDS_DATA_FILE)
 
 	return jsonutil.Write(dataFile, info, DEFAULT_FILE_PERMS)
 }
@@ -2758,9 +2759,9 @@ func updateConfigInfo(id int) error {
 func generateSentinelConfig() error {
 	var err error
 
-	sentinelConfig := Config.GetS(PATH_CONFIG_DIR) + "/sentinel.conf"
-	sentinelPidFile := Config.GetS(PATH_PID_DIR) + "/" + PID_SENTINEL
-	sentinelLogFile := Config.GetS(PATH_LOG_DIR) + "/sentinel.log"
+	sentinelConfig := path.Join(Config.GetS(PATH_CONFIG_DIR), "sentinel", "sentinel.conf")
+	sentinelPidFile := path.Join(Config.GetS(PATH_PID_DIR), PID_SENTINEL)
+	sentinelLogFile := path.Join(Config.GetS(PATH_LOG_DIR), "sentinel.log")
 	sentinelPort := Config.GetS(SENTINEL_PORT, "26379")
 
 	if fsutil.IsExist(sentinelConfig) {
