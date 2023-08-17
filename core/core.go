@@ -133,8 +133,6 @@ const (
 	MAIN_DISABLE_FILESYSTEM_CHECK    = "main:disable-filesystem-check"
 	MAIN_WARN_USED_MEMORY            = "main:warn-used-memory"
 	MAIN_DIR                         = "main:dir"
-	MAIN_SU_PASS_LENGTH              = "main:su-pass-length"
-	MAIN_DEFAULT_PASS_LENGTH         = "main:default-pass-length"
 	MAIN_MIN_PASS_LENGTH             = "main:min-pass-length"
 	MAIN_STRICT_SECURE               = "main:strict-secure"
 	MAIN_HOSTNAME                    = "main:hostname"
@@ -551,7 +549,7 @@ func GenerateToken() string {
 
 // NewSUAuth generates new superuser auth data
 func NewSUAuth() (string, *SuperuserAuth, error) {
-	password := genSecurePassword()
+	password := GenPassword()
 	pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
 	hash, err := passwd.Hash(password, pepper)
 
@@ -862,9 +860,9 @@ func NewInstanceMeta(instancePassword, servicePassword string) (*InstanceMeta, e
 
 	preferencies := &InstancePreferencies{
 		ServicePassword:  servicePassword,
-		AdminPassword:    genSecurePassword(),
-		SyncPassword:     genSecurePassword(),
-		SentinelPassword: genSecurePassword(),
+		AdminPassword:    GenPassword(),
+		SyncPassword:     GenPassword(),
+		SentinelPassword: GenPassword(),
 		ReplicationType:  ReplicationType(knf.GetS(REPLICATION_DEFAULT_ROLE, string(REPL_TYPE_REPLICA))),
 	}
 
@@ -2136,6 +2134,11 @@ func GetStats() *Stats {
 	return stats
 }
 
+// GenPassword generates secure password with random length (16-28)
+func GenPassword() string {
+	return passwd.GenPassword(16+rand.Int(6), passwd.STRENGTH_MEDIUM)
+}
+
 // Shutdown safely shutdown app
 func Shutdown(code int) {
 	log.Flush()
@@ -2367,8 +2370,6 @@ func validateConfig(c *knf.Config) []error {
 		{MAIN_WARN_USED_MEMORY, knfv.Greater, 100},
 		{MAIN_MIN_PASS_LENGTH, knfv.Less, MIN_PASS_LENGTH},
 		{MAIN_MIN_PASS_LENGTH, knfv.Greater, MAX_PASS_LENGTH},
-		{MAIN_DEFAULT_PASS_LENGTH, knfv.Less, MIN_PASS_LENGTH},
-		{MAIN_DEFAULT_PASS_LENGTH, knfv.Greater, MAX_PASS_LENGTH},
 
 		// DELAY //
 
@@ -3333,11 +3334,6 @@ func checkConfigDaemonizeOption(id int) error {
 	}
 
 	return nil
-}
-
-// genSecurePassword generates secure password with random length (16-28)
-func genSecurePassword() string {
-	return passwd.GenPassword(16+rand.Int(12), passwd.STRENGTH_MEDIUM)
 }
 
 // getSHA256Hash returns SHA-256 hash for given data

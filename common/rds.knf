@@ -32,12 +32,6 @@
   # Main data directory
   dir: /opt/rds
 
-  # Length of superuser password
-  su-pass-length: 18
-
-  # Length of password for instances
-  default-pass-length: 12
-
   # Minimal password length (6-64)
   min-pass-length: 6
 

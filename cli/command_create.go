@@ -16,7 +16,6 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/options"
-	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
@@ -76,18 +75,12 @@ func CreateCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	if info.InstancePassword == "" {
-		info.InstancePassword = passwd.GenPassword(
-			CORE.Config.GetI(CORE.MAIN_DEFAULT_PASS_LENGTH),
-			passwd.STRENGTH_MEDIUM,
-		)
+	if !info.CustomInstancePassword {
+		info.InstancePassword = CORE.GenPassword()
 	}
 
-	if options.GetB(OPT_SECURE) && info.ServicePassword == "" {
-		info.ServicePassword = passwd.GenPassword(
-			CORE.Config.GetI(CORE.MAIN_DEFAULT_PASS_LENGTH),
-			passwd.STRENGTH_MEDIUM,
-		)
+	if options.GetB(OPT_SECURE) && !info.CustomServicePassword {
+		info.ServicePassword = CORE.GenPassword()
 	}
 
 	meta, err := CORE.NewInstanceMeta(
