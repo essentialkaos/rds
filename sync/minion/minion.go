@@ -839,7 +839,7 @@ func getURL(method API.Method) string {
 	return "http://" + host + ":" + port + "/" + string(method)
 }
 
-// sendRequest request to master
+// sendRequest sends request to the master node
 func sendRequest(method API.Method, reqData, respData any) error {
 	resp, err := req.Request{
 		URL:         getURL(method),

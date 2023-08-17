@@ -58,7 +58,7 @@ var infoStore map[int]*CORE.InstanceInfo
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Start start sync daemon in sentinel mode
+// Start starts sync daemon in sentinel mode
 func Start(app, ver, rev string) int {
 	daemonVersion = ver
 
@@ -82,7 +82,7 @@ func Start(app, ver, rev string) int {
 	return EC_OK
 }
 
-// Stop stop sync daemon
+// Stop stops sync daemon
 func Stop() {
 	if sentinelWorks {
 		syncSentinelState(false)
@@ -91,14 +91,14 @@ func Stop() {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// runSyncLoop start sync loop
+// runSyncLoop starts sync loop
 func runSyncLoop() {
 	for range time.Tick(time.Second) {
 		sendPullCommand()
 	}
 }
 
-// sendHelloCommand send hello command to master
+// sendHelloCommand sends hello command to master
 func sendHelloCommand() bool {
 	connectedToMaster = false
 
@@ -153,7 +153,7 @@ func sendHelloCommand() bool {
 	return CORE.SaveSUAuth(helloResponse.Auth, true) == nil
 }
 
-// sendFetchCommand send fetch command to master
+// sendFetchCommand sends fetch command to master
 func sendFetchCommand() {
 	log.Info("Fetching info about all instances on master…")
 
@@ -192,7 +192,7 @@ func sendFetchCommand() {
 	processFetchedData(fetchResponse.Instances)
 }
 
-// sendPullCommand send pull command to master
+// sendPullCommand sends pull command to master
 func sendPullCommand() {
 	log.Debug("Pulling commands from master…")
 
@@ -231,7 +231,7 @@ func sendPullCommand() {
 	processCommands(pullResponse.Commands)
 }
 
-// sendInfoCommand send info command to master
+// sendInfoCommand sends info command to master
 func sendInfoCommand(id int, uuid string) (*CORE.InstanceInfo, bool) {
 	log.Debug("Fetching info for instance with ID %d (%s)", id, uuid)
 
@@ -266,7 +266,7 @@ func sendInfoCommand(id int, uuid string) (*CORE.InstanceInfo, bool) {
 	return infoResponse.Info, true
 }
 
-// processCommands process command queue item and route to handler
+// processCommands processes command queue item and route to handler
 func processCommands(items []*API.CommandQueueItem) {
 	items = removeConflictActions(items)
 
@@ -302,7 +302,7 @@ func processCommands(items []*API.CommandQueueItem) {
 	}
 }
 
-// createCommandHandler handler for "create" command
+// createCommandHandler is handler for "create" command
 func createCommandHandler(item *API.CommandQueueItem) {
 	if !sentinelWorks {
 		return
@@ -327,7 +327,7 @@ func createCommandHandler(item *API.CommandQueueItem) {
 	}
 }
 
-// destroyCommandHandler handler for "destroy" command
+// destroyCommandHandler is handler for "destroy" command
 func destroyCommandHandler(item *API.CommandQueueItem) {
 	if !sentinelWorks {
 		return
@@ -346,7 +346,7 @@ func destroyCommandHandler(item *API.CommandQueueItem) {
 	}
 }
 
-// startCommandHandler handler for "start" command
+// startCommandHandler is handler for "start" command
 func startCommandHandler(item *API.CommandQueueItem) {
 	if !sentinelWorks || !isValidCommandItem(item) {
 		return
@@ -382,7 +382,7 @@ func startCommandHandler(item *API.CommandQueueItem) {
 	log.Info("(%3d) Sentinel monitoring enabled for started instance", item.InstanceID)
 }
 
-// stopCommandHandler handler for "stop" command
+// stopCommandHandler is handler for "stop" command
 func stopCommandHandler(item *API.CommandQueueItem) {
 	if !sentinelWorks || !isValidCommandItem(item) {
 		return
@@ -418,7 +418,7 @@ func stopCommandHandler(item *API.CommandQueueItem) {
 	log.Info("(%3d) Sentinel monitoring stopped for stopped instance", item.InstanceID)
 }
 
-// startAllCommandHandler handler for "start-all" command
+// startAllCommandHandler is handler for "start-all" command
 func startAllCommandHandler(item *API.CommandQueueItem) {
 	if len(infoStore) == 0 {
 		log.Warn("Command %s ignored - no instances are created", string(item.Command))
@@ -440,7 +440,7 @@ func startAllCommandHandler(item *API.CommandQueueItem) {
 	log.Info("Sentinel monitoring started for all instances")
 }
 
-// stopAllCommandHandler handler for "stop-all" command
+// stopAllCommandHandler is handler for "stop-all" command
 func stopAllCommandHandler(item *API.CommandQueueItem) {
 	if len(infoStore) == 0 {
 		log.Warn("Command %s ignored - no instances are created", string(item.Command))
@@ -462,7 +462,7 @@ func stopAllCommandHandler(item *API.CommandQueueItem) {
 	log.Info("Sentinel monitoring stopped for all instances")
 }
 
-// sentinelStartCommandHandler handler for "sentinel-start" command
+// sentinelStartCommandHandler is handler for "sentinel-start" command
 func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 	if CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already works", string(item.Command))
@@ -487,7 +487,7 @@ func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 	sendFetchCommand()
 }
 
-// sentinelStopCommandHandler handler for "sentinel-stop" command
+// sentinelStopCommandHandler is handler for "sentinel-stop" command
 func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already stopped", string(item.Command))
@@ -526,7 +526,7 @@ func isValidCommandItem(item *API.CommandQueueItem) bool {
 	return true
 }
 
-// processFetchedData process fetched data
+// processFetchedData processes fetched data
 func processFetchedData(instances []*CORE.InstanceInfo) {
 	err := CORE.SentinelReset()
 
@@ -553,7 +553,7 @@ func processFetchedData(instances []*CORE.InstanceInfo) {
 	}
 }
 
-// syncSentinelState sync state of sentinel with master
+// syncSentinelState syncs state of sentinel with master
 func syncSentinelState(works bool) {
 	var err error
 
@@ -585,7 +585,7 @@ func syncSentinelState(works bool) {
 	}
 }
 
-// removeConflictActions skip create+destroy commands for same instance
+// removeConflictActions filters create+destroy commands for same instance
 func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueItem {
 	if len(items) == 0 {
 		return items
@@ -620,7 +620,7 @@ func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueIte
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// getURL return unique method url
+// getURL returns method URL
 func getURL(method API.Method) string {
 	host := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
 	port := CORE.Config.GetS(CORE.REPLICATION_MASTER_PORT)
@@ -628,7 +628,7 @@ func getURL(method API.Method) string {
 	return "http://" + host + ":" + port + "/" + string(method)
 }
 
-// sendRequest request to master
+// sendRequest sends request to the master node
 func sendRequest(method API.Method, reqData, respData any) error {
 	resp, err := req.Request{
 		URL:         getURL(method),
