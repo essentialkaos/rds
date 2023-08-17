@@ -66,7 +66,7 @@ const (
 type ClientsList []*API.ClientInfo
 
 func (s ClientsList) Len() int           { return len(s) }
-func (s ClientsList) Less(i, j int) bool { return s[i].ConnectionDate < s[j].ConnectionDate }
+func (s ClientsList) Less(i, j int) bool { return s[i].ConnectionDate > s[j].ConnectionDate }
 func (s ClientsList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // ////////////////////////////////////////////////////////////////////////////////// //

@@ -255,7 +255,7 @@ func sendPullCommand() {
 }
 
 // sendInfoCommand send info command to master
-func sendInfoCommand(id int, uuid string) (bool, *CORE.InstanceInfo) {
+func sendInfoCommand(id int, uuid string) (*CORE.InstanceInfo, bool) {
 	log.Debug("Fetching info for instance with ID %d (%s)", id, uuid)
 
 	infoRequest := &API.InfoRequest{CID: cid, ID: id, UUID: uuid}
@@ -269,7 +269,7 @@ func sendInfoCommand(id int, uuid string) (bool, *CORE.InstanceInfo) {
 			log.Error(err.Error())
 		}
 
-		return false, nil
+		return nil, false
 	}
 
 	errorFlags[API.METHOD_INFO] = false
@@ -283,10 +283,10 @@ func sendInfoCommand(id int, uuid string) (bool, *CORE.InstanceInfo) {
 			}
 		}
 
-		return false, nil
+		return nil, false
 	}
 
-	return true, infoResponse.Info
+	return infoResponse.Info, true
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -334,7 +334,7 @@ func createCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	ok, info := sendInfoCommand(item.InstanceID, item.InstanceUUID)
+	info, ok := sendInfoCommand(item.InstanceID, item.InstanceUUID)
 
 	if !ok {
 		return
@@ -358,7 +358,7 @@ func editCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	ok, info := sendInfoCommand(item.InstanceID, item.InstanceUUID)
+	info, ok := sendInfoCommand(item.InstanceID, item.InstanceUUID)
 
 	if !ok {
 		return
