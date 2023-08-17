@@ -39,6 +39,7 @@ const (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// InstanceSyncState contains info about current instance state
 type InstanceSyncState struct {
 	SyncLeftBytes  int
 	IsLoading      bool
@@ -72,7 +73,7 @@ var connectedToMaster bool
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Start start sync daemon in minion mode
+// Start starts sync daemon in minion mode
 func Start(app, ver, rev string) int {
 	daemonVersion = ver
 
@@ -101,14 +102,14 @@ func Stop() {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// runSyncLoop start sync loop
+// runSyncLoop starts sync loop
 func runSyncLoop() {
 	for range time.Tick(time.Second) {
 		sendPullCommand()
 	}
 }
 
-// sendHelloCommand send hello command to master
+// sendHelloCommand sends hello command to master
 func sendHelloCommand() bool {
 	connectedToMaster = false
 
@@ -167,7 +168,7 @@ func sendHelloCommand() bool {
 	return CORE.SaveSUAuth(helloResponse.Auth, true) == nil
 }
 
-// sendFetchCommand send fetch command to master
+// sendFetchCommand sends fetch command to the master node
 func sendFetchCommand() {
 	log.Info("Fetching info about all instances on master…")
 
@@ -208,7 +209,7 @@ func sendFetchCommand() {
 	log.Info("Fetched info processing successfully completed")
 }
 
-// sendPullCommand send pull command to master
+// sendPullCommand sends pull command to the master node
 func sendPullCommand() {
 	log.Debug("Pulling commands on master…")
 
@@ -254,7 +255,7 @@ func sendPullCommand() {
 	processCommands(pullResponse.Commands)
 }
 
-// sendInfoCommand send info command to master
+// sendInfoCommand sends info command to the master node
 func sendInfoCommand(id int, uuid string) (*CORE.InstanceInfo, bool) {
 	log.Debug("Fetching info for instance with ID %d (%s)", id, uuid)
 
@@ -291,7 +292,7 @@ func sendInfoCommand(id int, uuid string) (*CORE.InstanceInfo, bool) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// processCommands process command queue item and route to handler
+// processCommands processes command queue items and routes them to handlers
 func processCommands(items []*API.CommandQueueItem) {
 	items = removeConflictActions(items)
 
@@ -327,7 +328,7 @@ func processCommands(items []*API.CommandQueueItem) {
 	}
 }
 
-// createCommandHandler handler for "create" command
+// createCommandHandler is handler for "create" command
 func createCommandHandler(item *API.CommandQueueItem) {
 	if CORE.IsInstanceExist(item.InstanceID) {
 		log.Error("(%3d) Can't execute command %s - instance already exist", item.InstanceID, string(item.Command))
@@ -343,7 +344,7 @@ func createCommandHandler(item *API.CommandQueueItem) {
 	createInstance(info.Meta, info.State)
 }
 
-// destroyCommandHandler handler for "destroy" command
+// destroyCommandHandler is handler for "destroy" command
 func destroyCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
@@ -352,7 +353,7 @@ func destroyCommandHandler(item *API.CommandQueueItem) {
 	destroyInstance(item.InstanceID)
 }
 
-// editCommandHandler handler for "edit" command
+// editCommandHandler is handler for "edit" command
 func editCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
@@ -367,7 +368,7 @@ func editCommandHandler(item *API.CommandQueueItem) {
 	editInstance(info.Meta)
 }
 
-// startCommandHandler handler for "start" command
+// startCommandHandler is handler for "start" command
 func startCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
@@ -376,7 +377,7 @@ func startCommandHandler(item *API.CommandQueueItem) {
 	startInstance(item.InstanceID)
 }
 
-// stopCommandHandler handler for "stop" command
+// stopCommandHandler is handler for "stop" command
 func stopCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
@@ -385,7 +386,7 @@ func stopCommandHandler(item *API.CommandQueueItem) {
 	stopInstance(item.InstanceID)
 }
 
-// restartCommandHandler handler for "restart" command
+// restartCommandHandler is handler for "restart" command
 func restartCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
@@ -394,7 +395,7 @@ func restartCommandHandler(item *API.CommandQueueItem) {
 	restartInstance(item.InstanceID)
 }
 
-// startAllCommandHandler handler for "start-all" command
+// startAllCommandHandler is handler for "start-all" command
 func startAllCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", string(item.Command))
@@ -404,7 +405,7 @@ func startAllCommandHandler(item *API.CommandQueueItem) {
 	startAllInstances()
 }
 
-// stopAllCommandHandler handler for "stop-all" command
+// stopAllCommandHandler is handler for "stop-all" command
 func stopAllCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", string(item.Command))
@@ -414,7 +415,7 @@ func stopAllCommandHandler(item *API.CommandQueueItem) {
 	stopAllInstances()
 }
 
-// restartAllCommandHandler handler for "restart-all" command
+// restartAllCommandHandler is handler for "restart-all" command
 func restartAllCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", string(item.Command))
@@ -424,7 +425,7 @@ func restartAllCommandHandler(item *API.CommandQueueItem) {
 	restartAllInstances()
 }
 
-// sentinelStartCommandHandler handler for "sentinel-start" command
+// sentinelStartCommandHandler is handler for "sentinel-start" command
 func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 	if CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already works", string(item.Command))
@@ -434,7 +435,7 @@ func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 	startSentinel()
 }
 
-// sentinelStopCommandHandler handler for "sentinel-stop" command
+// sentinelStopCommandHandler is handler for "sentinel-stop" command
 func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already stopped", string(item.Command))
@@ -444,7 +445,7 @@ func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	stopSentinel()
 }
 
-// processFetchedData process fetched data
+// processFetchedData processes fetched data
 func processFetchedData(instances []*CORE.InstanceInfo) {
 	idList := CORE.GetInstanceIDList()
 
@@ -464,7 +465,7 @@ func processFetchedData(instances []*CORE.InstanceInfo) {
 	}
 }
 
-// processInstanceData process info about one instance
+// processInstanceData processes info about instance
 func processInstanceData(info *CORE.InstanceInfo) {
 	id := info.Meta.ID
 
@@ -830,7 +831,7 @@ func stopSentinel() bool {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// getURL return unique method url
+// getURL returns method URL
 func getURL(method API.Method) string {
 	host := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
 	port := CORE.Config.GetS(CORE.REPLICATION_MASTER_PORT)
@@ -865,7 +866,7 @@ func sendRequest(method API.Method, reqData, respData any) error {
 	return nil
 }
 
-// syncSentinelState sync state of sentinel with master
+// syncSentinelState syncs state of sentinel with master
 func syncSentinelState(sentinelWorks bool) {
 	var err error
 
@@ -928,7 +929,7 @@ func isValidCommandItem(item *API.CommandQueueItem) bool {
 	return true
 }
 
-// removeConflictActions skip create+destroy commands for same instance
+// removeConflictActions filters create+destroy commands for same instance
 func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueItem {
 	if len(items) == 0 {
 		return items
@@ -1139,7 +1140,7 @@ func changeInstanceToStadby(id int) error {
 	return err
 }
 
-// getInstanceSyncState return current instance syncing state
+// getInstanceSyncState returns current instance syncing state
 func getInstanceSyncState(id int) InstanceSyncState {
 	info, err := CORE.GetInstanceInfo(id, time.Second, false)
 
