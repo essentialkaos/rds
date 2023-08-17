@@ -141,6 +141,9 @@
   # for token generation)
   auth-token:
 
+  # Failover method (standby|sentinel)
+  failover-method: standby
+
   # Default instance role on minions (standby|replica)
   default-role: replica
 

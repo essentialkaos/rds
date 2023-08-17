@@ -16,7 +16,6 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fmtutil/panel"
-	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/system/container"
 	"github.com/essentialkaos/ek/v12/terminal"
@@ -222,15 +221,14 @@ func generateSUAuthData() {
 		return
 	}
 
-	password := passwd.GenPassword(CORE.Config.GetI(CORE.MAIN_SU_PASS_LENGTH), passwd.STRENGTH_MEDIUM)
-	auth, err := CORE.NewInstanceAuth(password)
+	password, auth, err := CORE.NewSUAuth()
 
 	if err != nil {
 		terminal.Error(err.Error())
 		return
 	}
 
-	err = CORE.SaveSUAuth(&CORE.SuperuserAuth{Hash: auth.Hash, Pepper: auth.Pepper}, false)
+	err = CORE.SaveSUAuth(auth, false)
 
 	if err != nil {
 		terminal.Error(err.Error())

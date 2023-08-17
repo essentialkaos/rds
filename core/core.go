@@ -36,6 +36,7 @@ import (
 	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/path"
 	"github.com/essentialkaos/ek/v12/pid"
+	"github.com/essentialkaos/ek/v12/rand"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/system/process"
@@ -110,6 +111,11 @@ const (
 )
 
 const (
+	FAILOVER_METHOD_STANDBY  = "standby"
+	FAILOVER_METHOD_SENTINEL = "sentinel"
+)
+
+const (
 	SU_DATA_FILE            = "su.dat"
 	REDIS_VERSION_DATA_FILE = "redis.dat"
 	STATES_DATA_FILE        = "states.dat"
@@ -164,6 +170,7 @@ const (
 	REPLICATION_MASTER_IP           = "replication:master-ip"
 	REPLICATION_MASTER_PORT         = "replication:master-port"
 	REPLICATION_AUTH_TOKEN          = "replication:auth-token"
+	REPLICATION_FAILOVER_METHOD     = "replication:failover-method"
 	REPLICATION_DEFAULT_ROLE        = "replication:default-role"
 	REPLICATION_CHECK_READONLY_MODE = "replication:check-readonly-mode"
 	REPLICATION_ALLOW_REPLICAS      = "replication:allow-replicas"
@@ -221,8 +228,8 @@ type SystemStatus struct {
 }
 
 type SuperuserAuth struct {
-	Hash   string `json:"hash"`
 	Pepper string `json:"pepper"`
+	Hash   string `json:"hash"`
 }
 
 type InstanceAuth struct {
@@ -542,6 +549,19 @@ func GenerateToken() string {
 	return passwd.GenPassword(TOKEN_LENGTH, passwd.STRENGTH_MEDIUM)
 }
 
+// NewSUAuth generates new superuser auth data
+func NewSUAuth() (string, *SuperuserAuth, error) {
+	password := genSecurePassword()
+	pepper := passwd.GenPassword(32, passwd.STRENGTH_MEDIUM)
+	hash, err := passwd.Hash(password, pepper)
+
+	if err != nil {
+		return "", nil, fmt.Errorf("Can't generate encrypted password hash: %w", err)
+	}
+
+	return password, &SuperuserAuth{Hash: hash, Pepper: pepper}, nil
+}
+
 // HasSUAuth returns true if superuser auth data exists
 func HasSUAuth() bool {
 	return fsutil.CheckPerms("FRS", path.Join(Config.GetS(MAIN_DIR), SU_DATA_FILE))
@@ -842,9 +862,9 @@ func NewInstanceMeta(instancePassword, servicePassword string) (*InstanceMeta, e
 
 	preferencies := &InstancePreferencies{
 		ServicePassword:  servicePassword,
-		AdminPassword:    passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
-		SyncPassword:     passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
-		SentinelPassword: passwd.GenPassword(18, passwd.STRENGTH_MEDIUM),
+		AdminPassword:    genSecurePassword(),
+		SyncPassword:     genSecurePassword(),
+		SentinelPassword: genSecurePassword(),
 		ReplicationType:  ReplicationType(knf.GetS(REPLICATION_DEFAULT_ROLE, string(REPL_TYPE_REPLICA))),
 	}
 
@@ -961,8 +981,8 @@ func UpdateInstance(newMeta *InstanceMeta) error {
 	}
 
 	if oldMeta.Preferencies.ReplicationType != newMeta.Preferencies.ReplicationType {
-		if newMeta.Preferencies.ReplicationType != REPL_TYPE_REPLICA &&
-			newMeta.Preferencies.ReplicationType != REPL_TYPE_STANDBY {
+		if !newMeta.Preferencies.ReplicationType.IsReplica() &&
+			!newMeta.Preferencies.ReplicationType.IsStandby() {
 			return ErrUnknownReplicationType
 		}
 
@@ -1337,7 +1357,7 @@ func StartInstance(id int, controlLoading bool) error {
 		}
 
 		// Sentinel monitoring works only with replicas
-		if meta.Preferencies.ReplicationType == REPL_TYPE_REPLICA {
+		if meta.Preferencies.ReplicationType.IsReplica() {
 			if IsSentinelEnabled() {
 				err = StartSentinelMonitoring(id)
 
@@ -2124,6 +2144,16 @@ func Shutdown(code int) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// IsStandby returns true if replication type is standby
+func (t ReplicationType) IsStandby() bool {
+	return t == REPL_TYPE_STANDBY
+}
+
+// IsReplica returns true if replication type is replica
+func (t ReplicationType) IsReplica() bool {
+	return t == REPL_TYPE_REPLICA
+}
+
 // Validate validate meta struct
 func (m *InstanceMeta) Validate() error {
 	switch {
@@ -2415,6 +2445,9 @@ func validateConfig(c *knf.Config) []error {
 			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MAX_SYNC_WAIT},
 			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Less, MIN_INIT_SYNC_WAIT},
 			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Greater, MAX_INIT_SYNC_WAIT},
+			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.NotContains, []string{
+				FAILOVER_METHOD_STANDBY, FAILOVER_METHOD_SENTINEL,
+			}},
 			&knf.Validator{REPLICATION_DEFAULT_ROLE, knfv.NotContains, []string{
 				string(REPL_TYPE_STANDBY), string(REPL_TYPE_REPLICA),
 			}},
@@ -2891,7 +2924,7 @@ func addAllReplicasToSentinelMonitoring() []error {
 			continue
 		}
 
-		if meta.Preferencies.ReplicationType != REPL_TYPE_REPLICA {
+		if !meta.Preferencies.ReplicationType.IsReplica() {
 			continue
 		}
 
@@ -3191,7 +3224,7 @@ func createConfigFromMeta(meta *InstanceMeta) *InstanceConfigData {
 		result.Redis, _ = GetRedisVersion()
 	}
 
-	if IsMinion() && meta.Preferencies.ReplicationType == REPL_TYPE_REPLICA &&
+	if IsMinion() && meta.Preferencies.ReplicationType.IsReplica() &&
 		Config.GetB(REPLICATION_ALLOW_REPLICAS) {
 		result.IsReplica = true
 	}
@@ -3300,6 +3333,11 @@ func checkConfigDaemonizeOption(id int) error {
 	}
 
 	return nil
+}
+
+// genSecurePassword generates secure password with random length (16-28)
+func genSecurePassword() string {
+	return passwd.GenPassword(16+rand.Int(12), passwd.STRENGTH_MEDIUM)
 }
 
 // getSHA256Hash returns SHA-256 hash for given data
