@@ -34,7 +34,7 @@ const (
 // cid is client ID
 var cid string
 
-// errorFlags is flags for deduplication error messages
+// errorFlags is flags for error messages deduplication
 var errorFlags = map[API.Method]bool{
 	API.METHOD_HELLO: false,
 	API.METHOD_PULL:  false,
@@ -58,7 +58,7 @@ var infoStore map[int]*CORE.InstanceInfo
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Start starts sync daemon in sentinel mode
+// Start starts sync daemon in Sentinel mode
 func Start(app, ver, rev string) int {
 	daemonVersion = ver
 
@@ -72,7 +72,7 @@ func Start(app, ver, rev string) int {
 		return EC_ERROR
 	}
 
-	// Fetch info about all instances only if sentinel works
+	// Fetch info about all instances only if Sentinel works
 	if sentinelWorks {
 		sendFetchCommand()
 	}
@@ -147,7 +147,7 @@ func sendHelloCommand() bool {
 
 	sentinelWorks = helloResponse.SentinelWorks
 
-	// Start or stop sentinel monitoring
+	// Start or stop Sentinel monitoring
 	syncSentinelState(sentinelWorks)
 
 	return CORE.SaveSUAuth(helloResponse.Auth, true) == nil
@@ -553,7 +553,7 @@ func processFetchedData(instances []*CORE.InstanceInfo) {
 	}
 }
 
-// syncSentinelState syncs state of sentinel with master
+// syncSentinelState syncs state of Sentinel with master
 func syncSentinelState(works bool) {
 	var err error
 

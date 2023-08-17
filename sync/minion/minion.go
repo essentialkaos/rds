@@ -54,7 +54,7 @@ type InstanceSyncState struct {
 // cid is client ID
 var cid string
 
-// errorFlags is flags for deduplication error messages
+// errorFlags is flags for error messages deduplication
 var errorFlags = map[API.Method]bool{
 	API.METHOD_HELLO: false,
 	API.METHOD_PULL:  false,
@@ -65,7 +65,7 @@ var errorFlags = map[API.Method]bool{
 // daemonVersion is current daemon version
 var daemonVersion string
 
-// sentinelWorks is true if sentinel is works
+// sentinelWorks is true if Sentinel is works
 var sentinelWorks bool
 
 // connectedToMaster is true if minion currently connected to master
@@ -157,7 +157,7 @@ func sendHelloCommand() bool {
 
 	sentinelWorks = helloResponse.SentinelWorks
 
-	// Start or stop sentinel monitoring
+	// Start or stop Sentinel monitoring
 	syncSentinelState(sentinelWorks)
 
 	if helloResponse.Auth == nil {
@@ -866,7 +866,7 @@ func sendRequest(method API.Method, reqData, respData any) error {
 	return nil
 }
 
-// syncSentinelState syncs state of sentinel with master
+// syncSentinelState syncs state of Sentinel with master
 func syncSentinelState(sentinelWorks bool) {
 	var err error
 
@@ -1093,7 +1093,7 @@ func changeInstanceToReplica(id int) error {
 	masterPort := strconv.Itoa(CORE.GetInstancePort(id))
 
 	resp, err := CORE.ExecCommand(id, &REDIS.Request{
-		Command: []string{"SLAVEOF", masterHost, masterPort},
+		Command: []string{"REPLICAOF", masterHost, masterPort},
 		Timeout: time.Minute,
 	})
 
@@ -1109,7 +1109,7 @@ func changeInstanceToReplica(id int) error {
 // chengeInstanceToStadby changes instance replication type to "standby"
 func changeInstanceToStadby(id int) error {
 	resp, err := CORE.ExecCommand(id, &REDIS.Request{
-		Command: []string{"SLAVEOF", "NO", "ONE"},
+		Command: []string{"REPLICAOF", "NO", "ONE"},
 		Timeout: time.Minute,
 	})
 
@@ -1121,15 +1121,8 @@ func changeInstanceToStadby(id int) error {
 		return err
 	}
 
-	cmd := []string{"FLUSHALL"}
-
-	// Use async mode if instance Redis version is 4+
-	if CORE.GetInstanceVersion(id).Major() >= 4 {
-		cmd = append(cmd, "ASYNC")
-	}
-
 	resp, err = CORE.ExecCommand(id, &REDIS.Request{
-		Command: cmd,
+		Command: []string{"FLUSHALL", "ASYNC"},
 		Timeout: time.Minute,
 	})
 
