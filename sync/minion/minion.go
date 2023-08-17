@@ -68,7 +68,7 @@ var daemonVersion string
 // sentinelWorks is true if Sentinel is works
 var sentinelWorks bool
 
-// connectedToMaster is true if minion currently connected to master
+// connectedToMaster is true if minion currently connected to the master node
 var connectedToMaster bool
 
 // ////////////////////////////////////////////////////////////////////////////////// //
