@@ -14,7 +14,6 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/options"
-	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -41,14 +40,7 @@ func SettingsCommand(args CommandArgs) int {
 // printAllSettings prints all settings
 func printAllSettings() int {
 	for _, section := range CORE.Config.Sections() {
-		fmtutil.Separator(true)
-		fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section))
-		fmtutil.Separator(true)
-
-		for _, prop := range CORE.Config.Props(section) {
-			hidden := isPrivateSettingsProp(prop)
-			printSettingsProperty(prop, CORE.Config.GetS(section+":"+prop), hidden)
-		}
+		printSettingsSection(section)
 	}
 
 	fmtutil.Separator(true)
@@ -59,34 +51,32 @@ func printAllSettings() int {
 // printSpecificSettings prints specific settings
 func printSpecificSettings(args CommandArgs) int {
 	for i := range args {
-		propName := args.Get(i)
-		if !CORE.Config.HasProp(propName) {
-			terminal.Error("Unknown settings property \"%s\"", propName)
+		section := args.Get(i)
+		if !CORE.Config.HasSection(section) {
+			terminal.Error("Unknown settings section \"%s\"", section)
 			return EC_ERROR
 		}
 	}
 
-	var curSection string
-
 	for i := range args {
-		propName := args.Get(i)
-		section := strutil.ReadField(propName, 0, false, ":")
-		prop := strutil.ReadField(propName, 1, false, ":")
-
-		if curSection != section {
-			fmtutil.Separator(true)
-			fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section))
-			fmtutil.Separator(true)
-			curSection = section
-		}
-
-		hidden := isPrivateSettingsProp(prop)
-		printSettingsProperty(prop, CORE.Config.GetS(propName), hidden)
+		printSettingsSection(args.Get(i))
 	}
 
 	fmtutil.Separator(true)
 
 	return EC_OK
+}
+
+// printSettingsSection prints confugration section settings
+func printSettingsSection(section string) {
+	fmtutil.Separator(true)
+	fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section))
+	fmtutil.Separator(true)
+
+	for _, prop := range CORE.Config.Props(section) {
+		hidden := isPrivateSettingsProp(prop)
+		printSettingsProperty(prop, CORE.Config.GetS(section+":"+prop), hidden)
+	}
 }
 
 // printSettingsProperty prints formatted settings property
@@ -95,7 +85,7 @@ func printSettingsProperty(name, value string, hidden bool) {
 
 	switch {
 	case hidden:
-		fmtc.Println("{s-}[HIDDEN]{!}")
+		fmtc.Println("{s-}[hidden]{!}")
 
 	case value == "true":
 		fmtc.Println("Yes")
@@ -104,7 +94,7 @@ func printSettingsProperty(name, value string, hidden bool) {
 		fmtc.Println("No")
 
 	case value == "":
-		fmtc.Println("{s-}-empty-{!}")
+		fmtc.Println("{s-}[empty]{!}")
 
 	case strings.HasPrefix(value, "/"):
 		if fsutil.IsExist(value) {

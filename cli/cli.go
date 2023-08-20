@@ -932,7 +932,7 @@ func showSmartUsage() {
 	info.AddGroup("Common commands")
 
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
-	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file")
+	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
 
 	if isMaster {
@@ -1020,7 +1020,7 @@ func genUsage() *usage.Info {
 
 	info.AddGroup("Common commands")
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
-	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?option…")
+	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
 
 	info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support")

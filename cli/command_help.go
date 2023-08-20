@@ -641,11 +641,11 @@ func helpCommandSettings() {
 			{getNiceOptions(OPT_PRIVATE), "Show private info", false},
 		},
 		arguments: []helpInfoArgument{
-			{"option…", "Settings option section and name", true},
+			{"section…", "Settings option section and name", true},
 		},
 		examples: []helpInfoExample{
 			{"", "", "Show all settings"},
-			{"", "replcation:role replication:master-ip", "Show specific settings"},
+			{"", "replcation", "Show specific settings section"},
 		},
 	}.render()
 }
