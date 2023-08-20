@@ -8,8 +8,6 @@ package cli
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
-	"errors"
-
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/log"
@@ -18,7 +16,6 @@ import (
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"
-	SENTINEL "github.com/essentialkaos/rds/sentinel"
 	SC "github.com/essentialkaos/rds/sync/client"
 )
 
@@ -153,7 +150,7 @@ func SentinelSwitchMasterCommand(args CommandArgs) int {
 
 // SentinelCheckCommand is "sentinel-check" command handler
 func SentinelCheckCommand(args CommandArgs) int {
-	err := checkSentinelCommandArgs(args)
+	err := args.Check(true)
 
 	if err != nil {
 		terminal.Error(err.Error())
@@ -186,7 +183,7 @@ func SentinelInfoCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	err := checkSentinelCommandArgs(args)
+	err := args.Check(true)
 
 	if err != nil {
 		terminal.Error(err.Error())
@@ -200,7 +197,7 @@ func SentinelInfoCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	info, err := SENTINEL.GetInfo(CORE.Config.GetI(CORE.SENTINEL_PORT), id)
+	info, err := CORE.SentinelInfo(id)
 
 	if err != nil {
 		terminal.Error(err.Error())
@@ -209,7 +206,7 @@ func SentinelInfoCommand(args CommandArgs) int {
 
 	t := table.NewTable()
 
-	t.SetSizes(28, 96)
+	t.SetSizes(23, 96)
 
 	t.Separator()
 	fmtc.Printf("{*} %s{!}\n", "Master")
@@ -267,7 +264,7 @@ func SentinelMasterCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	err := checkSentinelCommandArgs(args)
+	err := args.Check(true)
 
 	if err != nil {
 		terminal.Error(err.Error())
@@ -281,7 +278,7 @@ func SentinelMasterCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	ip, err := SENTINEL.GetMasterIP(CORE.Config.GetI(CORE.SENTINEL_PORT), id)
+	ip, err := CORE.SentinelMasterIP(id)
 
 	if err != nil {
 		terminal.Error(err.Error())
@@ -294,12 +291,3 @@ func SentinelMasterCommand(args CommandArgs) int {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
-
-// checkSentinelCommandArgs checks sentinel command args
-func checkSentinelCommandArgs(args []string) error {
-	if len(args) == 0 {
-		return errors.New("You must define instance ID for this command")
-	}
-
-	return nil
-}

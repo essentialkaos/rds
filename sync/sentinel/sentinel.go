@@ -53,11 +53,6 @@ var connectedToMaster bool
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// infoStore is map instance ID -> instance info
-var infoStore map[int]*CORE.InstanceInfo
-
-// ////////////////////////////////////////////////////////////////////////////////// //
-
 // Start starts sync daemon in Sentinel mode
 func Start(app, ver, rev string) int {
 	daemonVersion = ver
@@ -93,7 +88,7 @@ func Stop() {
 
 // runSyncLoop starts sync loop
 func runSyncLoop() {
-	for range time.Tick(time.Second) {
+	for range time.NewTicker(time.Second).C {
 		sendPullCommand()
 	}
 }
@@ -133,14 +128,13 @@ func sendHelloCommand() bool {
 
 	switch AUXI.GetCoreCompatibility(helloResponse.Version) {
 	case API.CORE_COMPAT_PARTIAL:
-		log.Warn("This client can be not fully compatible with master")
+		log.Warn("This client might be incompatible with master node")
 	case API.CORE_COMPAT_ERROR:
-		log.Crit("This client is not compatible with master")
+		log.Crit("This client is not compatible with master node")
 		return false
 	}
 
 	connectedToMaster = true
-
 	cid = helloResponse.CID
 
 	log.Info("Master (%s) return CID %s for this client", helloResponse.Version, cid)
@@ -150,7 +144,7 @@ func sendHelloCommand() bool {
 	// Start or stop Sentinel monitoring
 	syncSentinelState(sentinelWorks)
 
-	return CORE.SaveSUAuth(helloResponse.Auth, true) == nil
+	return true
 }
 
 // sendFetchCommand sends fetch command to master
@@ -190,11 +184,13 @@ func sendFetchCommand() {
 	}
 
 	processFetchedData(fetchResponse.Instances)
+
+	log.Info("Fetched info processing successfully completed")
 }
 
 // sendPullCommand sends pull command to master
 func sendPullCommand() {
-	log.Debug("Pulling commands from master…")
+	log.Debug("Pulling commands on master…")
 
 	pullRequest := &API.DefaultRequest{CID: cid}
 	pullResponse := &API.PullResponse{}
@@ -227,6 +223,13 @@ func sendPullCommand() {
 	if len(pullResponse.Commands) == 0 {
 		return
 	}
+
+	log.Info(
+		pluralize.P(
+			"Master return %d %s from queue",
+			len(pullResponse.Commands), "command", "commands",
+		),
+	)
 
 	processCommands(pullResponse.Commands)
 }
@@ -305,6 +308,12 @@ func processCommands(items []*API.CommandQueueItem) {
 // createCommandHandler is handler for "create" command
 func createCommandHandler(item *API.CommandQueueItem) {
 	if !sentinelWorks {
+		log.Warn("Command %s ignored - Sentinel not working", item.Command)
+		return
+	}
+
+	if CORE.IsInstanceExist(item.InstanceID) {
+		log.Error("(%3d) Can't execute command %s - instance already exist", item.InstanceID, item.Command)
 		return
 	}
 
@@ -314,65 +323,35 @@ func createCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	infoStore[item.InstanceID] = info
-
-	log.Error("(%3d) Added info about created instance", item.InstanceID)
-
-	err := CORE.StartSentinelMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't start Sentinel monitoring: %v", item.InstanceID, err)
-	} else {
-		log.Info("(%3d) Sentinel monitoring enabled for created instance", item.InstanceID)
-	}
+	createInstance(info.Meta, info.State)
 }
 
 // destroyCommandHandler is handler for "destroy" command
 func destroyCommandHandler(item *API.CommandQueueItem) {
 	if !sentinelWorks {
+		log.Warn("Command %s ignored - Sentinel not working", item.Command)
 		return
 	}
 
-	delete(infoStore, item.InstanceID)
-
-	log.Error("(%3d) Removed info about deleted instance", item.InstanceID)
-
-	err := CORE.StopSentinelMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't stop Sentinel monitoring: %v", item.InstanceID, err)
-	} else {
-		log.Info("(%3d) Sentinel monitoring disabled for destroyed instance", item.InstanceID)
+	if !isValidCommandItem(item) {
+		return
 	}
+
+	destroyInstance(item.InstanceID)
 }
 
 // startCommandHandler is handler for "start" command
 func startCommandHandler(item *API.CommandQueueItem) {
-	if !sentinelWorks || !isValidCommandItem(item) {
+	if !sentinelWorks {
+		log.Warn("Command %s ignored - Sentinel not working", item.Command)
 		return
 	}
 
-	info, isExist := infoStore[item.InstanceID]
-
-	if !isExist {
-		log.Error(
-			"(%3d) Command %s ignored - instance with UUID %s does not exist",
-			item.InstanceID, item.Command, item.InstanceUUID,
-		)
+	if !isValidCommandItem(item) {
 		return
 	}
 
-	if info.State.IsWorks() {
-		log.Warn(
-			"(%3d) Command %s ignored - monitoring already started",
-			item.Command, item.InstanceID,
-		)
-		return
-	}
-
-	info.State = CORE.INSTANCE_STATE_WORKS
-
-	err := CORE.StartSentinelMonitoring(item.InstanceID)
+	err := CORE.SentinelStartMonitoring(item.InstanceID)
 
 	if err != nil {
 		log.Error("(%3d) Can't start Sentinel monitoring: %v", item.InstanceID, err)
@@ -384,88 +363,73 @@ func startCommandHandler(item *API.CommandQueueItem) {
 
 // stopCommandHandler is handler for "stop" command
 func stopCommandHandler(item *API.CommandQueueItem) {
-	if !sentinelWorks || !isValidCommandItem(item) {
+	if !sentinelWorks {
+		log.Warn("Command %s ignored - Sentinel not working", item.Command)
 		return
 	}
 
-	info, isExist := infoStore[item.InstanceID]
-
-	if !isExist {
-		log.Error(
-			"(%3d) Command %s ignored - instance with UUID %s does not exist",
-			item.InstanceID, item.Command, item.InstanceUUID,
-		)
+	if !isValidCommandItem(item) {
 		return
 	}
 
-	if info.State.IsStopped() {
-		log.Warn(
-			"(%3d) Command %s ignored - monitoring already stopped",
-			item.Command, item.InstanceID,
-		)
-		return
-	}
-
-	info.State = CORE.INSTANCE_STATE_STOPPED
-
-	err := CORE.StopSentinelMonitoring(item.InstanceID)
+	err := CORE.SentinelStopMonitoring(item.InstanceID)
 
 	if err != nil {
 		log.Error("(%3d) Can't stop Sentinel monitoring: %v", item.InstanceID, err)
 		return
 	}
 
-	log.Info("(%3d) Sentinel monitoring stopped for stopped instance", item.InstanceID)
+	log.Info("(%3d) Sentinel monitoring disabled for stopped instance", item.InstanceID)
 }
 
 // startAllCommandHandler is handler for "start-all" command
 func startAllCommandHandler(item *API.CommandQueueItem) {
-	if len(infoStore) == 0 {
-		log.Warn("Command %s ignored - no instances are created", string(item.Command))
+	if !CORE.HasInstances() {
+		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
 
-	for _, info := range infoStore {
-		if info.State.IsWorks() {
+	for _, id := range CORE.GetInstanceIDList() {
+		if CORE.IsSentinelMonitors(id) {
 			continue
 		}
 
-		err := CORE.StartSentinelMonitoring(info.Meta.ID)
+		err := CORE.SentinelStartMonitoring(id)
 
 		if err != nil {
-			log.Error("(%3d) Can't start Sentinel monitoring: %v", info.Meta.ID, err)
+			log.Error("(%3d) Can't start Sentinel monitoring: %v", id, err)
 		}
 	}
 
-	log.Info("Sentinel monitoring started for all instances")
+	log.Info("Sentinel monitoring enabled for all instances")
 }
 
 // stopAllCommandHandler is handler for "stop-all" command
 func stopAllCommandHandler(item *API.CommandQueueItem) {
-	if len(infoStore) == 0 {
-		log.Warn("Command %s ignored - no instances are created", string(item.Command))
+	if !CORE.HasInstances() {
+		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
 
-	for _, info := range infoStore {
-		if info.State.IsStopped() {
+	for _, id := range CORE.GetInstanceIDList() {
+		if !CORE.IsSentinelMonitors(id) {
 			continue
 		}
 
-		err := CORE.StopSentinelMonitoring(info.Meta.ID)
+		err := CORE.SentinelStopMonitoring(id)
 
 		if err != nil {
-			log.Error("(%3d) Can't stop Sentinel monitoring: %v", info.Meta.ID, err)
+			log.Error("(%3d) Can't stop Sentinel monitoring: %v", id, err)
 		}
 	}
 
-	log.Info("Sentinel monitoring stopped for all instances")
+	log.Info("Sentinel monitoring disabled for all instances")
 }
 
 // sentinelStartCommandHandler is handler for "sentinel-start" command
 func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 	if CORE.IsSentinelActive() {
-		log.Warn("Command %s ignored - Sentinel already works", string(item.Command))
+		log.Warn("Command %s ignored - Sentinel already works", item.Command)
 		return
 	}
 
@@ -490,7 +454,7 @@ func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 // sentinelStopCommandHandler is handler for "sentinel-stop" command
 func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.IsSentinelActive() {
-		log.Warn("Command %s ignored - Sentinel already stopped", string(item.Command))
+		log.Warn("Command %s ignored - Sentinel already stopped", item.Command)
 		return
 	}
 
@@ -506,19 +470,89 @@ func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	log.Info("Sentinel stopped")
 }
 
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// createInstance creates new instance
+func createInstance(meta *CORE.InstanceMeta, state CORE.State) {
+	err := CORE.CreateInstance(meta)
+
+	if err != nil {
+		log.Error("(%3d) Error while instance creation: %v", meta.ID, err)
+	} else {
+		log.Info("(%3d) Added info about created instance", meta.ID)
+	}
+
+	if meta.Preferencies.ReplicationType.IsReplica() && state.IsWorks() {
+		enableMonitoring(meta.ID)
+	}
+}
+
+// destroyInstance destroys instance
+func destroyInstance(id int) {
+	err := CORE.DestroyInstance(id)
+
+	if err != nil {
+		log.Error("(%3d) Error while instance destroying: %v", id, err)
+	} else {
+		log.Info("(%3d) Sentinel monitoring disabled for destroyed instance", id)
+	}
+}
+
+// enableMonitoring enables Sentinel monitoring for instance with given ID
+func enableMonitoring(id int) {
+	if CORE.IsSentinelMonitors(id) {
+		return
+	}
+
+	err := CORE.SentinelStartMonitoring(id)
+
+	if err != nil {
+		log.Error("(%3d) Can't start Sentinel monitoring: %v", id, err)
+	} else {
+		log.Info("(%3d) Sentinel monitoring enabled for instance", id)
+	}
+}
+
+// disableMonitoring disables Sentinel monitoring for instance with given ID
+func disableMonitoring(id int) {
+	if !CORE.IsSentinelMonitors(id) {
+		return
+	}
+
+	err := CORE.SentinelStopMonitoring(id)
+
+	if err != nil {
+		log.Error("(%3d) Can't stop Sentinel monitoring: %v", id, err)
+		return
+	}
+
+	log.Info("(%3d) Sentinel monitoring disabled for instance", id)
+}
+
 // isValidCommandItem validates command item from queue
 func isValidCommandItem(item *API.CommandQueueItem) bool {
-	info, isExist := infoStore[item.InstanceID]
-
-	if !isExist {
-		log.Error("(%3d) Command %s ignored - instance does not exist", item.InstanceID, item.Command)
+	if !CORE.IsInstanceExist(item.InstanceID) {
+		log.Warn(
+			"(%3d) Can't execute command %s - instance does not exist",
+			item.InstanceID, item.Command,
+		)
 		return false
 	}
 
-	if item.InstanceUUID != info.Meta.UUID {
+	meta, err := CORE.GetInstanceMeta(item.InstanceID)
+
+	if err != nil {
+		log.Error(
+			"(%3d) Can't execute command %s - can't read instance meta: %v",
+			item.InstanceID, item.Command, err,
+		)
+		return false
+	}
+
+	if item.InstanceUUID != meta.UUID {
 		log.Error(
 			"(%3d) Command %s ignored - gotten instance UUID is differ from current instance UUID",
-			item.InstanceID, string(item.Command),
+			item.InstanceID, item.Command,
 		)
 		return false
 	}
@@ -534,23 +568,52 @@ func processFetchedData(instances []*CORE.InstanceInfo) {
 		log.Error("Can't reset Sentinel state: %v", err)
 	}
 
-	infoStore = make(map[int]*CORE.InstanceInfo)
+	idList := CORE.GetInstanceIDList()
 
-	for _, info := range instances {
-		id := info.Meta.ID
+	if len(idList) != 0 {
+		for _, id := range idList {
+			if !isInstanceSliceContainsInstance(instances, id) {
+				err = CORE.DestroyInstance(id)
 
-		infoStore[info.Meta.ID] = info
-
-		if info.State.IsWorks() {
-			err := CORE.StartSentinelMonitoring(id)
-
-			if err != nil {
-				log.Error("(%3d) Can't start Sentinel monitoring: %v", id, err)
-			} else {
-				log.Info("(%3d) Sentinel monitoring enabled", id)
+				if err != nil {
+					log.Error("(%3d) Can't remove info about destroyed instance: %v", id, err)
+				}
 			}
 		}
 	}
+
+	if len(instances) != 0 {
+		for _, info := range instances {
+			processInstanceData(info)
+		}
+	}
+}
+
+// processInstanceData processes info from master node about instance
+func processInstanceData(info *CORE.InstanceInfo) {
+	id := info.Meta.ID
+
+	if CORE.IsInstanceExist(id) {
+		meta, err := CORE.GetInstanceMeta(id)
+
+		if err != nil {
+			log.Error("(%3d) Can't read local instance meta. Skipping instance…", id)
+			return
+		}
+
+		if info.Meta.UUID != meta.UUID {
+			log.Warn("(%3d) Instance exists on master, but have different UUID. Instance will be destroyed.", id)
+			destroyInstance(id)
+			return
+		}
+
+		if info.State.IsWorks() {
+			enableMonitoring(id)
+			return
+		}
+	}
+
+	createInstance(info.Meta, info.State)
 }
 
 // syncSentinelState syncs state of Sentinel with master
@@ -564,7 +627,7 @@ func syncSentinelState(works bool) {
 			if len(errs) != 0 {
 				log.Error("Can't start Sentinel daemon: %v", err)
 
-				// Print all errors to log
+				// Print all errors into log
 				for _, err := range errs {
 					log.Error("Error while starting Sentinel: %v", err)
 				}
@@ -616,6 +679,18 @@ func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueIte
 	}
 
 	return result
+}
+
+// isInstanceSliceContainsInstance returns true if instance slice contains instance
+// with given ID
+func isInstanceSliceContainsInstance(instances []*CORE.InstanceInfo, id int) bool {
+	for _, info := range instances {
+		if info.Meta.ID == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //

@@ -23,8 +23,8 @@ const NAME_PREFIX = "rds-"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Config contains data for Sentinel configuration
-type Config struct {
+// InstanceConfig contains info about instance for Sentinel monitoring
+type InstanceConfig struct {
 	ID   int
 	IP   string
 	Port int
@@ -33,6 +33,12 @@ type Config struct {
 	DownAfterMilliseconds int
 	FailoverTimeout       int
 	ParallelSyncs         int
+
+	Auth Auth
+}
+
+type SentinelConfig struct {
+	Port int
 
 	Auth Auth
 }
@@ -65,16 +71,9 @@ var client *redy.Client
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// protectedCommands is slice with commands names which is protected by prefix
-var protectedCommands = []string{
-	"CLIENT", "CONFIG", "SLAVEOF", "REPLICAOF",
-}
-
-// ////////////////////////////////////////////////////////////////////////////////// //
-
 // Monitor adds instance to Sentinel monitoring
-func Monitor(sentinelPort int, cfg *Config) error {
-	rc := getClient(sentinelPort, 3*time.Second)
+func Monitor(sCfg *SentinelConfig, iCfg *InstanceConfig) error {
+	rc := getClient(sCfg.Port, 3*time.Second)
 	err := rc.Connect()
 
 	if err != nil {
@@ -83,27 +82,33 @@ func Monitor(sentinelPort int, cfg *Config) error {
 
 	defer rc.Close()
 
-	instanceName := getInstanceName(cfg.ID)
+	instanceName := getInstanceName(iCfg.ID)
 
-	resp := rc.Cmd("SENTINEL", []any{"SET", "auth-user", instanceName, cfg.Auth.User})
+	err = sentinelAuth(rc, sCfg)
 
-	if resp.Err != nil {
-		return fmt.Errorf("Can't set auth-user for instance %d: %v", cfg.ID, resp.Err)
+	if err != nil {
+		return err
 	}
 
-	resp = rc.Cmd("SENTINEL", []any{"SET", "auth-pass", instanceName, cfg.Auth.Password})
+	resp := rc.Cmd("SENTINEL", []any{"MONITOR", instanceName, iCfg.IP, iCfg.Port, iCfg.Quorum})
 
 	if resp.Err != nil {
-		return fmt.Errorf("Can't set auth-pass for instance %d: %v", cfg.ID, resp.Err)
+		return fmt.Errorf("Can't add instance %d to monitoring: %v", iCfg.ID, resp.Err)
 	}
 
-	resp = rc.Cmd("SENTINEL", []any{"MONITOR", instanceName, cfg.IP, cfg.Port, cfg.Quorum})
+	resp = rc.Cmd("SENTINEL", []any{"SET", instanceName, "auth-user", iCfg.Auth.User})
 
 	if resp.Err != nil {
-		return fmt.Errorf("Can't add instance %d to monitoring: %v", cfg.ID, resp.Err)
+		return fmt.Errorf("Can't set auth-user for instance %d: %v", iCfg.ID, resp.Err)
 	}
 
-	err = configureFailover(rc, cfg)
+	resp = rc.Cmd("SENTINEL", []any{"SET", instanceName, "auth-pass", iCfg.Auth.Password})
+
+	if resp.Err != nil {
+		return fmt.Errorf("Can't set auth-pass for instance %d: %v", iCfg.ID, resp.Err)
+	}
+
+	err = configureFailover(rc, iCfg)
 
 	if err != nil {
 		return err
@@ -115,9 +120,9 @@ func Monitor(sentinelPort int, cfg *Config) error {
 // CheckQuorum checks if the current Sentinel configuration is able to
 // reach the quorum needed to failover a master, and the majority
 // needed to authorize the failover
-func CheckQuorum(sentinelPort, instanceID int) (string, bool) {
+func CheckQuorum(sCfg *SentinelConfig, instanceID int) (string, bool) {
 	cmd := []any{"CKQUORUM", getInstanceName(instanceID)}
-	resp, err := execSentinelCommand(sentinelPort, cmd)
+	resp, err := execSentinelCommand(sCfg, cmd)
 
 	if err != nil {
 		return err.Error(), false
@@ -129,33 +134,33 @@ func CheckQuorum(sentinelPort, instanceID int) (string, bool) {
 }
 
 // Remove removes instance from Sentinel monitoring
-func Remove(sentinelPort, instanceID int) error {
+func Remove(sCfg *SentinelConfig, instanceID int) error {
 	cmd := []any{"REMOVE", getInstanceName(instanceID)}
-	_, err := execSentinelCommand(sentinelPort, cmd)
+	_, err := execSentinelCommand(sCfg, cmd)
 
 	return err
 }
 
 // Reset sends RESET command to Sentinel
-func Reset(sentinelPort int) error {
+func Reset(sCfg *SentinelConfig) error {
 	cmd := []any{"RESET", "*"}
-	_, err := execSentinelCommand(sentinelPort, cmd)
+	_, err := execSentinelCommand(sCfg, cmd)
 
 	return err
 }
 
 // Failover sends FAILOVER command to Sentinel
-func Failover(sentinelPort, instanceID int) error {
+func Failover(sCfg *SentinelConfig, instanceID int) error {
 	cmd := []any{"FAILOVER", getInstanceName(instanceID)}
-	_, err := execSentinelCommand(sentinelPort, cmd)
+	_, err := execSentinelCommand(sCfg, cmd)
 
 	return err
 }
 
 // GetMasterIP returns master IP
-func GetMasterIP(sentinelPort, instanceID int) (string, error) {
+func GetMasterIP(sCfg *SentinelConfig, instanceID int) (string, error) {
 	cmd := []any{"GET-MASTER-ADDR-BY-NAME", getInstanceName(instanceID)}
-	resp, err := execSentinelCommand(sentinelPort, cmd)
+	resp, err := execSentinelCommand(sCfg, cmd)
 
 	if err != nil {
 		return "", err
@@ -178,17 +183,17 @@ func GetMasterIP(sentinelPort, instanceID int) (string, error) {
 	return masterInfo[0], nil
 }
 
-// IsSentinelEnabled returns true if instance already monitored by Sentinel
-func IsSentinelEnabled(sentinelPort, instanceID int) bool {
+// IsSentinelMonitors returns true if instance already monitored by Sentinel
+func IsSentinelMonitors(sCfg *SentinelConfig, instanceID int) bool {
 	cmd := []any{"MASTER", getInstanceName(instanceID)}
-	_, err := execSentinelCommand(sentinelPort, cmd)
+	_, err := execSentinelCommand(sCfg, cmd)
 
 	return err == nil
 }
 
 // GetInfo returns info about master, replicas and sentinels
-func GetInfo(sentinelPort, instanceID int) (*Info, error) {
-	rc := getClient(sentinelPort, 3*time.Second)
+func GetInfo(sCfg *SentinelConfig, instanceID int) (*Info, error) {
+	rc := getClient(sCfg.Port, 3*time.Second)
 	err := rc.Connect()
 
 	if err != nil {
@@ -196,6 +201,12 @@ func GetInfo(sentinelPort, instanceID int) (*Info, error) {
 	}
 
 	defer rc.Close()
+
+	err = sentinelAuth(rc, sCfg)
+
+	if err != nil {
+		return nil, err
+	}
 
 	instanceName := getInstanceName(instanceID)
 
@@ -264,8 +275,21 @@ func getInstanceName(instanceID int) string {
 	return NAME_PREFIX + strconv.Itoa(instanceID)
 }
 
+// sentinelAuth authenticates on Sentinel instance
+func sentinelAuth(rc *redy.Client, cfg *SentinelConfig) error {
+	if !cfg.Auth.IsEmpty() {
+		resp := rc.Cmd("AUTH", cfg.Auth.User, cfg.Auth.Password)
+
+		if resp.Err != nil {
+			return fmt.Errorf("Can't authenticate on Sentinel: %w", resp.Err)
+		}
+	}
+
+	return nil
+}
+
 // configureFailover configures failover for instance
-func configureFailover(rc *redy.Client, cfg *Config) error {
+func configureFailover(rc *redy.Client, cfg *InstanceConfig) error {
 	instanceName := getInstanceName(cfg.ID)
 
 	resp := rc.Cmd(
@@ -295,8 +319,8 @@ func configureFailover(rc *redy.Client, cfg *Config) error {
 }
 
 // execSentinelCommand executes command on sentinel
-func execSentinelCommand(port int, command []any) (*redy.Resp, error) {
-	rc := getClient(port, 3*time.Second)
+func execSentinelCommand(cfg *SentinelConfig, command []any) (*redy.Resp, error) {
+	rc := getClient(cfg.Port, 3*time.Second)
 	err := rc.Connect()
 
 	if err != nil {
@@ -304,6 +328,12 @@ func execSentinelCommand(port int, command []any) (*redy.Resp, error) {
 	}
 
 	defer rc.Close()
+
+	err = sentinelAuth(rc, cfg)
+
+	if err != nil {
+		return nil, err
+	}
 
 	resp := rc.Cmd("SENTINEL", command)
 

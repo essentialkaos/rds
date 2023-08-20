@@ -266,7 +266,7 @@ func Init(gitRev string, gomod []byte) {
 		initCommands()
 		runCommand(args)
 	} else {
-		genUsage().Print()
+		showSmartUsage()
 	}
 
 	CORE.Shutdown(EC_OK)
@@ -913,16 +913,18 @@ func showSmartUsage() {
 			info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Redis Sentinel daemon")
 		}
 
-		info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
+		if !isSentinel {
+			info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
 
-		if CORE.IsSentinelActive() {
-			info.AddCommand(COMMAND_SENTINEL_INFO, "Show info from Sentinel for some instance", "id")
-			info.AddCommand(COMMAND_SENTINEL_MASTER, "Show IP of master instance", "id")
-			info.AddCommand(COMMAND_SENTINEL_CHECK, "Check Sentinel configuration", "id")
-			info.AddCommand(COMMAND_SENTINEL_RESET, "Reset state in Sentinel for all instances")
+			if CORE.IsSentinelActive() {
+				info.AddCommand(COMMAND_SENTINEL_INFO, "Show info from Sentinel for some instance", "id")
+				info.AddCommand(COMMAND_SENTINEL_MASTER, "Show IP of master instance", "id")
+				info.AddCommand(COMMAND_SENTINEL_CHECK, "Check Sentinel configuration", "id")
+				info.AddCommand(COMMAND_SENTINEL_RESET, "Reset state in Sentinel for all instances")
 
-			if isMaster {
-				info.AddCommand(COMMAND_SENTINEL_SWITCH, "Switch instance to master role", "id")
+				if isMaster {
+					info.AddCommand(COMMAND_SENTINEL_SWITCH, "Switch instance to master role", "id")
+				}
 			}
 		}
 	}

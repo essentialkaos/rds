@@ -93,7 +93,7 @@ func Start(app, ver, rev string) int {
 	return EC_OK
 }
 
-// Stop stop sync daemon
+// Stop stops sync daemon
 func Stop() {
 	if sentinelWorks {
 		syncSentinelState(false)
@@ -104,7 +104,7 @@ func Stop() {
 
 // runSyncLoop starts sync loop
 func runSyncLoop() {
-	for range time.Tick(time.Second) {
+	for range time.NewTicker(time.Second).C {
 		sendPullCommand()
 	}
 }
@@ -144,9 +144,9 @@ func sendHelloCommand() bool {
 
 	switch AUXI.GetCoreCompatibility(helloResponse.Version) {
 	case API.CORE_COMPAT_PARTIAL:
-		log.Warn("This client can be not fully compatible with master")
+		log.Warn("This client might be incompatible with master node")
 	case API.CORE_COMPAT_ERROR:
-		log.Crit("This client is not compatible with master")
+		log.Crit("This client is not compatible with master node")
 		return false
 	}
 
@@ -331,7 +331,7 @@ func processCommands(items []*API.CommandQueueItem) {
 // createCommandHandler is handler for "create" command
 func createCommandHandler(item *API.CommandQueueItem) {
 	if CORE.IsInstanceExist(item.InstanceID) {
-		log.Error("(%3d) Can't execute command %s - instance already exist", item.InstanceID, string(item.Command))
+		log.Error("(%3d) Can't execute command %s - instance already exist", item.InstanceID, item.Command)
 		return
 	}
 
@@ -398,7 +398,7 @@ func restartCommandHandler(item *API.CommandQueueItem) {
 // startAllCommandHandler is handler for "start-all" command
 func startAllCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.HasInstances() {
-		log.Warn("Command %s ignored - no instances are created", string(item.Command))
+		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
 
@@ -408,7 +408,7 @@ func startAllCommandHandler(item *API.CommandQueueItem) {
 // stopAllCommandHandler is handler for "stop-all" command
 func stopAllCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.HasInstances() {
-		log.Warn("Command %s ignored - no instances are created", string(item.Command))
+		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
 
@@ -418,7 +418,7 @@ func stopAllCommandHandler(item *API.CommandQueueItem) {
 // restartAllCommandHandler is handler for "restart-all" command
 func restartAllCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.HasInstances() {
-		log.Warn("Command %s ignored - no instances are created", string(item.Command))
+		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
 
@@ -428,7 +428,7 @@ func restartAllCommandHandler(item *API.CommandQueueItem) {
 // sentinelStartCommandHandler is handler for "sentinel-start" command
 func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 	if CORE.IsSentinelActive() {
-		log.Warn("Command %s ignored - Sentinel already works", string(item.Command))
+		log.Warn("Command %s ignored - Sentinel already works", item.Command)
 		return
 	}
 
@@ -438,7 +438,7 @@ func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 // sentinelStopCommandHandler is handler for "sentinel-stop" command
 func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 	if !CORE.IsSentinelActive() {
-		log.Warn("Command %s ignored - Sentinel already stopped", string(item.Command))
+		log.Warn("Command %s ignored - Sentinel already stopped", item.Command)
 		return
 	}
 
@@ -473,7 +473,7 @@ func processInstanceData(info *CORE.InstanceInfo) {
 		meta, err := CORE.GetInstanceMeta(id)
 
 		if err != nil {
-			log.Error("(%3d) Can't read local meta. Skipping instance…", id)
+			log.Error("(%3d) Can't read local instance meta. Skipping instance…", id)
 			return
 		}
 
@@ -903,7 +903,7 @@ func isValidCommandItem(item *API.CommandQueueItem) bool {
 	if !CORE.IsInstanceExist(item.InstanceID) {
 		log.Warn(
 			"(%3d) Can't execute command %s - instance does not exist",
-			item.InstanceID, string(item.Command),
+			item.InstanceID, item.Command,
 		)
 		return false
 	}
@@ -913,7 +913,7 @@ func isValidCommandItem(item *API.CommandQueueItem) bool {
 	if err != nil {
 		log.Error(
 			"(%3d) Can't execute command %s - can't read instance meta: %v",
-			item.InstanceID, string(item.Command), err,
+			item.InstanceID, item.Command, err,
 		)
 		return false
 	}
@@ -921,7 +921,7 @@ func isValidCommandItem(item *API.CommandQueueItem) bool {
 	if item.InstanceUUID != meta.UUID {
 		log.Error(
 			"(%3d) Command %s ignored - gotten instance UUID is differ from current instance UUID",
-			item.InstanceID, string(item.Command),
+			item.InstanceID, item.Command,
 		)
 		return false
 	}
@@ -968,7 +968,7 @@ func syncBlocker(id int) {
 	config, err := CORE.GetInstanceConfig(id, time.Second)
 
 	if err != nil {
-		log.Error("(%3d) Can't read instance config: %v", err)
+		log.Error("(%3d) Can't read instance config: %v", id, err)
 		// We wait 1 min to reduce the load on a minion if there is a lot of instances
 		time.Sleep(time.Minute)
 		return

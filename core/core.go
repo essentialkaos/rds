@@ -190,7 +190,7 @@ const (
 )
 
 // DEFAULT_FILE_PERMS is default permissions for files created by core
-const DEFAULT_FILE_PERMS = 0640
+const DEFAULT_FILE_PERMS = 0600
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -256,8 +256,8 @@ type InstanceConfigInfo struct {
 }
 
 type InstancePreferencies struct {
-	AdminPassword    string          `json:"admin_password"`             // Admin user password
-	SyncPassword     string          `json:"sync_password"`              // Sync user password
+	AdminPassword    string          `json:"admin_password,omitempty"`   // Admin user password
+	SyncPassword     string          `json:"sync_password,omitempty"`    // Sync user password
 	ServicePassword  string          `json:"service_password,omitempty"` // Service user password
 	SentinelPassword string          `json:"sentinel_password"`          // Sentinel user password
 	ReplicationType  ReplicationType `json:"replication_type"`           // Replication type
@@ -418,6 +418,7 @@ var supportedVersions = map[string]bool{
 	"6.0": true,
 	"6.2": true,
 	"7.0": true,
+	"7.2": true,
 }
 
 // tagRegex is regex pattern for tag validation
@@ -895,10 +896,12 @@ func CreateInstance(meta *InstanceMeta) error {
 
 	meta.Created = time.Now().Unix()
 
-	err = createInstanceData(meta)
+	if !IsSentinel() {
+		err = createInstanceData(meta)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	err = saveInstanceMeta(meta)
@@ -1356,12 +1359,10 @@ func StartInstance(id int, controlLoading bool) error {
 
 		// Sentinel monitoring works only with replicas
 		if meta.Preferencies.ReplicationType.IsReplica() {
-			if IsSentinelEnabled() {
-				err = StartSentinelMonitoring(id)
+			err = SentinelStartMonitoring(id)
 
-				if err != nil {
-					return err
-				}
+			if err != nil {
+				return fmt.Errorf("Can't start Sentinel monitoring: %w", err)
 			}
 		}
 	}
@@ -1381,6 +1382,14 @@ func StopInstance(id int, force bool) error {
 
 	if instancePID == -1 {
 		return ErrCantReadPID
+	}
+
+	if IsSentinelActive() && IsSentinelMonitors(id) {
+		err = SentinelStopMonitoring(id)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	err = execShutdownCommand(id)
@@ -1452,60 +1461,62 @@ func DestroyInstance(id int) error {
 		return fmt.Errorf("Instance with ID %d doesn't exist", id)
 	}
 
-	if SENTINEL.IsSentinelEnabled(Config.GetI(SENTINEL_PORT), id) {
-		err = StopSentinelMonitoring(id)
+	if IsSentinelMonitors(id) {
+		err = SentinelStopMonitoring(id)
 
 		if err != nil {
 			return err
 		}
 	}
 
-	state, err := GetInstanceState(id, false)
-
-	if err != nil {
-		return fmt.Errorf("Can't get instance state: %v", err)
-	}
-
-	if state.IsWorks() {
-		err = KillInstance(id)
+	if !IsSentinel() {
+		state, err := GetInstanceState(id, false)
 
 		if err != nil {
-			return fmt.Errorf("Can't stop instance: %v", err)
+			return fmt.Errorf("Can't get instance state: %v", err)
 		}
-	}
 
-	err = os.RemoveAll(GetInstanceConfigFilePath(id))
+		if state.IsWorks() {
+			err = KillInstance(id)
 
-	if err != nil {
-		return fmt.Errorf("Can't remove configuration file: %v", err)
-	}
+			if err != nil {
+				return fmt.Errorf("Can't stop instance: %v", err)
+			}
+		}
 
-	err = os.RemoveAll(GetInstanceLogDirPath(id))
+		err = os.RemoveAll(GetInstanceConfigFilePath(id))
 
-	if err != nil {
-		return fmt.Errorf("Can't remove log directory: %v", err)
-	}
+		if err != nil {
+			return fmt.Errorf("Can't remove configuration file: %v", err)
+		}
 
-	err = os.RemoveAll(GetInstanceDataDirPath(id))
+		err = os.RemoveAll(GetInstanceLogDirPath(id))
 
-	if err != nil {
-		return fmt.Errorf("Can't remove data directory: %v", err)
+		if err != nil {
+			return fmt.Errorf("Can't remove log directory: %v", err)
+		}
+
+		err = os.RemoveAll(GetInstanceDataDirPath(id))
+
+		if err != nil {
+			return fmt.Errorf("Can't remove data directory: %v", err)
+		}
+
+		pidFile := GetInstancePIDFilePath(id)
+
+		if fsutil.IsExist(pidFile) {
+			err = os.RemoveAll(pidFile)
+
+			if err != nil {
+				return fmt.Errorf("Can't remove PID file: %v", err)
+			}
+		}
 	}
 
 	err = os.RemoveAll(GetInstanceMetaFilePath(id))
 
 	if err != nil {
 		return fmt.Errorf("Can't remove meta file: %v", err)
-	}
-
-	pidFile := GetInstancePIDFilePath(id)
-
-	if fsutil.IsExist(pidFile) {
-		err = os.RemoveAll(pidFile)
-
-		if err != nil {
-			return fmt.Errorf("Can't remove PID file: %v", err)
-		}
 	}
 
 	return nil
@@ -1532,17 +1543,17 @@ func SentinelStart() []error {
 		return []error{ErrSentinelWrongVersion}
 	}
 
-	sentinelConfigDir := path.Join(Config.GetS(PATH_CONFIG_DIR) + "sentinel")
+	sentinelConfigDir := path.Join(Config.GetS(PATH_CONFIG_DIR), "sentinel")
 
-	if fsutil.IsExist(sentinelConfigDir) {
-		err = os.Mkdir(sentinelConfigDir, 0770)
+	if !fsutil.IsExist(sentinelConfigDir) {
+		err = createSentinelConfigDir(sentinelConfigDir)
 
 		if err != nil {
-			return []error{err}
+			return []error{fmt.Errorf("Can't create directory for Sentinel configuration: %w", err)}
 		}
 	}
 
-	sentinelConfig := path.Join(sentinelConfigDir + "sentinel.conf")
+	sentinelConfig := path.Join(sentinelConfigDir, "sentinel.conf")
 
 	err = generateSentinelConfig()
 
@@ -1611,13 +1622,17 @@ func SentinelCheck(id int) (string, bool) {
 		return "Sentinel is stopped", false
 	}
 
-	return SENTINEL.CheckQuorum(Config.GetI(SENTINEL_PORT), id)
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
+	}
+
+	return SENTINEL.CheckQuorum(sCfg, id)
 }
 
 // SentinelReset reset master state in Sentinel for all instances
 func SentinelReset() error {
 	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinel() && !IsSentinelEnabled() {
+	if !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
 	}
 
@@ -1625,7 +1640,74 @@ func SentinelReset() error {
 		return ErrSentinelIsStopped
 	}
 
-	return SENTINEL.Reset(Config.GetI(SENTINEL_PORT))
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
+	}
+
+	return SENTINEL.Reset(sCfg)
+}
+
+// SentinelStartMonitoring add instance to Sentinel monitoring
+func SentinelStartMonitoring(id int) error {
+	// Check for enabled Sentinel only if node works as master or minion
+	if !IsSentinelEnabled() {
+		return ErrSentinelIsDisabled
+	}
+
+	if !IsSentinelActive() {
+		return ErrSentinelIsStopped
+	}
+
+	if IsSentinelMonitors(id) {
+		return nil
+	}
+
+	meta, err := GetInstanceMeta(id)
+
+	if err != nil {
+		return err
+	}
+
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
+	}
+
+	iCfg := &SENTINEL.InstanceConfig{
+		ID:   id,
+		IP:   Config.GetS(REPLICATION_MASTER_IP, netutil.GetIP()),
+		Port: GetInstancePort(id),
+
+		Auth: SENTINEL.Auth{REDIS_USER_SENTINEL, meta.Preferencies.SentinelPassword},
+
+		Quorum:                Config.GetI(SENTINEL_QUORUM, 3),
+		DownAfterMilliseconds: Config.GetI(SENTINEL_DOWN_AFTER, 10000),
+		FailoverTimeout:       Config.GetI(SENTINEL_FAILOVER_TIMEOUT, 180000),
+		ParallelSyncs:         Config.GetI(SENTINEL_PARALLEL_SYNCS, 1),
+	}
+
+	return SENTINEL.Monitor(sCfg, iCfg)
+}
+
+// SentinelStopMonitoring remove instance from Sentinel monitoring
+func SentinelStopMonitoring(id int) error {
+	// Check for enabled Sentinel only if node works as master or minion
+	if !IsSentinelEnabled() {
+		return ErrSentinelIsDisabled
+	}
+
+	if !IsSentinelActive() {
+		return errors.New("Sentinel is stopped")
+	}
+
+	if !IsSentinelMonitors(id) {
+		return nil
+	}
+
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
+	}
+
+	return SENTINEL.Remove(sCfg, id)
 }
 
 // SentinelMasterSwitch can be used if you want to set role of current
@@ -1633,7 +1715,7 @@ func SentinelReset() error {
 // 1 and force failover.
 func SentinelMasterSwitch(id int) error {
 	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinel() && !IsSentinelEnabled() {
+	if !IsSentinelEnabled() {
 		return ErrSentinelIsDisabled
 	}
 
@@ -1678,59 +1760,32 @@ func SentinelMasterSwitch(id int) error {
 	return runSentinelFailoverSwitch(id, priority)
 }
 
-// StartSentinelMonitoring add instance to Sentinel monitoring
-func StartSentinelMonitoring(id int) error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinel() && !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled
+// SentinelMasterIP returns IP of master instance
+func SentinelMasterIP(id int) (string, error) {
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
 	}
 
-	if !IsSentinelActive() {
-		return ErrSentinelIsStopped
-	}
-
-	if SENTINEL.IsSentinelEnabled(Config.GetI(SENTINEL_PORT), id) {
-		return nil
-	}
-
-	meta, err := GetInstanceMeta(id)
-
-	if err != nil {
-		return err
-	}
-
-	cfg := &SENTINEL.Config{
-		ID:   id,
-		IP:   Config.GetS(REPLICATION_MASTER_IP, netutil.GetIP()),
-		Port: GetInstancePort(id),
-
-		Auth: SENTINEL.Auth{REDIS_USER_SENTINEL, meta.Preferencies.SentinelPassword},
-
-		Quorum:                Config.GetI(SENTINEL_QUORUM, 3),
-		DownAfterMilliseconds: Config.GetI(SENTINEL_DOWN_AFTER, 10000),
-		FailoverTimeout:       Config.GetI(SENTINEL_FAILOVER_TIMEOUT, 180000),
-		ParallelSyncs:         Config.GetI(SENTINEL_PARALLEL_SYNCS, 1),
-	}
-
-	return SENTINEL.Monitor(Config.GetI(SENTINEL_PORT), cfg)
+	return SENTINEL.GetMasterIP(sCfg, id)
 }
 
-// StopSentinelMonitoring remove instance from Sentinel monitoring
-func StopSentinelMonitoring(id int) error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinel() && !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled
+// SentinelInfo returns info from Sentinel about master, replicas and sentinels
+func SentinelInfo(id int) (*SENTINEL.Info, error) {
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
 	}
 
-	if !IsSentinelActive() {
-		return errors.New("Sentinel is stopped")
+	return SENTINEL.GetInfo(sCfg, id)
+}
+
+// IsSentinelMonitors returns true if Sentinel monitoring instance
+// with given ID
+func IsSentinelMonitors(id int) bool {
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
 	}
 
-	if !SENTINEL.IsSentinelEnabled(Config.GetI(SENTINEL_PORT), id) {
-		return nil
-	}
-
-	return SENTINEL.Remove(Config.GetI(SENTINEL_PORT), id)
+	return SENTINEL.IsSentinelMonitors(sCfg, id)
 }
 
 // SaveStates save all instances states to file
@@ -2789,15 +2844,33 @@ func updateConfigInfo(id int) error {
 	return saveInstanceMeta(meta)
 }
 
-// generateSentinelConfig create and generate Sentinel config
+// createSentinelConfigDir creates directory for Sentinel configuration
+func createSentinelConfigDir(dir string) error {
+	redisUser, err := system.LookupUser(Config.GetS(REDIS_USER))
+
+	if err != nil {
+		return err
+	}
+
+	err = os.Mkdir(dir, 0770)
+
+	if err != nil {
+		return err
+	}
+
+	return os.Chown(dir, redisUser.UID, redisUser.GID)
+}
+
+// generateSentinelConfig creates and generates Sentinel configuration
 func generateSentinelConfig() error {
 	var err error
 
 	sentinelConfig := path.Join(Config.GetS(PATH_CONFIG_DIR), "sentinel", "sentinel.conf")
 	sentinelPidFile := path.Join(Config.GetS(PATH_PID_DIR), PID_SENTINEL)
 	sentinelLogFile := path.Join(Config.GetS(PATH_LOG_DIR), "sentinel.log")
-	sentinelPort := Config.GetS(SENTINEL_PORT, "26379")
+	sentinelPort := Config.GetS(SENTINEL_PORT, "63999")
 
+	// Rewrite configuration
 	if fsutil.IsExist(sentinelConfig) {
 		err = os.Remove(sentinelConfig)
 
@@ -2929,7 +3002,7 @@ func addAllReplicasToSentinelMonitoring() []error {
 			continue
 		}
 
-		err = StartSentinelMonitoring(id)
+		err = SentinelStartMonitoring(id)
 
 		if err != nil {
 			errs = append(errs, err)
@@ -3143,8 +3216,12 @@ func runSentinelFailoverSwitch(id int, priority string) error {
 		return fmt.Errorf("Can't set slave priority: %v", err)
 	}
 
+	sCfg := &SENTINEL.SentinelConfig{
+		Port: Config.GetI(SENTINEL_PORT),
+	}
+
 	// Force Sentinel failover
-	sentinelErr := SENTINEL.Failover(Config.GetI(SENTINEL_PORT), id)
+	sentinelErr := SENTINEL.Failover(sCfg, id)
 
 	if sentinelErr == nil {
 		roleSet := false
@@ -3165,7 +3242,7 @@ func runSentinelFailoverSwitch(id int, priority string) error {
 		}
 	}
 
-	// Restore priority
+	// Restore replica priority
 	req.Command = []string{"CONFIG", "SET", "slave-priority", priority}
 
 	_, err = REDIS.ExecCommand(req)
