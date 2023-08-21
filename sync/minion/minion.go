@@ -1205,7 +1205,7 @@ func checkRedisVersionCompatibility(meta *CORE.InstanceMeta) {
 // checkReplicaMode checks if replica has enabled read-only mode
 func checkReplicaMode(id int) {
 	if !CORE.Config.GetB(CORE.REPLICATION_CHECK_READONLY_MODE, true) ||
-		!CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_SENTINEL) {
+		!CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_STANDBY) {
 		return
 	}
 
