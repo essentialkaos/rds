@@ -89,8 +89,6 @@ Sentinel commands
   sentinel-start               Start Redis Sentinel daemon
   sentinel-stop                Stop Redis Sentinel daemon
   sentinel-status              Show status of Redis Sentinel daemon
-  sentinel-enable id           Enable Sentinel monitoring for instance
-  sentinel-disable id          Disable Sentinel monitoring for instance
   sentinel-info id             Show info from Sentinel for some instance
   sentinel-master id           Show IP of master instance
   sentinel-check id            Check Sentinel configuration
@@ -100,7 +98,7 @@ Sentinel commands
 Common commands
 
   help command                 Show command usage info
-  settings option…             Show settings from global configuration file
+  settings section…            Show settings from global configuration file
   gen-token                    Generate authentication token for sync daemon
 
 Options
