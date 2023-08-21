@@ -498,7 +498,7 @@ func Init(conf string) []error {
 		return errs
 	}
 
-	metaCache = NewMetaCache(time.Second)
+	metaCache = NewMetaCache(5 * time.Second)
 
 	pid.Dir = Config.GetS(PATH_PID_DIR)
 
