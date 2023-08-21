@@ -1,0 +1,14 @@
+[Unit]
+Description=RDS Sync Daemon
+Documentation=https://kaos.sh/rds
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+ExecStart=/usr/bin/rds-sync --no-color
+ExecReload=kill -HUP $MAINPID
+KillMode=process
+SyslogIdentifier=rds-sync
+
+[Install]
+WantedBy=multi-user.target

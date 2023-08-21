@@ -1,0 +1,4 @@
+# Tuning for RDS and Redis
+
+redis    soft  nofile    10240
+redis    hard  nofile    10240

@@ -1,0 +1,13 @@
+[files]
+extend-exclude = [
+  "go.sum",
+  "redis/client/redis_commands.go",
+  "common/templates/redis/*.conf",
+  "common/templates/sentinel/*.conf"
+]
+
+[default.extend-identifiers]
+O_WRONLY = "O_WRONLY"
+Redy = "Redy"
+redy = "redy"
+SMOVE = "SMOVE"
