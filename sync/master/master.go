@@ -25,6 +25,7 @@ import (
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/mathutil"
 	"github.com/essentialkaos/ek/v12/netutil"
+	"github.com/essentialkaos/ek/v12/sortutil"
 	"github.com/essentialkaos/ek/v12/timeutil"
 
 	API "github.com/essentialkaos/rds/api"
@@ -65,9 +66,15 @@ const (
 
 type ClientsList []*API.ClientInfo
 
-func (s ClientsList) Len() int           { return len(s) }
-func (s ClientsList) Less(i, j int) bool { return s[i].ConnectionDate > s[j].ConnectionDate }
-func (s ClientsList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s ClientsList) Len() int      { return len(s) }
+func (s ClientsList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s ClientsList) Less(i, j int) bool {
+	if s[i].Hostname != "" && s[j].Hostname != "" {
+		return sortutil.NaturalLess(s[i].Hostname, s[j].Hostname)
+	}
+
+	return s[i].ConnectionDate < s[j].ConnectionDate
+}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
