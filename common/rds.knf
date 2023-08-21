@@ -67,9 +67,6 @@
 
 [sentinel]
 
-  # Enable or disable Sentinel support
-  enabled: false
-
   # Path to Sentinel binary
   binary: /usr/bin/redis-sentinel
 

@@ -1205,7 +1205,7 @@ func checkRedisVersionCompatibility(meta *CORE.InstanceMeta) {
 // checkReplicaMode checks if replica has enabled read-only mode
 func checkReplicaMode(id int) {
 	if !CORE.Config.GetB(CORE.REPLICATION_CHECK_READONLY_MODE, true) ||
-		CORE.Config.GetS(CORE.REPLICATION_FAILOVER_METHOD) != CORE.FAILOVER_METHOD_STANDBY {
+		!CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_SENTINEL) {
 		return
 	}
 
@@ -1216,7 +1216,8 @@ func checkReplicaMode(id int) {
 		return
 	}
 
-	if instanceConfig.Get("slave-read-only") == "yes" {
+	if instanceConfig.Get("slave-read-only") == "yes" ||
+		instanceConfig.Get("replica-read-only") == "yes" {
 		log.Warn("(%3d) Read-only mode is enabled for this instance. Failover can fail if this node becomes a master.", id)
 	}
 }

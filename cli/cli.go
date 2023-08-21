@@ -419,7 +419,7 @@ func initCommands() {
 	isMaster := role == CORE.ROLE_MASTER || role == ""
 	isMinion := role == CORE.ROLE_MINION
 	isSentinel := role == CORE.ROLE_SENTINEL
-	isSentinelEnabled := CORE.IsSentinelEnabled()
+	isSentinelFailover := CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_SENTINEL)
 	allowCommands := CORE.Config.GetB(CORE.REPLICATION_ALLOW_COMMANDS)
 
 	if isMaster || (isMinion && allowCommands) {
@@ -451,7 +451,7 @@ func initCommands() {
 	if CORE.IsSyncDaemonInstalled() {
 		commands[COMMAND_REPLICATION] = &CommandRoutine{ReplicationCommand, AUTH_NO, false, options.GetS(OPT_FORMAT) == "" && useRawOutput == false}
 
-		if !isSentinelEnabled {
+		if !isSentinelFailover {
 			commands[COMMAND_REPLICATION_ROLE_SET] = &CommandRoutine{ReplicationRoleSetCommand, AUTH_SUPERUSER, false, true}
 		}
 	}
@@ -496,7 +496,7 @@ func initCommands() {
 		commands[COMMAND_TRACK] = &CommandRoutine{TrackCommand, AUTH_NO, false, true}
 	}
 
-	if isSentinelEnabled {
+	if isSentinelFailover {
 		if isMaster {
 			commands[COMMAND_SENTINEL_START] = &CommandRoutine{SentinelStartCommand, AUTH_SUPERUSER, true, true}
 			commands[COMMAND_SENTINEL_STOP] = &CommandRoutine{SentinelStopCommand, AUTH_SUPERUSER, true, true}
@@ -821,7 +821,7 @@ func showSmartUsage() {
 	isMaster := role == CORE.ROLE_MASTER || role == ""
 	isMinion := role == CORE.ROLE_MINION
 	isSentinel := role == CORE.ROLE_SENTINEL
-	isSentinelEnabled := CORE.IsSentinelEnabled()
+	isSentinelFailover := CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_SENTINEL)
 	allowCommands := CORE.Config.GetB(CORE.REPLICATION_ALLOW_COMMANDS)
 
 	if isMaster {
@@ -900,12 +900,12 @@ func showSmartUsage() {
 
 		info.AddCommand(COMMAND_REPLICATION, "Show replication info")
 
-		if !isSentinelEnabled {
+		if !isSentinelFailover {
 			info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Reconfigure node after changing the role")
 		}
 	}
 
-	if isSentinelEnabled {
+	if isSentinelFailover {
 		info.AddGroup("Sentinel commands")
 
 		if isMaster {

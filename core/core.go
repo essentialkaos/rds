@@ -111,11 +111,6 @@ const (
 )
 
 const (
-	FAILOVER_METHOD_STANDBY  = "standby"
-	FAILOVER_METHOD_SENTINEL = "sentinel"
-)
-
-const (
 	SU_DATA_FILE            = "su.dat"
 	REDIS_VERSION_DATA_FILE = "redis.dat"
 	STATES_DATA_FILE        = "states.dat"
@@ -147,7 +142,6 @@ const (
 	REDIS_IONICE_CLASS     = "redis:ionice-class"
 	REDIS_IONICE_CLASSDATA = "redis:ionice-classdata"
 
-	SENTINEL_ENABLED          = "sentinel:enabled"
 	SENTINEL_BINARY           = "sentinel:binary"
 	SENTINEL_PORT             = "sentinel:port"
 	SENTINEL_QUORUM           = "sentinel:quorum"
@@ -193,6 +187,13 @@ const (
 const DEFAULT_FILE_PERMS = 0600
 
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+type FailoverMethod string
+
+const (
+	FAILOVER_METHOD_STANDBY  FailoverMethod = "standby"
+	FAILOVER_METHOD_SENTINEL FailoverMethod = "sentinel"
+)
 
 type State uint16
 
@@ -372,8 +373,8 @@ var (
 	ErrStateFileNotDefined       = errors.New("You must define path to states file")
 	ErrInstanceStillWorks        = errors.New("Instance still works")
 	ErrSentinelRoleSetNotAllowed = errors.New("This node must have master role for switching instance role")
-	ErrSentinelWrongInstanceRole = errors.New("Instance must have a slave (replica) role")
-	ErrSentinelIsDisabled        = errors.New("Sentinel support is disabled in configuration file")
+	ErrSentinelWrongInstanceRole = errors.New("Instance must have a replica role")
+	ErrIncompatibleFailover      = errors.New("Action can't be done due to incompatibility with failover method defined in the configuration file")
 	ErrSentinelWrongVersion      = errors.New("Sentinel monitoring requires Redis 5 or greater")
 	ErrSentinelCantStart         = errors.New("Can't start Sentinel process")
 	ErrSentinelCantStop          = errors.New("Can't stop Sentinel process")
@@ -1546,9 +1547,8 @@ func DestroyInstance(id int) error {
 
 // SentinelStart start (run) Sentinel daemon
 func SentinelStart() []error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinel() && !IsSentinelEnabled() {
-		return []error{ErrSentinelIsDisabled}
+	if !IsSentinel() && !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
+		return []error{ErrIncompatibleFailover}
 	}
 
 	if IsSentinelActive() {
@@ -1605,9 +1605,8 @@ func SentinelStart() []error {
 
 // SentinelStop stop (shutdown) Sentinel daemon
 func SentinelStop() error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinel() && !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled
+	if !IsSentinel() && !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
+		return ErrIncompatibleFailover
 	}
 
 	if !IsSentinelActive() {
@@ -1636,8 +1635,8 @@ func SentinelStop() error {
 
 // SentinelCheck returns message about checking Sentinel quorum status
 func SentinelCheck(id int) (string, bool) {
-	if !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled.Error(), false
+	if !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
+		return ErrIncompatibleFailover.Error(), false
 	}
 
 	if !IsSentinelActive() {
@@ -1653,9 +1652,8 @@ func SentinelCheck(id int) (string, bool) {
 
 // SentinelReset reset master state in Sentinel for all instances
 func SentinelReset() error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled
+	if !IsSentinel() && !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
+		return ErrIncompatibleFailover
 	}
 
 	if !IsSentinelActive() {
@@ -1671,9 +1669,8 @@ func SentinelReset() error {
 
 // SentinelStartMonitoring add instance to Sentinel monitoring
 func SentinelStartMonitoring(id int) error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled
+	if !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
+		return ErrIncompatibleFailover
 	}
 
 	if !IsSentinelActive() {
@@ -1712,9 +1709,8 @@ func SentinelStartMonitoring(id int) error {
 
 // SentinelStopMonitoring remove instance from Sentinel monitoring
 func SentinelStopMonitoring(id int) error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled
+	if !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
+		return ErrIncompatibleFailover
 	}
 
 	if !IsSentinelActive() {
@@ -1736,9 +1732,8 @@ func SentinelStopMonitoring(id int) error {
 // local instance to master. This command temporary set slave priority to
 // 1 and force failover.
 func SentinelMasterSwitch(id int) error {
-	// Check for enabled Sentinel only if node works as master or minion
-	if !IsSentinelEnabled() {
-		return ErrSentinelIsDisabled
+	if !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
+		return ErrIncompatibleFailover
 	}
 
 	if !IsInstanceExist(id) {
@@ -1995,9 +1990,9 @@ func IsSentinelActive() bool {
 	return pid.IsWorks(PID_SENTINEL)
 }
 
-// IsSentinelEnabled returns true if Sentinel support is enabled
-func IsSentinelEnabled() bool {
-	return Config.GetB(SENTINEL_ENABLED, false)
+// IsFailoverMethod returns true if given failover method is used
+func IsFailoverMethod(method FailoverMethod) bool {
+	return FailoverMethod(Config.GetS(REPLICATION_FAILOVER_METHOD)) == method
 }
 
 // IsOutdated returns true if instance outdated
@@ -2524,7 +2519,7 @@ func validateConfig(c *knf.Config) []error {
 			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Less, MIN_INIT_SYNC_WAIT},
 			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Greater, MAX_INIT_SYNC_WAIT},
 			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.NotContains, []string{
-				FAILOVER_METHOD_STANDBY, FAILOVER_METHOD_SENTINEL,
+				string(FAILOVER_METHOD_STANDBY), string(FAILOVER_METHOD_SENTINEL),
 			}},
 			&knf.Validator{REPLICATION_DEFAULT_ROLE, knfv.NotContains, []string{
 				string(REPL_TYPE_STANDBY), string(REPL_TYPE_REPLICA),
