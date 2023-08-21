@@ -474,6 +474,11 @@ func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 
 // createInstance creates new instance
 func createInstance(meta *CORE.InstanceMeta, state CORE.State) {
+	// We don't need these passwords on sentinel node, so we wipe them
+	meta.Preferencies.AdminPassword = ""
+	meta.Preferencies.SyncPassword = ""
+	meta.Preferencies.ServicePassword = ""
+
 	err := CORE.CreateInstance(meta)
 
 	if err != nil {
