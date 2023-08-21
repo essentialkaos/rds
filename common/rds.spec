@@ -184,5 +184,5 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
-* Wed Aug 02 2023 Anton Novojilov <andy@essentialkaos.com> - 1.0.0-0
+* Mon Aug 21 2023 Anton Novojilov <andy@essentialkaos.com> - 1.0.0-0
 - First public release
