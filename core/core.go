@@ -662,7 +662,24 @@ func IsInstanceExist(id int) bool {
 		return false
 	}
 
-	return fsutil.IsExist(path.Join(Config.GetS(PATH_META_DIR), strconv.Itoa(id)))
+	return fsutil.IsExist(GetInstanceMetaFilePath(id))
+}
+
+// HasInstanceData returns true if instance data is present on FS
+func HasInstanceData(id int) bool {
+	if !IsInstanceExist(id) {
+		return false
+	}
+
+	if !fsutil.IsExist(GetInstanceDataDirPath(id)) {
+		return false
+	}
+
+	if !fsutil.IsExist(GetInstanceConfigFilePath(id)) {
+		return false
+	}
+
+	return true
 }
 
 // GetInstanceMeta returns meta info struct for given instance
@@ -1172,17 +1189,22 @@ func ReloadInstanceConfig(id int) []error {
 // GetInstanceRDBPath returns path to the instance dump file
 func GetInstanceRDBPath(id int) string {
 	dataDir := GetInstanceDataDirPath(id)
+	defautRDB := path.Join(dataDir, "dump.rdb")
+
+	if fsutil.CheckPerms("FS", defautRDB) {
+		return defautRDB
+	}
+
 	config, err := ReadInstanceConfig(id)
 
-	// Return default path
 	if err != nil {
-		return path.Join(dataDir, "dump.rdb")
+		return defautRDB
 	}
 
 	rdb := config.Get("dbfilename")
 
 	if rdb == "" {
-		return path.Join(dataDir, "dump.rdb")
+		return defautRDB
 	}
 
 	return path.Join(dataDir, rdb)

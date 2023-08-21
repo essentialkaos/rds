@@ -469,54 +469,62 @@ func processFetchedData(instances []*CORE.InstanceInfo) {
 func processInstanceData(info *CORE.InstanceInfo) {
 	id := info.Meta.ID
 
-	if CORE.IsInstanceExist(id) {
-		meta, err := CORE.GetInstanceMeta(id)
-
-		if err != nil {
-			log.Error("(%3d) Can't read local instance meta. Skipping instance…", id)
-			return
-		}
-
-		if info.Meta.UUID != meta.UUID {
-			log.Warn("(%3d) Instance exists on master, but have different UUID. Instance will be destroyed.", id)
-
-			if !destroyInstance(id) {
-				return
-			}
-
-		} else {
-			if !isMetaEqual(info.Meta, meta) {
-				if !editInstance(info.Meta) {
-					return
-				}
-			}
-
-			state, err := CORE.GetInstanceState(id, false)
-
-			if err != nil {
-				log.Error("(%3d) Getting state failed: %v", id, err)
-				return
-			}
-
-			if info.State.IsWorks() && !state.IsWorks() {
-				startInstance(id)
-				checkRedisVersionCompatibility(info.Meta)
-				return
-			} else if info.State.IsStopped() && !state.IsStopped() {
-				stopInstance(id)
-				return
-			}
-
-			checkReplicaMode(id)
-			checkRedisVersionCompatibility(info.Meta)
-
-			log.Info("(%3d) Instance is up-to-date with master", id)
-
-			return
-		}
+	// If there is no instance, create it
+	if !CORE.IsInstanceExist(id) {
+		createInstance(info.Meta, info.State)
+		return
 	}
 
-	createInstance(info.Meta, info.State)
+	meta, err := CORE.GetInstanceMeta(id)
+
+	if err != nil {
+		log.Error("(%3d) Can't read local instance meta. Skipping instance…", id)
+		return
+	}
+
+	// If instance exist, but there is no data, recreate instance
+	if !CORE.HasInstanceData(id) || info.Meta.UUID != meta.UUID {
+		switch {
+		case info.Meta.UUID != meta.UUID:
+			log.Warn("(%3d) Instance exists on master, but have different UUID. Instance will be recreated.", id)
+		default:
+			log.Warn("(%3d) Instance data not present on disk (possible sentinel → minion migration). Instance will be recreated.", id)
+		}
+
+		if !destroyInstance(id) {
+			return
+		}
+
+		createInstance(info.Meta, info.State)
+		return
+	}
+
+	// If meta is not equal, tychange it
+	if !isMetaEqual(info.Meta, meta) {
+		editInstance(info.Meta)
+	}
+	state, err := CORE.GetInstanceState(id, false)
+
+	if err != nil {
+		log.Error("(%3d) Can't check instance state: %v", id, err)
+		return
+	}
+
+	// Sync instance state
+	if info.State.IsWorks() && !state.IsWorks() {
+		startInstance(id)
+		checkRedisVersionCompatibility(info.Meta)
+		return
+	} else if info.State.IsStopped() && !state.IsStopped() {
+		stopInstance(id)
+		return
+	}
+
+	// Check instance for problems
+	checkReplicaMode(id)
+	checkRedisVersionCompatibility(info.Meta)
+
+	log.Info("(%3d) Instance is up-to-date with master", id)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -1196,7 +1204,8 @@ func checkRedisVersionCompatibility(meta *CORE.InstanceMeta) {
 
 // checkReplicaMode checks if replica has enabled read-only mode
 func checkReplicaMode(id int) {
-	if !CORE.Config.GetB(CORE.REPLICATION_CHECK_READONLY_MODE, true) {
+	if !CORE.Config.GetB(CORE.REPLICATION_CHECK_READONLY_MODE, true) ||
+		CORE.Config.GetS(CORE.REPLICATION_FAILOVER_METHOD) != CORE.FAILOVER_METHOD_STANDBY {
 		return
 	}
 
