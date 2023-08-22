@@ -1205,22 +1205,22 @@ func ReloadInstanceConfig(id int) []error {
 // GetInstanceRDBPath returns path to the instance dump file
 func GetInstanceRDBPath(id int) string {
 	dataDir := GetInstanceDataDirPath(id)
-	defautRDB := path.Join(dataDir, "dump.rdb")
+	defaultRDB := path.Join(dataDir, "dump.rdb")
 
-	if fsutil.CheckPerms("FS", defautRDB) {
-		return defautRDB
+	if fsutil.CheckPerms("FS", defaultRDB) {
+		return defaultRDB
 	}
 
 	config, err := ReadInstanceConfig(id)
 
 	if err != nil {
-		return defautRDB
+		return defaultRDB
 	}
 
 	rdb := config.Get("dbfilename")
 
 	if rdb == "" {
-		return defautRDB
+		return defaultRDB
 	}
 
 	return path.Join(dataDir, rdb)

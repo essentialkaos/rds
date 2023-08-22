@@ -67,7 +67,7 @@ func printSpecificSettings(args CommandArgs) int {
 	return EC_OK
 }
 
-// printSettingsSection prints confugration section settings
+// printSettingsSection prints configuration section settings
 func printSettingsSection(section string) {
 	fmtutil.Separator(true)
 	fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section))
