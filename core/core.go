@@ -345,9 +345,12 @@ type Stats struct {
 	Keys      *StatsKeys      `json:"keys"`
 }
 
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // aligo:ignore
-type InstanceConfigData struct {
+type instanceConfigData struct {
 	Redis            version.Version
+	RDS              *instanceConfigRDSData
 	ID               int
 	AdminPassword    string
 	SyncPassword     string
@@ -357,7 +360,19 @@ type InstanceConfigData struct {
 	IsSaveDisabled   bool
 	IsReplica        bool
 
-	tags []string
+	tags    []string
+	storage Storage
+}
+
+type instanceConfigRDSData struct {
+	HasReplication bool
+
+	IsMaster   bool
+	IsMinion   bool
+	IsSentinel bool
+
+	IsFailoverStandby  bool
+	IsFailoverSentinel bool
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -1190,22 +1205,22 @@ func ReloadInstanceConfig(id int) []error {
 // GetInstanceRDBPath returns path to the instance dump file
 func GetInstanceRDBPath(id int) string {
 	dataDir := GetInstanceDataDirPath(id)
-	defautRDB := path.Join(dataDir, "dump.rdb")
+	defaultRDB := path.Join(dataDir, "dump.rdb")
 
-	if fsutil.CheckPerms("FS", defautRDB) {
-		return defautRDB
+	if fsutil.CheckPerms("FS", defaultRDB) {
+		return defaultRDB
 	}
 
 	config, err := ReadInstanceConfig(id)
 
 	if err != nil {
-		return defautRDB
+		return defaultRDB
 	}
 
 	rdb := config.Get("dbfilename")
 
 	if rdb == "" {
-		return defautRDB
+		return defaultRDB
 	}
 
 	return path.Join(dataDir, rdb)
@@ -2258,52 +2273,52 @@ func (m *InstanceMeta) Validate() error {
 }
 
 // Port returns instance port
-func (p *InstanceConfigData) Port() int {
+func (p *instanceConfigData) Port() int {
 	return GetInstancePort(p.ID)
 }
 
 // MetaFile returns path to meta file for instance with given ID
-func (p *InstanceConfigData) MetaFile() string {
+func (p *instanceConfigData) MetaFile() string {
 	return GetInstanceMetaFilePath(p.ID)
 }
 
 // ConfigFile returns path to config file for instance with given ID
-func (p *InstanceConfigData) ConfigFile() string {
+func (p *instanceConfigData) ConfigFile() string {
 	return GetInstanceConfigFilePath(p.ID)
 }
 
 // DataDir returns path to data directory for instance with given ID
-func (p *InstanceConfigData) DataDir() string {
+func (p *instanceConfigData) DataDir() string {
 	return GetInstanceDataDirPath(p.ID)
 }
 
 // LogDir returns path to logs directory for instance with given ID
-func (p *InstanceConfigData) LogDir() string {
+func (p *instanceConfigData) LogDir() string {
 	return GetInstanceLogDirPath(p.ID)
 }
 
 // LogFile returns path to log file for instance with given ID
-func (p *InstanceConfigData) LogFile() string {
+func (p *instanceConfigData) LogFile() string {
 	return GetInstanceLogFilePath(p.ID)
 }
 
 // PidFile returns path to PID file for instance with given ID
-func (p *InstanceConfigData) PidFile() string {
+func (p *instanceConfigData) PidFile() string {
 	return GetInstancePIDFilePath(p.ID)
 }
 
 // MasterHost returns redis master host (IP)
-func (p *InstanceConfigData) MasterHost() string {
+func (p *instanceConfigData) MasterHost() string {
 	return Config.GetS(REPLICATION_MASTER_IP)
 }
 
 // MasterPort returns redis master port
-func (p *InstanceConfigData) MasterPort() int {
+func (p *instanceConfigData) MasterPort() int {
 	return GetInstancePort(p.ID)
 }
 
 // HasTag return true if configuration has given tag
-func (c *InstanceConfigData) HasTag(tag string) bool {
+func (c *instanceConfigData) HasTag(tag string) bool {
 	if len(c.tags) == 0 {
 		return false
 	}
@@ -2319,13 +2334,22 @@ func (c *InstanceConfigData) HasTag(tag string) bool {
 	return false
 }
 
+// Storage returns value from instance custom data storage
+func (c *instanceConfigData) Storage(key string) string {
+	if c.storage == nil {
+		return ""
+	}
+
+	return c.storage[key]
+}
+
 // Version returns struct with Redis version info
-func (c *InstanceConfigData) Version() version.Version {
+func (c *instanceConfigData) Version() version.Version {
 	return c.Redis
 }
 
 // RedisVersionLess returns true if instance Redis version is less than given
-func (c *InstanceConfigData) RedisVersionLess(v string) bool {
+func (c *instanceConfigData) RedisVersionLess(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
@@ -2336,7 +2360,7 @@ func (c *InstanceConfigData) RedisVersionLess(v string) bool {
 }
 
 // RedisVersionGreater returns true if instance Redis version is greater than given
-func (c *InstanceConfigData) RedisVersionGreater(v string) bool {
+func (c *instanceConfigData) RedisVersionGreater(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
@@ -2347,7 +2371,7 @@ func (c *InstanceConfigData) RedisVersionGreater(v string) bool {
 }
 
 // RedisVersionEquals returns true if instance Redis version is equal to given
-func (c *InstanceConfigData) RedisVersionEquals(v string) bool {
+func (c *instanceConfigData) RedisVersionEquals(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
@@ -2358,22 +2382,22 @@ func (c *InstanceConfigData) RedisVersionEquals(v string) bool {
 }
 
 // AdminPasswordHash returns SHA-256 hash for admin user password
-func (c *InstanceConfigData) AdminPasswordHash() string {
+func (c *instanceConfigData) AdminPasswordHash() string {
 	return getSHA256Hash(c.AdminPassword)
 }
 
 // SyncPasswordHash returns SHA-256 hash for sync user password
-func (c *InstanceConfigData) SyncPasswordHash() string {
+func (c *instanceConfigData) SyncPasswordHash() string {
 	return getSHA256Hash(c.SyncPassword)
 }
 
 // SentinelPasswordHash returns SHA-256 hash for sentinel user password
-func (c *InstanceConfigData) SentinelPasswordHash() string {
+func (c *instanceConfigData) SentinelPasswordHash() string {
 	return getSHA256Hash(c.SentinelPassword)
 }
 
 // ServicePasswordHash returns SHA-256 hash for service user password
-func (c *InstanceConfigData) ServicePasswordHash() string {
+func (c *instanceConfigData) ServicePasswordHash() string {
 	return getSHA256Hash(c.ServicePassword)
 }
 
@@ -3300,8 +3324,8 @@ func appendStatsData(info *REDIS.Info, prop string, value *uint64) {
 }
 
 // createConfigFromMeta create config struct based on instance preferencies
-func createConfigFromMeta(meta *InstanceMeta) *InstanceConfigData {
-	result := &InstanceConfigData{
+func createConfigFromMeta(meta *InstanceMeta) *instanceConfigData {
+	result := &instanceConfigData{
 		ID:               meta.ID,
 		AdminPassword:    meta.Preferencies.AdminPassword,
 		SyncPassword:     meta.Preferencies.SyncPassword,
@@ -3310,7 +3334,17 @@ func createConfigFromMeta(meta *InstanceMeta) *InstanceConfigData {
 		IsSecure:         meta.Preferencies.ServicePassword != "",
 		IsSaveDisabled:   meta.Preferencies.IsSaveDisabled,
 
-		tags: meta.Tags,
+		RDS: &instanceConfigRDSData{
+			HasReplication:     Config.GetS(REPLICATION_ROLE) != "",
+			IsMaster:           IsMaster(),
+			IsMinion:           IsMinion(),
+			IsSentinel:         IsSentinel(),
+			IsFailoverStandby:  IsFailoverMethod(FAILOVER_METHOD_STANDBY),
+			IsFailoverSentinel: IsFailoverMethod(FAILOVER_METHOD_SENTINEL),
+		},
+
+		tags:    meta.Tags,
+		storage: meta.Storage,
 	}
 
 	if IsInstanceExist(meta.ID) {

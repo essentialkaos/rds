@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.0.0
+Version:        1.1.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -38,7 +38,7 @@ Tool for Redis orchestration.
 %package sync
 
 Summary:   RDS Sync daemon
-Version:   1.0.0
+Version:   1.1.0
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -184,5 +184,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Tue Aug 22 2023 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
+- Added info about RDS to templates payload
+- Added instance storage data to templates payload
+
 * Mon Aug 21 2023 Anton Novojilov <andy@essentialkaos.com> - 1.0.0-0
 - First public release
