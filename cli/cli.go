@@ -71,6 +71,7 @@ const (
 	OPT_DISABLE_SAVES   = "ds:disable-saves"
 	OPT_YES             = "y:yes"
 	OPT_SIMPLE          = "S:simple"
+	OPT_RAW             = "R:raw"
 	OPT_NO_COLOR        = "nc:no-color"
 	OPT_HELP            = "h:help"
 	OPT_VERSION         = "v:version"
@@ -179,6 +180,7 @@ var optMap = options.Map{
 	OPT_DISABLE_SAVES:   {Type: options.BOOL},
 	OPT_NO_COLOR:        {Type: options.BOOL},
 	OPT_SIMPLE:          {Type: options.BOOL},
+	OPT_RAW:             {Type: options.BOOL},
 	OPT_YES:             {Type: options.BOOL},
 	OPT_HELP:            {Type: options.BOOL},
 	OPT_VERSION:         {Type: options.MIXED},
@@ -342,6 +344,10 @@ func configureUI() {
 
 	if options.GetB(OPT_YES) {
 		terminal.AlwaysYes = true
+	}
+
+	if options.GetB(OPT_RAW) {
+		useRawOutput = true
 	}
 }
 
@@ -945,6 +951,7 @@ func showSmartUsage() {
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
+	info.AddOption(OPT_RAW, "Force raw output {s-}(useful for scripts){!}")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VERSION, "Show information about version")
@@ -1030,6 +1037,7 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
+	info.AddOption(OPT_RAW, "Force raw output {s-}(useful for scripts){!}")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VERSION, "Show information about version")
