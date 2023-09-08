@@ -35,7 +35,7 @@ RDS supports the next versions of Redis and Sentinel:
 
 * `6.0.x`
 * `6.2.x`
-* `7.0.x` **ʀᴇᴄᴏᴍᴍᴇɴᴅᴇᴅ**
+* `7.0.x` **← ʀᴇᴄᴏᴍᴍᴇɴᴅᴇᴅ**
 * `7.2.x`
 
 RDS packages do not have Redis as a dependency, so you can install it from any source (_package, sources, prebuilt binaries…_).
@@ -45,7 +45,7 @@ RDS packages do not have Redis as a dependency, so you can install it from any s
 * `redis`
 * `redis60`
 * `redis62`
-* `redis70` **ʀᴇᴄᴏᴍᴍᴇɴᴅᴇᴅ**
+* `redis70` **← ʀᴇᴄᴏᴍᴍᴇɴᴅᴇᴅ**
 * `redis72`
 
 </p></details>
@@ -68,14 +68,14 @@ Instances commands
   cli id:db command            Run CLI connected to Redis instance
   cpu id period                Calculate instance CPU usage
   memory id                    Show instance memory usage
-  info id section              Show system info about Redis instance
+  info id section…             Show system info about Redis instance
   stats-command id             Show statistics based on the command type
   stats-latency id             Show latency statistics based on the command type
   stats-error id               Show error statistics
   clients id filter            Show list of connected clients
   track id interval            Show interactive info about Redis instance
-  conf id property             Show configuration of Redis instance
-  list filter                  Show list of all Redis instances
+  conf id filter…              Show configuration of Redis instance
+  list filter…                 Show list of all Redis instances
   stats                        Show overall statistics
   top field num                Show instances top
   top-diff file field num      Compare current and dumped top data
@@ -121,6 +121,7 @@ Common commands
   help command                 Show command usage info
   settings section…            Show settings from global configuration file
   gen-token                    Generate authentication token for sync daemon
+  validate-templates           Validate Redis and Sentinel templates
 
 Options
 
@@ -131,6 +132,7 @@ Options
   --format, -f format       Output format (text/json/xml)
   --yes, -y                 Automatically answer yes for all questions
   --simple, -S              Simplify output (useful for copy-paste)
+  --raw, -R                 Force raw output (useful for scripts)
   --no-color, -nc           Disable colors in output
   --help, -h                Show this help message
   --version, -v             Show information about version
