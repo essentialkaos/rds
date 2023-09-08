@@ -286,7 +286,7 @@ func helpCommandStatus() {
 			{"id", "Instance unique ID", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1", "Show status for instance with ID 1"},
+			{"", "1", "Show status of instance with ID 1"},
 		},
 	}.render()
 }
@@ -353,14 +353,14 @@ func helpCommandInfo() {
 		desc:    "Show system info about Redis instance.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
-			{"section", "Info section", true},
+			{"section…", "Info section", true},
 		},
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_FORMAT), "Output format (json|text|xml)", false},
 		},
 		examples: []helpInfoExample{
 			{"", "1", "Show basic info about instance with ID 1"},
-			{"", "1 memory", "Show info memory section for instance with ID 1"},
+			{"", "1 memory cpu", "Show memory and cpu section of instance with ID 1"},
 			{"", "1 all", "Show all info (including non-default sections) about instance with ID 1"},
 		},
 	}.render()
@@ -468,7 +468,7 @@ func helpCommandList() {
 		command: COMMAND_LIST,
 		desc:    "Show list of all Redis instances.",
 		arguments: []helpInfoArgument{
-			{"filter", "Listing filter", true},
+			{"filter…", "Listing filters", true},
 		},
 		examples: []helpInfoExample{
 			{"", "", "Show list of all instances"},
@@ -529,7 +529,7 @@ func helpCommandMemory() {
 			{"id", "Instance unique ID", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1", "Show memory usage for instance with ID 1"},
+			{"", "1", "Show memory usage of instance with ID 1"},
 		},
 	}.render()
 }
@@ -554,7 +554,7 @@ func helpCommandStatsCommand() {
 		command: COMMAND_STATS_COMMAND,
 		desc:    "Show statistics based on the command type.",
 		examples: []helpInfoExample{
-			{"", "1", "Show statistics for instance with ID 1"},
+			{"", "1", "Show statistics of instance with ID 1"},
 		},
 	}.render()
 }
@@ -565,7 +565,7 @@ func helpCommandStatsLatency() {
 		command: COMMAND_STATS_LATENCY,
 		desc:    "Show latency statistics based on the command type.",
 		examples: []helpInfoExample{
-			{"", "1", "Show statistics for instance with ID 1"},
+			{"", "1", "Show statistics of instance with ID 1"},
 		},
 	}.render()
 }
@@ -576,7 +576,7 @@ func helpCommandStatsError() {
 		command: COMMAND_STATS_ERROR,
 		desc:    "Show error statistics.",
 		examples: []helpInfoExample{
-			{"", "1", "Show statistics for instance with ID 1"},
+			{"", "1", "Show statistics of instance with ID 1"},
 		},
 	}.render()
 }
