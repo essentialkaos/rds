@@ -33,13 +33,6 @@ type CommandArgs []string
 
 type CommandHandler func(CommandArgs) int
 
-type CommandRoutine struct {
-	Handler           CommandHandler
-	Auth              AuthType
-	RequireStrictAuth bool
-	PrettyOutput      bool
-}
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var userExistenceCache map[string]bool

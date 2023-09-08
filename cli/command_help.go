@@ -108,6 +108,7 @@ func HelpCommand(args CommandArgs) int {
 		COMMAND_TOP_DIFF:             helpCommandTopDiff,
 		COMMAND_TOP_DUMP:             helpCommandTopDump,
 		COMMAND_TRACK:                helpCommandTrack,
+		COMMAND_VALIDATE_TEMPLATES:   helpCommandValidateTemplates,
 	}
 
 	helpFunc, hasInfo := commandList[commandName]
@@ -914,6 +915,17 @@ func helpCommandGenToken() {
 		desc:    "Generate authentication token for sync daemon.",
 		examples: []helpInfoExample{
 			{"", "", "Generate random token"},
+		},
+	}.render()
+}
+
+// helpCommandValidateTemplates prints info about "validate-templates" command usage
+func helpCommandValidateTemplates() {
+	helpInfo{
+		command: COMMAND_VALIDATE_TEMPLATES,
+		desc:    "Validate Redis and Sentinel configuration file templates.",
+		examples: []helpInfoExample{
+			{"", "", "Validate templates"},
 		},
 	}.render()
 }

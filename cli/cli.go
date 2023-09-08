@@ -145,6 +145,7 @@ const (
 	COMMAND_TOP_DIFF             = "top-diff"
 	COMMAND_TOP_DUMP             = "top-dump"
 	COMMAND_TRACK                = "track"
+	COMMAND_VALIDATE_TEMPLATES   = "validate-templates"
 )
 
 const (
@@ -168,6 +169,13 @@ const (
 	AUTH_INSTANCE
 	AUTH_SUPERUSER
 )
+
+type CommandRoutine struct {
+	Handler           CommandHandler
+	Auth              AuthType
+	RequireStrictAuth bool
+	PrettyOutput      bool
+}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -473,7 +481,7 @@ func initCommands() {
 		}
 	} else {
 		commands[COMMAND_CONF] = &CommandRoutine{ConfCommand, AUTH_NO, false, true}
-		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_NO, true, useRawOutput == false}
+		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_NO, false, useRawOutput == false}
 		commands[COMMAND_SETTINGS] = &CommandRoutine{SettingsCommand, AUTH_NO, false, true}
 	}
 
@@ -512,13 +520,13 @@ func initCommands() {
 			}
 		}
 
-		commands[COMMAND_SENTINEL_STATUS] = &CommandRoutine{SentinelStatusCommand, AUTH_NO, true, true}
+		commands[COMMAND_SENTINEL_STATUS] = &CommandRoutine{SentinelStatusCommand, AUTH_NO, false, true}
 
 		if CORE.IsSentinelActive() {
-			commands[COMMAND_SENTINEL_CHECK] = &CommandRoutine{SentinelCheckCommand, AUTH_NO, true, true}
-			commands[COMMAND_SENTINEL_INFO] = &CommandRoutine{SentinelInfoCommand, AUTH_NO, true, true}
-			commands[COMMAND_SENTINEL_MASTER] = &CommandRoutine{SentinelMasterCommand, AUTH_NO, true, true}
-			commands[COMMAND_SENTINEL_RESET] = &CommandRoutine{SentinelResetCommand, AUTH_SUPERUSER, true, true}
+			commands[COMMAND_SENTINEL_CHECK] = &CommandRoutine{SentinelCheckCommand, AUTH_NO, false, true}
+			commands[COMMAND_SENTINEL_INFO] = &CommandRoutine{SentinelInfoCommand, AUTH_NO, false, true}
+			commands[COMMAND_SENTINEL_MASTER] = &CommandRoutine{SentinelMasterCommand, AUTH_NO, false, true}
+			commands[COMMAND_SENTINEL_RESET] = &CommandRoutine{SentinelResetCommand, AUTH_SUPERUSER, false, true}
 		}
 	}
 
@@ -540,7 +548,8 @@ func initCommands() {
 		commands[COMMAND_RESTART_ALL_PROP] = &CommandRoutine{RestartAllPropCommand, AUTH_SUPERUSER, true, true}
 	}
 
-	commands[COMMAND_GEN_TOKEN] = &CommandRoutine{GenTokenCommand, AUTH_NO, true, useRawOutput == false}
+	commands[COMMAND_VALIDATE_TEMPLATES] = &CommandRoutine{ValidateTemplatesCommand, AUTH_NO, false, true}
+	commands[COMMAND_GEN_TOKEN] = &CommandRoutine{GenTokenCommand, AUTH_NO, false, useRawOutput == false}
 	commands[COMMAND_HELP] = &CommandRoutine{HelpCommand, AUTH_NO, false, true}
 
 	for a, c := range aliases {
@@ -728,7 +737,7 @@ func getSpellcheckModel() *spellcheck.Model {
 		COMMAND_STATS_COMMAND, COMMAND_STATS_LATENCY, COMMAND_STATS_ERROR,
 		COMMAND_STATUS, COMMAND_STOP, COMMAND_STOP_ALL, COMMAND_STOP_ALL_PROP,
 		COMMAND_STOP_PROP, COMMAND_TAG_ADD, COMMAND_TAG_REMOVE, COMMAND_TOP,
-		COMMAND_TOP_DIFF, COMMAND_TOP_DUMP, COMMAND_TRACK,
+		COMMAND_TOP_DIFF, COMMAND_TOP_DUMP, COMMAND_TRACK, COMMAND_VALIDATE_TEMPLATES,
 	})
 }
 
@@ -940,6 +949,7 @@ func showSmartUsage() {
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
 	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
+	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Redis and Sentinel templates")
 
 	if isMaster {
 		info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support ({y}create{!})")
@@ -1029,6 +1039,7 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
 	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
+	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Redis and Sentinel templates")
 
 	info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support")
 	info.AddOption(OPT_DISABLE_SAVES, "Disable saves for created instance")
