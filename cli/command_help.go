@@ -435,13 +435,14 @@ func helpCommandConf() {
 		desc:    "Print values from the configuration file and in-memory configuration.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
-			{"property", "Configuration property", true},
+			{"filter…", "Property name filters", true},
 		},
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_PRIVATE), "Show private info", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1", "Show configuration for instance with ID 1"},
+			{"", "1", "Show configuration of instance with ID 1"},
+			{"", "1 append sync", "Show properties with 'append' or 'sync' in the name of instance with ID 1"},
 		},
 	}.render()
 }

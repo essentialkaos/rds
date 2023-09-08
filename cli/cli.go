@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.1.0"
+	VER  = "1.2.0"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -980,7 +980,7 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_CLIENTS, "Show list of connected clients", "id", "?filter")
 	info.AddCommand(COMMAND_TRACK, "Show interactive info about Redis instance", "id", "?interval")
 	info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?property")
-	info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter")
+	info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter…")
 	info.AddCommand(COMMAND_STATS, "Show overall statistics")
 	info.AddCommand(COMMAND_TOP, "Show instances top", "?field", "?num")
 	info.AddCommand(COMMAND_TOP_DIFF, "Compare current and dumped top data", "file", "?field", "?num")
