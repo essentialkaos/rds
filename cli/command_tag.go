@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/terminal"
 
 	API "github.com/essentialkaos/rds/api"
@@ -64,7 +63,8 @@ func TagAddCommand(args CommandArgs) int {
 
 	// We use renderTags function from listing
 	fmtc.Printf("Tag "+renderTags(tag)+" added to instance %d\n", id)
-	log.Info("(%s) Added tag \"%s\" to instance %d", CORE.User.RealName, tag, id)
+
+	logger.Info(id, "Tag %q added", tag)
 
 	return EC_OK
 }
@@ -116,7 +116,7 @@ func TagRemoveCommand(args CommandArgs) int {
 
 	fmtc.Printf("{g}Tag \"%s\" removed from instance %d{!}\n", tagName, id)
 
-	log.Info("(%s) Removed tag \"%s\" from instance %d", CORE.User.RealName, tagName, id)
+	logger.Info(id, "Tag %q removed", tagName)
 
 	return EC_OK
 }

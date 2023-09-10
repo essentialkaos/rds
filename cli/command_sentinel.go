@@ -10,7 +10,6 @@ package cli
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -52,7 +51,7 @@ func SentinelStartCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Started Sentinel", CORE.User.RealName)
+	logger.Info(-1, "Started Sentinel")
 
 	return EC_OK
 }
@@ -81,7 +80,7 @@ func SentinelStopCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Stopped Sentinel", CORE.User.RealName)
+	logger.Info(-1, "Stopped Sentinel")
 
 	return EC_OK
 }
@@ -102,7 +101,7 @@ func SentinelResetCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Reset Sentinel state for all instances", CORE.User.RealName)
+	logger.Info(-1, "Sentinel state has been reset for all instances")
 
 	return EC_OK
 }
@@ -143,7 +142,7 @@ func SentinelSwitchMasterCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Switched master role in Sentinel to current node", CORE.User.RealName)
+	logger.Info(-1, "Switched master role in Sentinel to current node")
 
 	return EC_OK
 }

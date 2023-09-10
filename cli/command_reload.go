@@ -13,7 +13,6 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil/panel"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -136,16 +135,17 @@ Use {*}REPLICAOF{!} or {*}SLAVEOF{!} commands for changing replication settings.
 
 	errs := CORE.ReloadInstanceConfig(id)
 
-	log.Info("(%s) Reloaded configuration for instance %d", CORE.User.RealName, id)
-
 	if len(errs) == 0 {
 		fmtc.Println("{g}Instance configuration successfully updated{!}")
+		logger.Info(id, "Instance configuration reloaded")
 		return EC_OK
 	}
 
 	for _, err = range errs {
 		terminal.Error(err.Error())
 	}
+
+	logger.Error(id, "Instance configuration reloaded with errors (%d)", len(errs))
 
 	return EC_ERROR
 }
@@ -187,10 +187,11 @@ func reloadAllConfigs() int {
 			}
 			fmtc.NewLine()
 			hasErrors = true
+			logger.Error(id, "Instance configuration reloaded (batch) with errors (%d)", len(errs))
+		} else {
+			logger.Info(id, "Instance configuration reloaded (batch)")
 		}
 	}
-
-	log.Info("(%s) Reloaded configuration for all instances", CORE.User.RealName)
 
 	if hasErrors {
 		return EC_ERROR

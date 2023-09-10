@@ -120,10 +120,10 @@ func RestartAllCommand(args CommandArgs) int {
 			continue
 		}
 
+		logger.Info(id, "Instance restarted (batch)")
+
 		spinner.Done(true)
 	}
-
-	log.Info("(%s) Restarted all working instances", CORE.User.RealName)
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())
 

@@ -218,6 +218,9 @@ var safeCommands = []string{
 	COMMAND_SETTINGS,
 }
 
+// logger is CLI logger
+var logger *Logger
+
 // commands is list of command handlers
 var commands map[string]*CommandRoutine
 
@@ -389,6 +392,8 @@ func setupLogger() {
 		terminal.Error(err.Error())
 		os.Exit(EC_ERROR)
 	}
+
+	logger = &Logger{}
 }
 
 // disableProxy disable proxy for requests to sync daemon

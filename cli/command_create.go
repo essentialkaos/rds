@@ -14,7 +14,6 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
@@ -108,12 +107,9 @@ func CreateCommand(args CommandArgs) int {
 	fmtc.Println("{*}Done, a new Redis instance has been successfully created. Just for you.{!}")
 
 	if len(tags) == 0 {
-		log.Info("(%s) Created instance with ID %d", CORE.User.RealName, meta.ID)
+		logger.Info(meta.ID, "Instance created")
 	} else {
-		log.Info(
-			"(%s) Created instance with ID %d (tags: %s)",
-			CORE.User.RealName, meta.ID, strings.Join(tags, ","),
-		)
+		logger.Info(meta.ID, "Instance created (tags: %s)", strings.Join(tags, ","))
 	}
 
 	showInstanceInfo(meta, info, tags)

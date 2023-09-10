@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
@@ -112,7 +111,7 @@ func EditCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Updated info for instance with ID %d", CORE.User.RealName, id)
+	logger.Info(id, "Instance info updated")
 	fmtc.Printf("{g}Done. Data for instance with ID %d successfully updated.{!}\n", id)
 
 	err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)

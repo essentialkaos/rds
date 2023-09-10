@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -98,7 +97,7 @@ func setRoleFromMasterToMinion() int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Reconfigurated node to minion role", CORE.User.RealName)
+	logger.Info(-1, "Node reconfigurated to minion role")
 
 	return EC_OK
 }
@@ -115,7 +114,7 @@ func setRoleFromMinionToMaster() int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Reconfigurated node to master role", CORE.User.RealName)
+	logger.Info(-1, "Node reconfigurated to minion role")
 
 	return EC_OK
 }

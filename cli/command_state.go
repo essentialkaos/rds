@@ -13,7 +13,6 @@ import (
 
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fsutil"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -52,6 +51,8 @@ func SaveStateCommand(args CommandArgs) int {
 	}
 
 	spinner.Done(true)
+
+	logger.Info(-1, "States saved to file %s", statesFile)
 
 	return EC_OK
 }
@@ -96,21 +97,22 @@ func RestoreStateCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Started states restoring from file %s", CORE.User.RealName, path.Clean(statesFile))
+	logger.Info(-1, "Started states restoring from file %s", path.Clean(statesFile))
 
-	restored, hasErrors := false, false
+	restored := false
 
 	for _, stateInfo := range statesInfo.States {
-		if !CORE.IsInstanceExist(stateInfo.ID) {
+		id := stateInfo.ID
+
+		if !CORE.IsInstanceExist(id) {
 			continue
 		}
 
-		spinner.Show("Restoring instance %d state", stateInfo.ID)
-		state, err := CORE.GetInstanceState(stateInfo.ID, false)
+		spinner.Show("Restoring instance %d state", id)
+		state, err := CORE.GetInstanceState(id, false)
 
 		if err != nil {
 			spinner.Done(false)
-			hasErrors = true
 			continue
 		}
 
@@ -121,29 +123,24 @@ func RestoreStateCommand(args CommandArgs) int {
 
 		switch {
 		case stateInfo.State.IsWorks():
-			err = CORE.StartInstance(stateInfo.ID, true)
+			err = CORE.StartInstance(id, true)
 		case stateInfo.State.IsStopped():
-			err = CORE.StopInstance(stateInfo.ID, false)
+			err = CORE.StopInstance(id, false)
 		}
 
 		spinner.Done(err == nil)
 
 		if err == nil {
 			restored = true
+			logger.Info(id, "Instance state restored")
 		} else {
-			hasErrors = true
+			logger.Info(id, "Instance state restored with error: %v", err)
 		}
 	}
 
 	if !restored {
-		log.Info("(%s) No actions are made while states restoring", CORE.User.RealName)
+		logger.Info(-1, "No actions were made while states restoring")
 		return EC_OK
-	}
-
-	if hasErrors {
-		log.Info("(%s) Restored states from file %s with errors", CORE.User.RealName, path.Clean(statesFile))
-	} else {
-		log.Info("(%s) Restored states from file %s", CORE.User.RealName, path.Clean(statesFile))
 	}
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())

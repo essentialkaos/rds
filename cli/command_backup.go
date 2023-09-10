@@ -17,7 +17,6 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/fsutil"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/mathutil"
 	"github.com/essentialkaos/ek/v12/path"
 	"github.com/essentialkaos/ek/v12/sortutil"
@@ -116,11 +115,11 @@ func BackupCreateCommand(args CommandArgs) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error("Can't exec BGSAVE command: %v", err)
+		terminal.Error("Can't copy snapshot file: %v", err)
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Created RDB backup of instance with ID %d", CORE.User.RealName, id)
+	logger.Info(id, "Created RDB backup")
 
 	return EC_OK
 }
@@ -206,11 +205,11 @@ func BackupRestoreCommand(args CommandArgs) int {
 	if err != nil {
 		fmtc.NewLine()
 		terminal.Error("Can't restore snapshot: %v", err)
-		log.Error("(%s) Tried to restore snapshot of instance with ID %d, but got error: %v", CORE.User.RealName, id, err)
+		logger.Error(id, "Tried to restore snapshot, but got error: %v", err)
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Restored RDB backup of instance with ID %d", CORE.User.RealName, id)
+	logger.Info(id, "Restored RDB backup")
 
 	return EC_OK
 }
@@ -259,11 +258,11 @@ func BackupCleanCommand(args CommandArgs) int {
 	if err != nil {
 		fmtc.NewLine()
 		terminal.Error("Can't clean backups: %v", err)
-		log.Error("(%s) Tried to remove RDB backups (%d) of instance with ID %d, but got error: %v", CORE.User.RealName, numBackups, id, err)
+		logger.Error(id, "Tried to remove RDB backups (%d), but got error: %v", numBackups, err)
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Removed RDB backups (%d) of instance with ID %d", CORE.User.RealName, numBackups, id)
+	logger.Info(id, "Removed RDB backups (%d)", numBackups)
 
 	return EC_OK
 }

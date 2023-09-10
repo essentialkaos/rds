@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -94,10 +93,11 @@ func regenerateInstanceConfig(id int) int {
 	if err != nil {
 		fmtc.NewLine()
 		terminal.Error(err.Error())
+		logger.Error(id, "Configuration file regeneration error: %v", err)
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Regenerated configuration file for instance %d", CORE.User.RealName, id)
+	logger.Info(id, "Configuration file regenerated")
 
 	return EC_OK
 }
@@ -128,11 +128,12 @@ func regenerateAllConfigs() int {
 		if err != nil {
 			fmtc.NewLine()
 			terminal.Error(err.Error())
+			logger.Error(id, "Configuration file regeneration (batch) error: %v", err)
 			return EC_ERROR
+		} else {
+			logger.Info(id, "Configuration file regenerated (batch)")
 		}
 	}
-
-	log.Info("(%s) Regenerated configuration files for all instances", CORE.User.RealName)
 
 	return EC_OK
 }

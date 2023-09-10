@@ -98,6 +98,8 @@ func BatchCreateCommand(args CommandArgs) int {
 			continue
 		}
 
+		logger.Info(meta.ID, "Instance created (batch)")
+
 		err = SC.PropagateCommand(API.COMMAND_CREATE, meta.ID, meta.UUID)
 
 		if err != nil {

@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -66,10 +65,11 @@ func StartCommand(args CommandArgs) int {
 	if err != nil {
 		fmtc.NewLine()
 		terminal.Error(err.Error())
+		logger.Error(id, "Instance starting error: %v", err)
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Started instance with ID %d", CORE.User.RealName, id)
+	logger.Info(id, "Instance started")
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())
 

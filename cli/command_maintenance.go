@@ -30,12 +30,14 @@ func MaintenanceCommand(args CommandArgs) int {
 		err = createMaintenanceLock()
 		if err == nil {
 			fmtc.Println("Maintenance mode is {g}enabled{!}")
+			logger.Info(-1, "Maintenance mode enabled")
 		}
 
 	case "disable", "no":
 		err = removeMaintenanceLock()
 		if err == nil {
 			fmtc.Println("Maintenance mode is {y}disabled{!}")
+			logger.Info(-1, "Maintenance mode disabled")
 		}
 
 	default:

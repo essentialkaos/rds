@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -81,7 +80,7 @@ func StopCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Stopped instance with ID %d (force: %t)", CORE.User.RealName, id, force)
+	logger.Info(id, "Instance stopped (force: %t)", force)
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())
 
