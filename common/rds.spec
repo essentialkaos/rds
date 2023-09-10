@@ -1,6 +1,6 @@
 ################################################################################
 
-%define  debug_package %{nil}
+%define debug_package  %{nil}
 
 ################################################################################
 
@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.1.0
+Version:        1.2.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -21,12 +21,11 @@ Source0:        https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  golang >= 1.19
+BuildRequires:  golang >= 1.20
 
 Requires:       tuned
 
 Provides:       %{name} = %{version}-%{release}
-Provides:       %{name}-cli = %{version}-%{release}
 
 ################################################################################
 
@@ -36,9 +35,8 @@ Tool for Redis orchestration.
 ################################################################################
 
 %package sync
-
 Summary:   RDS Sync daemon
-Version:   1.1.0
+Version:   1.1.1
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -184,6 +182,19 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Sun Sep 10 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
+- [cli] Added 'validate-templates' command for templates validation
+- [cli] Added 'backup-create' command for creating RDB snapshots
+- [cli] Added 'backup-restore' command for restoring instance data from snapshots
+- [cli] Added 'backup-clean' command for deleting RDB snapshots
+- [cli] Added 'backup-list' command for listing RDB snapshots
+- [cli] Added -R/--raw option for forcing raw output
+- [sync] Disable read-only mode for replicas on minion if standby failover is used
+- [core] Run all processes with umask 027
+- [cli] Improved properties filtering in 'conf' command
+- [cli] Added using of password variations for password auth
+- [cli] Improved actions logging
+
 * Tue Aug 22 2023 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
 - Added info about RDS to templates payload
 - Added instance storage data to templates payload
