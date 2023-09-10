@@ -47,6 +47,10 @@ type helpInfo struct {
 func HelpCommand(args CommandArgs) int {
 	commandName := args.Get(0)
 	commandList := map[string]func(){
+		COMMAND_BACKUP_CREATE:        helpCommandBackupCreate,
+		COMMAND_BACKUP_RESTORE:       helpCommandBackupRestore,
+		COMMAND_BACKUP_CLEAN:         helpCommandBackupClean,
+		COMMAND_BACKUP_LIST:          helpCommandBackupList,
 		COMMAND_BATCH_CREATE:         helpCommandBatchCreate,
 		COMMAND_BATCH_EDIT:           helpCommandBatchEdit,
 		COMMAND_CHECK:                helpCommandCheck,
@@ -930,6 +934,62 @@ func helpCommandValidateTemplates() {
 	}.render()
 }
 
+// helpCommandBackupCreate prints info about "backup-create" command usage
+func helpCommandBackupCreate() {
+	helpInfo{
+		command: COMMAND_BACKUP_CREATE,
+		desc:    "Create snapshot of RDB file.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Create an RDB file snapshot of the instance with the ID 7"},
+		},
+	}.render()
+}
+
+// helpCommandBackupRestore prints info about "backup-restore" command usage
+func helpCommandBackupRestore() {
+	helpInfo{
+		command: COMMAND_BACKUP_RESTORE,
+		desc:    "Restore previously created snapshot of instance data.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Restore a data snapshot of the instance with the ID 7"},
+		},
+	}.render()
+}
+
+// helpCommandBackupClean prints info about "backup-clean" command usage
+func helpCommandBackupClean() {
+	helpInfo{
+		command: COMMAND_BACKUP_CLEAN,
+		desc:    "Delete all backup snapshots.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Delete all RDB snapshots of the instance with the ID 7"},
+		},
+	}.render()
+}
+
+// helpCommandBackupList prints info about "backup-list" command usage
+func helpCommandBackupList() {
+	helpInfo{
+		command: COMMAND_BACKUP_LIST,
+		desc:    "Show information regarding all backup snapshots.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Show information about all snapshots of the instance with the ID 7"},
+		},
+	}.render()
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // getNiceOptions parse option and return formatted string
@@ -984,7 +1044,7 @@ func (i helpInfo) renderUsage() {
 		arguments = append(arguments, cmdArg.name)
 	}
 
-	fmtc.Printf("  rds {y}%s{!} {c}%s{!}\n\n", i.command, strings.Join(arguments, " "))
+	fmtc.Printf("  rds {y}%s{!} {#45}%s{!}\n\n", i.command, strings.Join(arguments, " "))
 }
 
 // renderDescription render description
@@ -1006,7 +1066,7 @@ func (i helpInfo) renderArguments() {
 	fmtStr := getArgumentFormatting(i.arguments)
 
 	for _, argument := range i.arguments {
-		fmtc.Printf("  {c}"+fmtStr+"{!} %s", argument.name, argument.desc)
+		fmtc.Printf("  {#45}"+fmtStr+"{!} %s", argument.name, argument.desc)
 
 		if argument.optional {
 			fmtc.Printf(" {s-}(optional){!}")

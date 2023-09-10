@@ -83,6 +83,10 @@ const (
 
 // Supported commands
 const (
+	COMMAND_BACKUP_CREATE        = "backup-create"
+	COMMAND_BACKUP_RESTORE       = "backup-restore"
+	COMMAND_BACKUP_CLEAN         = "backup-clean"
+	COMMAND_BACKUP_LIST          = "backup-list"
 	COMMAND_BATCH_CREATE         = "batch-create"
 	COMMAND_BATCH_EDIT           = "batch-edit"
 	COMMAND_CHECK                = "check"
@@ -447,6 +451,10 @@ func initCommands() {
 		commands[COMMAND_RELOAD] = &CommandRoutine{ReloadCommand, AUTH_SUPERUSER, true, true}
 		commands[COMMAND_REGEN] = &CommandRoutine{RegenCommand, AUTH_SUPERUSER, true, true}
 		commands[COMMAND_MAINTENANCE] = &CommandRoutine{MaintenanceCommand, AUTH_SUPERUSER, true, true}
+		commands[COMMAND_BACKUP_CREATE] = &CommandRoutine{BackupCreateCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
+		commands[COMMAND_BACKUP_RESTORE] = &CommandRoutine{BackupRestoreCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
+		commands[COMMAND_BACKUP_CLEAN] = &CommandRoutine{BackupCleanCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
+		commands[COMMAND_BACKUP_LIST] = &CommandRoutine{BackupListCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
 	}
 
 	if isMaster {
@@ -721,10 +729,11 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 // getSpellcheckModel train spellchecker with supported commands
 func getSpellcheckModel() *spellcheck.Model {
 	return spellcheck.Train([]string{
-		COMMAND_BATCH_CREATE, COMMAND_BATCH_EDIT, COMMAND_CHECK, COMMAND_CLI,
-		COMMAND_CPU, COMMAND_CONF, COMMAND_CREATE, COMMAND_DELETE, COMMAND_DESTROY,
-		COMMAND_EDIT, COMMAND_GEN_TOKEN, COMMAND_GO, COMMAND_HELP, COMMAND_INFO,
-		COMMAND_INIT, COMMAND_KILL, COMMAND_LIST, COMMAND_MAINTENANCE,
+		COMMAND_BACKUP_CREATE, COMMAND_BACKUP_RESTORE, COMMAND_BACKUP_CLEAN,
+		COMMAND_BACKUP_LIST, COMMAND_BATCH_CREATE, COMMAND_BATCH_EDIT, COMMAND_CHECK,
+		COMMAND_CLI, COMMAND_CPU, COMMAND_CONF, COMMAND_CREATE, COMMAND_DELETE,
+		COMMAND_DESTROY, COMMAND_EDIT, COMMAND_GEN_TOKEN, COMMAND_GO, COMMAND_HELP,
+		COMMAND_INFO, COMMAND_INIT, COMMAND_KILL, COMMAND_LIST, COMMAND_MAINTENANCE,
 		COMMAND_MEMORY, COMMAND_REGEN, COMMAND_RELEASE, COMMAND_RELOAD,
 		COMMAND_REMOVE, COMMAND_REPLICATION, COMMAND_REPLICATION_ROLE_SET,
 		COMMAND_RESTART, COMMAND_RESTART_ALL, COMMAND_RESTART_ALL_PROP,
@@ -880,12 +889,17 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_TOP_DUMP, "Dump top data to file", "file")
 		info.AddCommand(COMMAND_SLOWLOG_GET, "Show last entries from slow log", "id", "?num")
 		info.AddCommand(COMMAND_SLOWLOG_RESET, "Clear slow log", "id")
-		info.AddCommand(COMMAND_CHECK, "Check for dead instances")
+		info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
+		info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
+		info.AddCommand(COMMAND_BACKUP_CLEAN, "Remove all backup snapshots", "id")
+		info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
 
 		if isMaster {
 			info.AddCommand(COMMAND_TAG_ADD, "Add tag to instance", "id", "tag")
 			info.AddCommand(COMMAND_TAG_REMOVE, "Remove tag from instance", "id", "tag")
 		}
+
+		info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 	}
 
 	info.AddGroup("Superuser commands")
@@ -1004,9 +1018,13 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_TOP_DUMP, "Dump top data to file", "file")
 	info.AddCommand(COMMAND_SLOWLOG_GET, "Show last entries from slow log", "id", "?num")
 	info.AddCommand(COMMAND_SLOWLOG_RESET, "Clear slow log", "id")
-	info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 	info.AddCommand(COMMAND_TAG_ADD, "Add tag to instance", "id", "tag")
 	info.AddCommand(COMMAND_TAG_REMOVE, "Remove tag from instance", "id", "tag")
+	info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
+	info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
+	info.AddCommand(COMMAND_BACKUP_CLEAN, "Delete all backup snapshots", "id")
+	info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
+	info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 
 	info.AddGroup("Superuser commands")
 	info.AddCommand(COMMAND_GO, "Generate superuser access credentials")

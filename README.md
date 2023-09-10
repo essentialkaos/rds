@@ -82,9 +82,13 @@ Instances commands
   top-dump file                Dump top data to file
   slowlog-get id num           Show last entries from slow log
   slowlog-reset id             Clear slow log
-  check                        Check for dead instances
+  backup-create id             Create snapshot of RDB file
+  backup-restore id            Restore instance data from snapshot
+  backup-clean id              Delete all backup snapshots
+  backup-list id               List backup snapshots
   tag-add id tag               Add tag to instance
   tag-remove id tag            Remove tag from instance
+  check                        Check for dead instances
 
 Superuser commands
 
