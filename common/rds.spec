@@ -185,11 +185,13 @@ systemctl daemon-reload &>/dev/null || :
 * Sun Sep 10 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
 - [cli] Added 'validate-templates' command for templates validation
 - [cli] Added 'backup-create' command for creating RDB snapshots
-- [cli] Added 'backup-restore' command for restoring instance data from snapshots
+- [cli] Added 'backup-restore' command for restoring instance data from
+  snapshots
 - [cli] Added 'backup-clean' command for deleting RDB snapshots
 - [cli] Added 'backup-list' command for listing RDB snapshots
 - [cli] Added -R/--raw option for forcing raw output
-- [sync] Disable read-only mode for replicas on minion if standby failover is used
+- [sync] Disable read-only mode for replicas on minion if standby failover
+  is used
 - [core] Run all processes with umask 027
 - [cli] Improved properties filtering in 'conf' command
 - [cli] Added using of password variations for password auth
