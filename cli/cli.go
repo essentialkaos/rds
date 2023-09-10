@@ -710,9 +710,13 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 		CORE.Shutdown(EC_OK)
 	}
 
+	passwordVariations := passwd.GenPasswordVariations(password)
+
 	if iAuth != nil {
-		if passwd.Check(password, iAuth.Pepper, iAuth.Hash) {
-			return true, nil
+		for _, pwd := range passwordVariations {
+			if passwd.Check(pwd, iAuth.Pepper, iAuth.Hash) {
+				return true, nil
+			}
 		}
 	}
 
@@ -723,8 +727,10 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 	}
 
 	if sAuth != nil {
-		if passwd.Check(password, sAuth.Pepper, sAuth.Hash) {
-			return true, nil
+		for _, pwd := range passwordVariations {
+			if passwd.Check(pwd, sAuth.Pepper, sAuth.Hash) {
+				return true, nil
+			}
 		}
 	}
 
