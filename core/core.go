@@ -3169,6 +3169,9 @@ func runAsUser(user, logFile string, args ...string) error {
 
 	defer logFd.Close()
 
+	oldUMask := syscall.Umask(027)
+	defer syscall.Umask(oldUMask)
+
 	w := bufio.NewWriter(logFd)
 	cmdArgs := []string{"-s", "/bin/bash", user, "-c", strings.Join(args, " ")}
 	cmd := exec.Command(BIN_RUNUSER, cmdArgs...)
