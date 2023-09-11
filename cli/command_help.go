@@ -136,12 +136,12 @@ func helpCommandCreate() {
 		desc:    "Command read user input and create a new instance.",
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_TAGS), "List of tags", false},
-			{getNiceOptions(OPT_SECURE), "Create instance with ACL", false},
-			{getNiceOptions(OPT_DISABLE_SAVES), "Disable saves for created instance", false},
+			{getNiceOptions(OPT_SECURE), "Create instance with service ACL", false},
+			{getNiceOptions(OPT_DISABLE_SAVES), "Disable saving for created instance", false},
 		},
 		examples: []helpInfoExample{
 			{"", "", "Create new instance"},
-			{"", "--disable-saves", "Create new instance with disabled saves"},
+			{"", "--disable-saves", "Create new instance with saves disabled"},
 			{"", "--tags r:important,myapp", "Create new instance with tags"},
 		},
 	}.render()
@@ -151,7 +151,7 @@ func helpCommandCreate() {
 func helpCommandDestroy() {
 	helpInfo{
 		command: COMMAND_RELEASE,
-		desc:    "Command destroy instance associated with the defined ID. Command delete all instance data, logs and configuration files on master and all minions.",
+		desc:    "Command to destroy the instance associated with the given ID. Command deletes all instance data, logs and configuration files on the master and all minions.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -165,7 +165,7 @@ func helpCommandDestroy() {
 func helpCommandEdit() {
 	helpInfo{
 		command: COMMAND_EDIT,
-		desc:    "With this command, you can change some info about your instance. At this moment you can change owner, description, and password.",
+		desc:    "This command allows you to change some information about the instance. At the moment you can change the owner, description and password.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -190,7 +190,7 @@ func helpCommandBatchCreate() {
 	info.renderUsage()
 
 	fmtc.Println("{*}Description{!}\n")
-	fmtc.Println(`  With this command, you can create many instances at once. CSV file must have records in next format:
+	fmtc.Println(`  This command allows you to create many instances at once. The CSV file must contain records in the next format:
 
   {m}owner;password;replication-type;auth-password;description{!}
 
@@ -211,7 +211,7 @@ func helpCommandBatchCreate() {
 func helpCommandBatchEdit() {
 	helpInfo{
 		command: COMMAND_BATCH_EDIT,
-		desc:    "With this command you can modify metadata for many instances at once.",
+		desc:    "This command allows you to change metadata for many instances at once.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance ID list", false},
 		},
@@ -321,7 +321,7 @@ func helpCommandCli() {
 func helpCommandClients() {
 	helpInfo{
 		command: COMMAND_CLIENTS,
-		desc:    "Show list of connected clients.",
+		desc:    "Show list of clients connected to the instance.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 			{"filter", "Clients filter", true},
@@ -355,7 +355,7 @@ func helpCommandCPU() {
 func helpCommandInfo() {
 	helpInfo{
 		command: COMMAND_INFO,
-		desc:    "Show system info about Redis instance.",
+		desc:    "Show info about Redis instance.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 			{"section…", "Info section", true},
@@ -456,7 +456,7 @@ func helpCommandConf() {
 func helpCommandReload() {
 	helpInfo{
 		command: COMMAND_RELOAD,
-		desc:    "Reload configuration for one or all instances. Use this command if configuration file was updated. Please use this command carefully.",
+		desc:    "Reload the configuration for one or all instances. Use this command if the configuration file has been updated. Use this command with care.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -590,7 +590,7 @@ func helpCommandStatsError() {
 func helpCommandTop() {
 	helpInfo{
 		command: COMMAND_TOP,
-		desc:    "Show top for some field available in INFO command output. Without any arguments command show top 10 by memory usage. Also this command can calculate CPU usage (\"cpu\", \"cpu_children\", \"cpu_sys\", \"cpu_user\", \"cpu_sys_children\", \"cpu_user_children\")",
+		desc:    "Show top for any field available in the INFO command output. Command without arguments show top 10 by memory usage. Also this command can calculate CPU usage (\"cpu\", \"cpu_children\", \"cpu_sys\", \"cpu_user\", \"cpu_sys_children\", \"cpu_user_children\")",
 		arguments: []helpInfoArgument{
 			{"field", "Field  name", true},
 			{"num", "Number of results", true},
@@ -609,7 +609,7 @@ func helpCommandTop() {
 func helpCommandTopDump() {
 	helpInfo{
 		command: COMMAND_TOP_DUMP,
-		desc:    "Dump top data to the file. Output file must have .gz extension (all data saved as gzipped JSON file) and must not exist before saving. For output name can be used date control sequences (see 'man date').",
+		desc:    "Dump top data to file. The output file must have a .gz extension (all data saved as a gzipped JSON file) and must not exist before saving. Date control sequences can be used for the output name (see 'man date').",
 		arguments: []helpInfoArgument{
 			{"file", "Output file", false},
 		},
@@ -777,7 +777,7 @@ func helpCommandStateRestore() {
 func helpCommandRegen() {
 	helpInfo{
 		command: COMMAND_REGEN,
-		desc:    "Regenerate configuration file for one or all instances. Use this command if configuration template was updated. Please use this command carefully.",
+		desc:    "Regenerate the configuration file for one or all instances. Use this command if the configuration template has been updated. Use this command with care.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -792,7 +792,7 @@ func helpCommandRegen() {
 func helpCommandReplication() {
 	helpInfo{
 		command: COMMAND_REPLICATION,
-		desc:    "Show info about RDS replication with other nodes in the cluster.",
+		desc:    "Show information about RDS replication with other nodes in the cluster.",
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_FORMAT), "Output format (json|text|xml)", false},
 		},
