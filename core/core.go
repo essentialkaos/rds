@@ -756,9 +756,9 @@ func GetInstanceMeta(id int) (*InstanceMeta, error) {
 		metaCache = &MetaCache{}
 	}
 
-	hit, meta := metaCache.Get(id)
+	meta, ok := metaCache.Get(id)
 
-	if hit {
+	if ok {
 		return meta, nil
 	}
 
@@ -778,7 +778,7 @@ func GetInstanceMeta(id int) (*InstanceMeta, error) {
 
 	metaCache.Set(id, meta)
 
-	_, meta = metaCache.Get(id)
+	meta, _ = metaCache.Get(id)
 
 	return meta, err
 }

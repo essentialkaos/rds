@@ -8,16 +8,19 @@ package core
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"sync"
 	"time"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// MetaCache is instance metadata cache
 type MetaCache struct {
 	maxCacheTime int64
-	items        map[int]*MetaCacheItem
+	items        *sync.Map
 }
 
+// MetaCacheItem contains instance metadata and date of creation
 type MetaCacheItem struct {
 	meta *InstanceMeta
 	date int64
@@ -29,44 +32,61 @@ type MetaCacheItem struct {
 func NewMetaCache(maxCacheTime time.Duration) *MetaCache {
 	return &MetaCache{
 		maxCacheTime: int64(maxCacheTime),
-		items:        make(map[int]*MetaCacheItem),
+		items:        &sync.Map{},
 	}
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Set add object to cache
+// Set adds metadata to cache
 func (c *MetaCache) Set(key int, meta *InstanceMeta) {
-	c.items[key] = &MetaCacheItem{meta, time.Now().UnixNano()}
+	if c.items == nil {
+		return
+	}
+
+	c.items.Store(key, &MetaCacheItem{meta, time.Now().UnixNano()})
+
 	c.clearCache()
 }
 
-// Get returns meta from cache
-func (c *MetaCache) Get(key int) (bool, *InstanceMeta) {
-	item, hit := c.items[key]
-
-	if hit {
-		if time.Now().UnixNano()-item.date >= c.maxCacheTime {
-			delete(c.items, key)
-			return false, nil
-		}
-
-		return true, c.getClone(item.meta)
+// Get returns meta from cache if exist
+func (c *MetaCache) Get(key int) (*InstanceMeta, bool) {
+	if c.items == nil {
+		return nil, false
 	}
 
-	return false, nil
+	v, ok := c.items.Load(key)
+
+	if ok {
+		item := v.(*MetaCacheItem)
+
+		if time.Now().UnixNano()-item.date >= c.maxCacheTime {
+			c.items.Delete(key)
+			return nil, false
+		}
+
+		return c.getClone(item.meta), true
+	}
+
+	return nil, false
 }
 
 // Has checks that we have cached meta for instance
 func (c *MetaCache) Has(key int) bool {
-	item, hit := c.items[key]
-
-	if !hit {
+	if c.items == nil {
 		return false
 	}
 
+	v, ok := c.items.Load(key)
+
+	if !ok {
+		return false
+	}
+
+	item := v.(*MetaCacheItem)
+
 	if time.Now().UnixNano()-item.date >= c.maxCacheTime {
-		delete(c.items, key)
+		c.items.Delete(key)
 		return false
 	}
 
@@ -75,7 +95,11 @@ func (c *MetaCache) Has(key int) bool {
 
 // Remove removes item from cache
 func (c *MetaCache) Remove(key int) {
-	delete(c.items, key)
+	if c.items == nil {
+		return
+	}
+
+	c.items.Delete(key)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -88,11 +112,15 @@ func (c *MetaCache) clearCache() {
 
 	now := time.Now().UnixNano()
 
-	for key, item := range c.items {
+	c.items.Range(func(key, value any) bool {
+		item := value.(*MetaCacheItem)
+
 		if now-item.date >= c.maxCacheTime {
-			delete(c.items, key)
+			c.items.Delete(key)
 		}
-	}
+
+		return true
+	})
 }
 
 // getClone clones meta

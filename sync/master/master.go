@@ -753,7 +753,7 @@ func collectInstancesData() []*CORE.InstanceInfo {
 
 // appendHeader append header to response
 func appendHeader(w http.ResponseWriter) {
-	w.Header().Set("Server", "RSS/"+daemonVersion)
+	w.Header().Set("Server", "RDS-Sync/"+daemonVersion)
 	w.Header().Set("Content-Type", "application/json")
 }
 
