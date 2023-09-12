@@ -866,7 +866,7 @@ func showSmartUsage() {
 		}
 	}
 
-	info.AddGroup("Instances commands")
+	info.AddGroup("Basic commands")
 
 	if isMaster {
 		info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
@@ -900,10 +900,6 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_TOP_DUMP, "Dump top data to file", "file")
 		info.AddCommand(COMMAND_SLOWLOG_GET, "Show last entries from slow log", "id", "?num")
 		info.AddCommand(COMMAND_SLOWLOG_RESET, "Clear slow log", "id")
-		info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
-		info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
-		info.AddCommand(COMMAND_BACKUP_CLEAN, "Remove all backup snapshots", "id")
-		info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
 
 		if isMaster {
 			info.AddCommand(COMMAND_TAG_ADD, "Add tag to instance", "id", "tag")
@@ -912,6 +908,13 @@ func showSmartUsage() {
 
 		info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 	}
+
+	info.AddGroup("Backup commands")
+
+	info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
+	info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
+	info.AddCommand(COMMAND_BACKUP_CLEAN, "Remove all backup snapshots", "id")
+	info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
 
 	info.AddGroup("Superuser commands")
 
@@ -1003,7 +1006,8 @@ func genUsage() *usage.Info {
 
 	info.AppNameColorTag = "{*}" + colorTagApp
 
-	info.AddGroup("Instances commands")
+	info.AddGroup("Basic commands")
+
 	info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
 	info.AddCommand(COMMAND_DESTROY, "Destroy (delete) Redis instance", "id")
 	info.AddCommand(COMMAND_EDIT, "Edit metadata for instance", "id")
@@ -1031,13 +1035,17 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_SLOWLOG_RESET, "Clear slow log", "id")
 	info.AddCommand(COMMAND_TAG_ADD, "Add tag to instance", "id", "tag")
 	info.AddCommand(COMMAND_TAG_REMOVE, "Remove tag from instance", "id", "tag")
-	info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
-	info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
-	info.AddCommand(COMMAND_BACKUP_CLEAN, "Delete all backup snapshots", "id")
-	info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
 	info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 
+	info.AddGroup("Backup commands")
+
+	info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
+	info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
+	info.AddCommand(COMMAND_BACKUP_CLEAN, "Remove all backup snapshots", "id")
+	info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
+
 	info.AddGroup("Superuser commands")
+
 	info.AddCommand(COMMAND_GO, "Generate superuser access credentials")
 	info.AddCommand(COMMAND_BATCH_CREATE, "Create many instances at once", "csv-file")
 	info.AddCommand(COMMAND_BATCH_EDIT, "Edit many instances at once", "id")
@@ -1051,10 +1059,12 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_MAINTENANCE, "Enable or disable maintenance mode", "flag")
 
 	info.AddGroup("Replication commands")
+
 	info.AddCommand(COMMAND_REPLICATION, "Show replication info")
 	info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Reconfigure node after changing the role")
 
 	info.AddGroup("Sentinel commands")
+
 	info.AddCommand(COMMAND_SENTINEL_START, "Start Redis Sentinel daemon")
 	info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Redis Sentinel daemon")
 	info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
@@ -1065,6 +1075,7 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_SENTINEL_SWITCH, "Switch instance to master role", "id")
 
 	info.AddGroup("Common commands")
+
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
 	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
