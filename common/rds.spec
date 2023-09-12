@@ -193,6 +193,7 @@ systemctl daemon-reload &>/dev/null || :
 - [sync] Disable read-only mode for replicas on minion if standby failover
   is used
 - [core] Run all processes with umask 027
+- [core] Use sync.Map for caching metadata
 - [cli] Improved properties filtering in 'conf' command
 - [cli] Added using of password variations for password auth
 - [cli] Improved actions logging
