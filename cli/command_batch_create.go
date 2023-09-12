@@ -87,6 +87,7 @@ func BatchCreateCommand(args CommandArgs) int {
 		}
 
 		meta.Desc = info.Desc
+		meta.Auth.User = info.Owner
 		meta.Preferencies.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 		meta.Preferencies.IsSaveDisabled = options.GetB(OPT_DISABLE_SAVES)
 
