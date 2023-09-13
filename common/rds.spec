@@ -201,7 +201,6 @@ systemctl daemon-reload &>/dev/null || :
 - [cli] Fixed raw output from 'top' command for long numbers
 - [cli] Fixed command execution with 'cli'
 - [cli] Fixed password check using password variations
-- [cli] Fix password check using password variations
 
 * Tue Aug 22 2023 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
 - Added info about RDS to templates payload
