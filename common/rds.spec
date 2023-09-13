@@ -196,6 +196,7 @@ systemctl daemon-reload &>/dev/null || :
 - [core] Use sync.Map for caching metadata
 - [cli] Improved properties filtering in 'conf' command
 - [cli] Added using of password variations for password auth
+- [cli] Improved instance listing filtering
 - [cli] Improved actions logging
 - [cli] Fixed raw output from 'top' command for long numbers
 - [cli] Fixed command execution with 'cli'
