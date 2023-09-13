@@ -81,7 +81,11 @@ func CliCommand(args CommandArgs) int {
 		cliCfg.Password = meta.Preferencies.ServicePassword
 	}
 
-	err = RC.RunRedisCli(cliCfg)
+	if len(args) == 1 {
+		err = RC.RunRedisCli(cliCfg)
+	} else {
+		err = RC.ExecRedisCmd(cliCfg)
+	}
 
 	if err != nil {
 		terminal.Error(err.Error())
