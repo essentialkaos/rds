@@ -183,6 +183,7 @@ systemctl daemon-reload &>/dev/null || :
 
 %changelog
 * Sun Sep 10 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
+- [cli] Fixed raw output from 'top' command for long numbers
 - [cli] Added 'validate-templates' command for templates validation
 - [cli] Added 'backup-create' command for creating RDB snapshots
 - [cli] Added 'backup-restore' command for restoring instance data from
