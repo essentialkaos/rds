@@ -84,8 +84,6 @@ const (
 	MAX_TAGS             = 3
 	MIN_SYNC_WAIT        = 60          // 1 Min
 	MAX_SYNC_WAIT        = 3 * 60 * 60 // 3 Hours
-	MIN_INIT_SYNC_WAIT   = 5 * 60      // 5 min
-	MAX_INIT_SYNC_WAIT   = 6 * 60 * 60 // 6 Hours
 	MAX_FULL_START_DELAY = 30 * 60     // 30 Min
 	MAX_SWITCH_WAIT      = 15 * 60     // 15 Min
 	TOKEN_LENGTH         = 64
@@ -168,7 +166,6 @@ const (
 	REPLICATION_ALLOW_REPLICAS      = "replication:allow-replicas"
 	REPLICATION_ALLOW_COMMANDS      = "replication:allow-commands"
 	REPLICATION_ALWAYS_PROPAGATE    = "replication:always-propagate"
-	REPLICATION_MAX_INIT_SYNC_WAIT  = "replication:max-init-sync-wait"
 	REPLICATION_MAX_SYNC_WAIT       = "replication:max-sync-wait"
 	REPLICATION_INIT_SYNC_DELAY     = "replication:init-sync-delay"
 
@@ -2581,8 +2578,6 @@ func validateConfig(c *knf.Config) []error {
 			&knf.Validator{REPLICATION_AUTH_TOKEN, knfv.NotLen, TOKEN_LENGTH},
 			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MIN_SYNC_WAIT},
 			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MAX_SYNC_WAIT},
-			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Less, MIN_INIT_SYNC_WAIT},
-			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Greater, MAX_INIT_SYNC_WAIT},
 			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.NotContains, []string{
 				string(FAILOVER_METHOD_STANDBY), string(FAILOVER_METHOD_SENTINEL),
 			}},

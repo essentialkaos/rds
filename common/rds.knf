@@ -152,10 +152,6 @@
   # restart-all) to minions
   always-propagate: true
 
-  # Max time (in seconds) which given to minions for initial state sync with
-  # master (time between fetch and pull command)
-  max-init-sync-wait: 3600
-
   # Max time (in seconds) which given to Redis replicas for syncing with masters
   # Increase this value if you have big instances (20+ Gb) or slow connection
   # between nodes

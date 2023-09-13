@@ -504,8 +504,9 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error("Can't encode response: %v", err)
 	}
 
-	maxInitTimeDur := time.Duration(CORE.Config.GetI(CORE.REPLICATION_MAX_INIT_SYNC_WAIT))
-	deadline := time.Now().Add(time.Second * maxInitTimeDur)
+	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT)
+	maxInitTimeDur := maxSyncWait * time.Duration(len(fetchResponse.Instances))
+	deadline := time.Now().Add(maxInitTimeDur)
 
 	log.Info(
 		"Client with ID %s started initial synchronization process (deadline: %s)",
@@ -870,13 +871,7 @@ func getClientState(now int64, client *ClientInfo) API.ClientState {
 	timeDiff := now - client.LastSeen
 
 	if client.Syncing {
-		maxInitSyncWait := int64(CORE.Config.GetI(CORE.REPLICATION_MAX_INIT_SYNC_WAIT))
-
-		if timeDiff <= maxInitSyncWait*1000000000 {
-			return API.STATE_SYNCING
-		} else {
-			return API.STATE_DOWN
-		}
+		return API.STATE_SYNCING
 	}
 
 	switch {
