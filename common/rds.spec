@@ -183,7 +183,6 @@ systemctl daemon-reload &>/dev/null || :
 
 %changelog
 * Sun Sep 10 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
-- [cli] Fixed raw output from 'top' command for long numbers
 - [cli] Added 'validate-templates' command for templates validation
 - [cli] Added 'backup-create' command for creating RDB snapshots
 - [cli] Added 'backup-restore' command for restoring instance data from
@@ -198,6 +197,10 @@ systemctl daemon-reload &>/dev/null || :
 - [cli] Improved properties filtering in 'conf' command
 - [cli] Added using of password variations for password auth
 - [cli] Improved actions logging
+- [cli] Fixed raw output from 'top' command for long numbers
+- [cli] Fixed command execution with 'cli'
+- [cli] Fixed password check using password variations
+- [cli] Fix password check using password variations
 
 * Tue Aug 22 2023 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
 - Added info about RDS to templates payload
