@@ -504,7 +504,7 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error("Can't encode response: %v", err)
 	}
 
-	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT)
+	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, time.Second)
 	maxInitTimeDur := maxSyncWait * time.Duration(len(fetchResponse.Instances))
 	deadline := time.Now().Add(maxInitTimeDur)
 

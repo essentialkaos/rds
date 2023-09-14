@@ -991,7 +991,7 @@ func syncBlocker(id int) {
 
 	log.Info("(%3d) Starting sync with master instance…", id)
 
-	time.Sleep(CORE.Config.GetD(CORE.REPLICATION_INIT_SYNC_DELAY, 3*time.Second))
+	time.Sleep(CORE.Config.GetD(CORE.REPLICATION_INIT_SYNC_DELAY, time.Second, 3*time.Second))
 
 	syncingWaitLoop(id)
 }
@@ -999,7 +999,7 @@ func syncBlocker(id int) {
 // syncingWaitLoop blocks main sync process till syncing will be completed
 func syncingWaitLoop(id int) {
 	start := time.Now().Unix()
-	maxWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT)
+	maxWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, time.Second)
 	deadline := time.Now().Add(maxWait)
 
 	log.Info(
