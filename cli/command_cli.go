@@ -9,6 +9,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/terminal"
@@ -55,7 +56,7 @@ func CliCommand(args CommandArgs) int {
 		}
 	}
 
-	if args.Has(1) || args.Get(1) == "MONITOR" {
+	if args.Has(1) || strings.ToUpper(args.Get(1)) == "MONITOR" {
 		ops, err := getCurrentInstanceTraffic(id)
 
 		if err != nil {
