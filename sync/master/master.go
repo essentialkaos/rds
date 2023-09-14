@@ -22,6 +22,7 @@ import (
 
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/httputil"
+	"github.com/essentialkaos/ek/v12/knf"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/mathutil"
 	"github.com/essentialkaos/ek/v12/netutil"
@@ -504,7 +505,7 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error("Can't encode response: %v", err)
 	}
 
-	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, time.Second)
+	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, knf.Second)
 	maxInitTimeDur := maxSyncWait * time.Duration(len(fetchResponse.Instances))
 	deadline := time.Now().Add(maxInitTimeDur)
 
