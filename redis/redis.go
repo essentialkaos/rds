@@ -291,24 +291,6 @@ func getClient(port int, timeout time.Duration) *redy.Client {
 	return client
 }
 
-// getRenamedCommand returns command with prefix
-func getRenamedCommand(rc *redy.Client, rn map[string]string, command string) string {
-	renamedCommand, ok := rn[strings.ToUpper(command)]
-
-	if !ok {
-		return command
-	}
-
-	// Check that renamed command is supported
-	resp, err := rc.Cmd("COMMAND", "INFO", renamedCommand).Array()
-
-	if err != nil || len(resp) == 0 || resp[0].HasType(NIL) {
-		return command
-	}
-
-	return renamedCommand
-}
-
 // getHumanSize returns size in human readable format
 func getHumanSize(size uint64) string {
 	f := float64(size)
