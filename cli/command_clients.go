@@ -51,7 +51,10 @@ func ClientsCommand(args CommandArgs) int {
 	req := &REDIS.Request{
 		Command: []string{"CLIENT", "LIST", "TYPE", "NORMAL"},
 		Port:    CORE.GetInstancePort(id),
-		Auth:    REDIS.Auth{CORE.REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Auth: REDIS.Auth{
+			User:     CORE.REDIS_USER_ADMIN,
+			Password: meta.Preferencies.AdminPassword,
+		},
 		Timeout: time.Second,
 	}
 
