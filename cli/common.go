@@ -472,11 +472,12 @@ func warnAboutUnsafeAction(id int, message string) bool {
 		case 5:
 			ops, err := getCurrentInstanceTraffic(id)
 
-			if ops > 10 {
+			switch {
+			case ops > 10:
 				terminal.Warn("There is some traffic on the instance (%d ops/s).", ops)
-			} else if err != nil {
+			case err != nil:
 				terminal.Warn("Can't measure the number of operations on the instance.")
-			} else {
+			default:
 				continue
 			}
 		}
