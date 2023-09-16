@@ -9,6 +9,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/terminal"
@@ -55,7 +56,7 @@ func CliCommand(args CommandArgs) int {
 		}
 	}
 
-	if args.Has(1) || args.Get(1) == "MONITOR" {
+	if args.Has(1) || strings.ToUpper(args.Get(1)) == "MONITOR" {
 		ops, err := getCurrentInstanceTraffic(id)
 
 		if err != nil {
@@ -81,7 +82,11 @@ func CliCommand(args CommandArgs) int {
 		cliCfg.Password = meta.Preferencies.ServicePassword
 	}
 
-	err = RC.RunRedisCli(cliCfg)
+	if len(args) == 1 {
+		err = RC.RunRedisCli(cliCfg)
+	} else {
+		err = RC.ExecRedisCmd(cliCfg)
+	}
 
 	if err != nil {
 		terminal.Error(err.Error())

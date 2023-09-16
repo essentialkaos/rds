@@ -148,6 +148,7 @@ func slowlogReset(id int) int {
 		return EC_ERROR
 	}
 
+	logger.Info(id, "Slow log reset")
 	fmtc.Printf("{g}Slow log successfully cleared for instance %d{!}\n", id)
 
 	return EC_OK

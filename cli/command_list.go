@@ -124,6 +124,8 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 			fit = state.IsWorks() && state.IsSaving()
 		case "loading", "load":
 			fit = state.IsWorks() && state.IsLoading()
+		case "orphan":
+			fit = isInstanceOwnerExist(meta.Auth.User) == false
 		case "outdated":
 			currentRedisVer, _ := CORE.GetRedisVersion()
 			if state.IsStopped() {
@@ -131,9 +133,9 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 			} else if currentRedisVer.String() != "" && meta.Compatible != "" {
 				fit = currentRedisVer.String() != meta.Compatible
 			}
-		case "standby", "duplicate":
+		case "standby":
 			fit = meta.Preferencies.ReplicationType == CORE.REPL_TYPE_STANDBY
-		case "replica", "slave":
+		case "replica":
 			fit = meta.Preferencies.ReplicationType == CORE.REPL_TYPE_REPLICA
 		case "secure":
 			fit = meta.Preferencies.ServicePassword != ""

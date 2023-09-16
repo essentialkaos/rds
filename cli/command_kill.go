@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -76,7 +75,7 @@ func KillCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Killed instance with ID %d", CORE.User.RealName, id)
+	logger.Info(id, "Instance killed")
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())
 

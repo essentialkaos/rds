@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -109,8 +108,6 @@ func stopAllInstances(idList []int) int {
 		return EC_OK
 	}
 
-	log.Info("(%s) Initiated the stopping of all working instances", CORE.User.RealName)
-
 	for _, id := range idList {
 		meta, err := CORE.GetInstanceMeta(id)
 
@@ -125,13 +122,14 @@ func stopAllInstances(idList []int) int {
 		if err != nil {
 			spinner.Done(false)
 			hasErrors = true
+			logger.Info(id, "Instance stopping (batch) error: %v", err)
 			continue
 		}
 
+		logger.Info(id, "Instance stopped (batch)")
+
 		spinner.Done(true)
 	}
-
-	log.Info("(%s) Stopped all working instances", CORE.User.RealName)
 
 	err := CORE.SaveStates(CORE.GetStatesFilePath())
 

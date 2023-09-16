@@ -47,6 +47,10 @@ type helpInfo struct {
 func HelpCommand(args CommandArgs) int {
 	commandName := args.Get(0)
 	commandList := map[string]func(){
+		COMMAND_BACKUP_CREATE:        helpCommandBackupCreate,
+		COMMAND_BACKUP_RESTORE:       helpCommandBackupRestore,
+		COMMAND_BACKUP_CLEAN:         helpCommandBackupClean,
+		COMMAND_BACKUP_LIST:          helpCommandBackupList,
 		COMMAND_BATCH_CREATE:         helpCommandBatchCreate,
 		COMMAND_BATCH_EDIT:           helpCommandBatchEdit,
 		COMMAND_CHECK:                helpCommandCheck,
@@ -108,6 +112,7 @@ func HelpCommand(args CommandArgs) int {
 		COMMAND_TOP_DIFF:             helpCommandTopDiff,
 		COMMAND_TOP_DUMP:             helpCommandTopDump,
 		COMMAND_TRACK:                helpCommandTrack,
+		COMMAND_VALIDATE_TEMPLATES:   helpCommandValidateTemplates,
 	}
 
 	helpFunc, hasInfo := commandList[commandName]
@@ -131,12 +136,12 @@ func helpCommandCreate() {
 		desc:    "Command read user input and create a new instance.",
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_TAGS), "List of tags", false},
-			{getNiceOptions(OPT_SECURE), "Create instance with ACL", false},
-			{getNiceOptions(OPT_DISABLE_SAVES), "Disable saves for created instance", false},
+			{getNiceOptions(OPT_SECURE), "Create instance with service ACL", false},
+			{getNiceOptions(OPT_DISABLE_SAVES), "Disable saving for created instance", false},
 		},
 		examples: []helpInfoExample{
 			{"", "", "Create new instance"},
-			{"", "--disable-saves", "Create new instance with disabled saves"},
+			{"", "--disable-saves", "Create new instance with saves disabled"},
 			{"", "--tags r:important,myapp", "Create new instance with tags"},
 		},
 	}.render()
@@ -146,7 +151,7 @@ func helpCommandCreate() {
 func helpCommandDestroy() {
 	helpInfo{
 		command: COMMAND_RELEASE,
-		desc:    "Command destroy instance associated with the defined ID. Command delete all instance data, logs and configuration files on master and all minions.",
+		desc:    "Command to destroy the instance associated with the given ID. Command deletes all instance data, logs and configuration files on the master and all minions.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -160,7 +165,7 @@ func helpCommandDestroy() {
 func helpCommandEdit() {
 	helpInfo{
 		command: COMMAND_EDIT,
-		desc:    "With this command, you can change some info about your instance. At this moment you can change owner, description, and password.",
+		desc:    "This command allows you to change some information about the instance. At the moment you can change the owner, description and password.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -185,7 +190,7 @@ func helpCommandBatchCreate() {
 	info.renderUsage()
 
 	fmtc.Println("{*}Description{!}\n")
-	fmtc.Println(`  With this command, you can create many instances at once. CSV file must have records in next format:
+	fmtc.Println(`  This command allows you to create many instances at once. The CSV file must contain records in the next format:
 
   {m}owner;password;replication-type;auth-password;description{!}
 
@@ -206,7 +211,7 @@ func helpCommandBatchCreate() {
 func helpCommandBatchEdit() {
 	helpInfo{
 		command: COMMAND_BATCH_EDIT,
-		desc:    "With this command you can modify metadata for many instances at once.",
+		desc:    "This command allows you to change metadata for many instances at once.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance ID list", false},
 		},
@@ -286,7 +291,7 @@ func helpCommandStatus() {
 			{"id", "Instance unique ID", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1", "Show status for instance with ID 1"},
+			{"", "1", "Show status of instance with ID 1"},
 		},
 	}.render()
 }
@@ -316,7 +321,7 @@ func helpCommandCli() {
 func helpCommandClients() {
 	helpInfo{
 		command: COMMAND_CLIENTS,
-		desc:    "Show list of connected clients.",
+		desc:    "Show list of clients connected to the instance.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 			{"filter", "Clients filter", true},
@@ -350,17 +355,17 @@ func helpCommandCPU() {
 func helpCommandInfo() {
 	helpInfo{
 		command: COMMAND_INFO,
-		desc:    "Show system info about Redis instance.",
+		desc:    "Show info about Redis instance.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
-			{"section", "Info section", true},
+			{"section…", "Info section", true},
 		},
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_FORMAT), "Output format (json|text|xml)", false},
 		},
 		examples: []helpInfoExample{
 			{"", "1", "Show basic info about instance with ID 1"},
-			{"", "1 memory", "Show info memory section for instance with ID 1"},
+			{"", "1 memory cpu", "Show memory and cpu section of instance with ID 1"},
 			{"", "1 all", "Show all info (including non-default sections) about instance with ID 1"},
 		},
 	}.render()
@@ -435,13 +440,14 @@ func helpCommandConf() {
 		desc:    "Print values from the configuration file and in-memory configuration.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
-			{"property", "Configuration property", true},
+			{"filter…", "Property name filters", true},
 		},
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_PRIVATE), "Show private info", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1", "Show configuration for instance with ID 1"},
+			{"", "1", "Show configuration of instance with ID 1"},
+			{"", "1 append sync", "Show properties with 'append' or 'sync' in the name of instance with ID 1"},
 		},
 	}.render()
 }
@@ -450,7 +456,7 @@ func helpCommandConf() {
 func helpCommandReload() {
 	helpInfo{
 		command: COMMAND_RELOAD,
-		desc:    "Reload configuration for one or all instances. Use this command if configuration file was updated. Please use this command carefully.",
+		desc:    "Reload the configuration for one or all instances. Use this command if the configuration file has been updated. Use this command with care.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -467,7 +473,7 @@ func helpCommandList() {
 		command: COMMAND_LIST,
 		desc:    "Show list of all Redis instances.",
 		arguments: []helpInfoArgument{
-			{"filter", "Listing filter", true},
+			{"filter…", "Listing filters", true},
 		},
 		examples: []helpInfoExample{
 			{"", "", "Show list of all instances"},
@@ -492,9 +498,9 @@ func helpCommandList() {
 	fmtc.Printf("    {b}%-10s{!} %s\n", "saving", "Saving instances")
 	fmtc.Printf("    {b}%-10s{!} %s\n", "loading", "Loading instances")
 	fmtc.Printf("    {b}%-10s{!} %s\n", "outdated", "Instances which require restart for update")
+	fmtc.Printf("    {b}%-10s{!} %s\n", "orphan", "Instances owned by deleted users")
 	fmtc.Printf("    {b}%-10s{!} %s\n", "standby", "Instances with standby replication")
 	fmtc.Printf("    {b}%-10s{!} %s\n", "replica", "Instances with real replicas")
-	fmtc.Printf("    {b}%-10s{!} %s\n", "sentinel", "Instances with enabled Sentinel support")
 	fmtc.Printf("    {b}%-10s{!} %s\n", "secure", "Instances with enabled authentication")
 	fmtc.Printf("    {b}%-10s{!} %s\n", "{username}", "Instances owned by given user")
 	fmtc.Printf("    {b}%-10s{!} %s\n", "{tag}", "Instances tagged by given tag")
@@ -528,7 +534,7 @@ func helpCommandMemory() {
 			{"id", "Instance unique ID", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1", "Show memory usage for instance with ID 1"},
+			{"", "1", "Show memory usage of instance with ID 1"},
 		},
 	}.render()
 }
@@ -553,7 +559,7 @@ func helpCommandStatsCommand() {
 		command: COMMAND_STATS_COMMAND,
 		desc:    "Show statistics based on the command type.",
 		examples: []helpInfoExample{
-			{"", "1", "Show statistics for instance with ID 1"},
+			{"", "1", "Show statistics of instance with ID 1"},
 		},
 	}.render()
 }
@@ -564,7 +570,7 @@ func helpCommandStatsLatency() {
 		command: COMMAND_STATS_LATENCY,
 		desc:    "Show latency statistics based on the command type.",
 		examples: []helpInfoExample{
-			{"", "1", "Show statistics for instance with ID 1"},
+			{"", "1", "Show statistics of instance with ID 1"},
 		},
 	}.render()
 }
@@ -575,7 +581,7 @@ func helpCommandStatsError() {
 		command: COMMAND_STATS_ERROR,
 		desc:    "Show error statistics.",
 		examples: []helpInfoExample{
-			{"", "1", "Show statistics for instance with ID 1"},
+			{"", "1", "Show statistics of instance with ID 1"},
 		},
 	}.render()
 }
@@ -584,7 +590,7 @@ func helpCommandStatsError() {
 func helpCommandTop() {
 	helpInfo{
 		command: COMMAND_TOP,
-		desc:    "Show top for some field available in INFO command output. Without any arguments command show top 10 by memory usage. Also this command can calculate CPU usage (\"cpu\", \"cpu_children\", \"cpu_sys\", \"cpu_user\", \"cpu_sys_children\", \"cpu_user_children\")",
+		desc:    "Show top for any field available in the INFO command output. Command without arguments show top 10 by memory usage. Also this command can calculate CPU usage (\"cpu\", \"cpu_children\", \"cpu_sys\", \"cpu_user\", \"cpu_sys_children\", \"cpu_user_children\")",
 		arguments: []helpInfoArgument{
 			{"field", "Field  name", true},
 			{"num", "Number of results", true},
@@ -603,7 +609,7 @@ func helpCommandTop() {
 func helpCommandTopDump() {
 	helpInfo{
 		command: COMMAND_TOP_DUMP,
-		desc:    "Dump top data to the file. Output file must have .gz extension (all data saved as gzipped JSON file) and must not exist before saving. For output name can be used date control sequences (see 'man date').",
+		desc:    "Dump top data to file. The output file must have a .gz extension (all data saved as a gzipped JSON file) and must not exist before saving. Date control sequences can be used for the output name (see 'man date').",
 		arguments: []helpInfoArgument{
 			{"file", "Output file", false},
 		},
@@ -771,7 +777,7 @@ func helpCommandStateRestore() {
 func helpCommandRegen() {
 	helpInfo{
 		command: COMMAND_REGEN,
-		desc:    "Regenerate configuration file for one or all instances. Use this command if configuration template was updated. Please use this command carefully.",
+		desc:    "Regenerate the configuration file for one or all instances. Use this command if the configuration template has been updated. Use this command with care.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
@@ -786,7 +792,7 @@ func helpCommandRegen() {
 func helpCommandReplication() {
 	helpInfo{
 		command: COMMAND_REPLICATION,
-		desc:    "Show info about RDS replication with other nodes in the cluster.",
+		desc:    "Show information about RDS replication with other nodes in the cluster.",
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_FORMAT), "Output format (json|text|xml)", false},
 		},
@@ -917,6 +923,73 @@ func helpCommandGenToken() {
 	}.render()
 }
 
+// helpCommandValidateTemplates prints info about "validate-templates" command usage
+func helpCommandValidateTemplates() {
+	helpInfo{
+		command: COMMAND_VALIDATE_TEMPLATES,
+		desc:    "Validate Redis and Sentinel configuration file templates.",
+		examples: []helpInfoExample{
+			{"", "", "Validate templates"},
+		},
+	}.render()
+}
+
+// helpCommandBackupCreate prints info about "backup-create" command usage
+func helpCommandBackupCreate() {
+	helpInfo{
+		command: COMMAND_BACKUP_CREATE,
+		desc:    "Create snapshot of RDB file.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Create an RDB file snapshot of the instance with the ID 7"},
+		},
+	}.render()
+}
+
+// helpCommandBackupRestore prints info about "backup-restore" command usage
+func helpCommandBackupRestore() {
+	helpInfo{
+		command: COMMAND_BACKUP_RESTORE,
+		desc:    "Restore previously created snapshot of instance data.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Restore a data snapshot of the instance with the ID 7"},
+		},
+	}.render()
+}
+
+// helpCommandBackupClean prints info about "backup-clean" command usage
+func helpCommandBackupClean() {
+	helpInfo{
+		command: COMMAND_BACKUP_CLEAN,
+		desc:    "Delete all backup snapshots.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Delete all RDB snapshots of the instance with the ID 7"},
+		},
+	}.render()
+}
+
+// helpCommandBackupList prints info about "backup-list" command usage
+func helpCommandBackupList() {
+	helpInfo{
+		command: COMMAND_BACKUP_LIST,
+		desc:    "Show information regarding all backup snapshots.",
+		arguments: []helpInfoArgument{
+			{"id", "Instance unique ID", false},
+		},
+		examples: []helpInfoExample{
+			{"", "7", "Show information about all snapshots of the instance with the ID 7"},
+		},
+	}.render()
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // getNiceOptions parse option and return formatted string
@@ -971,7 +1044,7 @@ func (i helpInfo) renderUsage() {
 		arguments = append(arguments, cmdArg.name)
 	}
 
-	fmtc.Printf("  rds {y}%s{!} {c}%s{!}\n\n", i.command, strings.Join(arguments, " "))
+	fmtc.Printf("  rds {y}%s{!} {#45}%s{!}\n\n", i.command, strings.Join(arguments, " "))
 }
 
 // renderDescription render description
@@ -993,7 +1066,7 @@ func (i helpInfo) renderArguments() {
 	fmtStr := getArgumentFormatting(i.arguments)
 
 	for _, argument := range i.arguments {
-		fmtc.Printf("  {c}"+fmtStr+"{!} %s", argument.name, argument.desc)
+		fmtc.Printf("  {#45}"+fmtStr+"{!} %s", argument.name, argument.desc)
 
 		if argument.optional {
 			fmtc.Printf(" {s-}(optional){!}")

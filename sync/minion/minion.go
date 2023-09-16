@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtutil"
+	"github.com/essentialkaos/ek/v12/knf"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/mathutil"
 	"github.com/essentialkaos/ek/v12/pluralize"
@@ -991,7 +992,7 @@ func syncBlocker(id int) {
 
 	log.Info("(%3d) Starting sync with master instance…", id)
 
-	time.Sleep(CORE.Config.GetD(CORE.REPLICATION_INIT_SYNC_DELAY, 3*time.Second))
+	time.Sleep(CORE.Config.GetD(CORE.REPLICATION_INIT_SYNC_DELAY, knf.Second, 3*time.Second))
 
 	syncingWaitLoop(id)
 }
@@ -999,7 +1000,7 @@ func syncBlocker(id int) {
 // syncingWaitLoop blocks main sync process till syncing will be completed
 func syncingWaitLoop(id int) {
 	start := time.Now().Unix()
-	maxWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT)
+	maxWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, knf.Second)
 	deadline := time.Now().Add(maxWait)
 
 	log.Info(

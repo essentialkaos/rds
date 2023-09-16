@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -42,8 +41,6 @@ func StartAllCommand(args CommandArgs) int {
 		return EC_WARN
 	}
 
-	log.Info("(%s) Initiated the starting of all stopped and dead instances", CORE.User.RealName)
-
 	hasErrors := false
 
 	for _, id := range idList {
@@ -69,14 +66,15 @@ func StartAllCommand(args CommandArgs) int {
 			if err != nil {
 				spinner.Done(false)
 				hasErrors = true
+				logger.Info(id, "Instance starting (batch) error: %v", err)
 				continue
 			}
 		}
 
+		logger.Info(id, "Instance started (batch)")
+
 		spinner.Done(true)
 	}
-
-	log.Info("(%s) Started all stopped instances", CORE.User.RealName)
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())
 

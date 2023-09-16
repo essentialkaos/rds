@@ -33,13 +33,6 @@ type CommandArgs []string
 
 type CommandHandler func(CommandArgs) int
 
-type CommandRoutine struct {
-	Handler           CommandHandler
-	Auth              AuthType
-	RequireStrictAuth bool
-	PrettyOutput      bool
-}
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var userExistenceCache map[string]bool
@@ -309,17 +302,7 @@ func getInstanceOwnerWithColor(meta *CORE.InstanceMeta, before bool) string {
 
 	owner := meta.Auth.User
 
-	if userExistenceCache == nil {
-		userExistenceCache = make(map[string]bool)
-	}
-
-	_, found := userExistenceCache[owner]
-
-	if !found {
-		userExistenceCache[owner] = system.IsUserExist(owner)
-	}
-
-	if userExistenceCache[owner] {
+	if isInstanceOwnerExist(owner) {
 		if CORE.User.RealName == owner {
 			switch before {
 			case true:
@@ -333,6 +316,21 @@ func getInstanceOwnerWithColor(meta *CORE.InstanceMeta, before bool) string {
 	}
 
 	return "{s-}" + owner + "{!}"
+}
+
+// isInstanceOwnerExist returns true if instance owner user exist on the system
+func isInstanceOwnerExist(owner string) bool {
+	if userExistenceCache == nil {
+		userExistenceCache = make(map[string]bool)
+	}
+
+	_, found := userExistenceCache[owner]
+
+	if !found {
+		userExistenceCache[owner] = system.IsUserExist(owner)
+	}
+
+	return userExistenceCache[owner]
 }
 
 // getInstanceDescWithTags returns instance description with rendered tags

@@ -9,6 +9,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
@@ -91,7 +92,7 @@ func ConfCommand(args CommandArgs) int {
 // printConfInfo shows difference between file and in-memory config
 func printConfInfo(fileConfig *REDIS.Config, diff []REDIS.ConfigPropDiff, filter []string) {
 	hasData := false
-	hasFilter := len(filter) != 0
+
 	t := table.NewTable("NAME", "VALUE")
 
 	for _, prop := range fileConfig.Props {
@@ -99,14 +100,16 @@ func printConfInfo(fileConfig *REDIS.Config, diff []REDIS.ConfigPropDiff, filter
 			continue
 		}
 
-		if hasFilter && !sliceutil.Contains(filter, prop) {
+		propFmt, found := filterConfProp(prop, filter)
+
+		if !found {
 			continue
 		}
 
 		hasData = true
 
 		if len(diff) == 0 || prop == "user" {
-			printConfProps(t, prop, fileConfig.Data[prop], "", true)
+			printConfProps(t, propFmt, fileConfig.Data[prop], "", true)
 			continue
 		}
 
@@ -114,13 +117,13 @@ func printConfInfo(fileConfig *REDIS.Config, diff []REDIS.ConfigPropDiff, filter
 
 		switch {
 		case diffInfo.PropName != "":
-			printConfProps(t, prop, fileConfig.Data[prop], diffInfo.MemValue, false)
+			printConfProps(t, propFmt, fileConfig.Data[prop], diffInfo.MemValue, false)
 		case prop == "replicaof" && findDiffProp(diff, "slaveof").PropName != "":
-			printConfProps(t, prop, fileConfig.Data[prop], findDiffProp(diff, "slaveof").MemValue, false)
+			printConfProps(t, propFmt, fileConfig.Data[prop], findDiffProp(diff, "slaveof").MemValue, false)
 		case prop == "slaveof" && findDiffProp(diff, "replicaof").PropName != "":
-			printConfProps(t, prop, fileConfig.Data[prop], findDiffProp(diff, "replicaof").MemValue, false)
+			printConfProps(t, propFmt, fileConfig.Data[prop], findDiffProp(diff, "replicaof").MemValue, false)
 		default:
-			printConfProps(t, prop, fileConfig.Data[prop], "", true)
+			printConfProps(t, propFmt, fileConfig.Data[prop], "", true)
 		}
 	}
 
@@ -148,6 +151,21 @@ func printConfProps(t *table.Table, prop string, values []string, curValue strin
 			t.Add(prop, value)
 		}
 	}
+}
+
+// filterConfProp filters configuration properties
+func filterConfProp(prop string, filter []string) (string, bool) {
+	if len(filter) == 0 {
+		return prop, true
+	}
+
+	for _, f := range filter {
+		if strings.Contains(prop, f) {
+			return strings.ReplaceAll(prop, f, "{_}"+f+"{!}"), true
+		}
+	}
+
+	return prop, false
 }
 
 // findDiffProp tries to find changed properties

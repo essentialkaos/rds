@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/pluralize"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/strutil"
@@ -117,7 +116,7 @@ func BatchEditCommand(args CommandArgs) int {
 			continue
 		}
 
-		log.Info("(%s) Updated info for instance with ID %d", CORE.User.RealName, id)
+		logger.Info(id, "Instance info updated (batch)")
 
 		err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)
 

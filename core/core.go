@@ -84,8 +84,6 @@ const (
 	MAX_TAGS             = 3
 	MIN_SYNC_WAIT        = 60          // 1 Min
 	MAX_SYNC_WAIT        = 3 * 60 * 60 // 3 Hours
-	MIN_INIT_SYNC_WAIT   = 5 * 60      // 5 min
-	MAX_INIT_SYNC_WAIT   = 6 * 60 * 60 // 6 Hours
 	MAX_FULL_START_DELAY = 30 * 60     // 30 Min
 	MAX_SWITCH_WAIT      = 15 * 60     // 15 Min
 	TOKEN_LENGTH         = 64
@@ -168,7 +166,6 @@ const (
 	REPLICATION_ALLOW_REPLICAS      = "replication:allow-replicas"
 	REPLICATION_ALLOW_COMMANDS      = "replication:allow-commands"
 	REPLICATION_ALWAYS_PROPAGATE    = "replication:always-propagate"
-	REPLICATION_MAX_INIT_SYNC_WAIT  = "replication:max-init-sync-wait"
 	REPLICATION_MAX_SYNC_WAIT       = "replication:max-sync-wait"
 	REPLICATION_INIT_SYNC_DELAY     = "replication:init-sync-delay"
 
@@ -214,6 +211,13 @@ type ReplicationType string
 const (
 	REPL_TYPE_REPLICA ReplicationType = "replica"
 	REPL_TYPE_STANDBY ReplicationType = "standby"
+)
+
+type TemplateSource string
+
+const (
+	TEMPLATE_SOURCE_REDIS    TemplateSource = "redis.conf"
+	TEMPLATE_SOURCE_SENTINEL TemplateSource = "sentinel.conf"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -375,6 +379,12 @@ type instanceConfigRDSData struct {
 	IsFailoverSentinel bool
 }
 
+type sentinelConfigData struct {
+	Port    string
+	PidFile string
+	LogFile string
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var (
@@ -408,6 +418,7 @@ var (
 	ErrCantReadDaemonizeOption   = errors.New("Can't read 'daemonize' option value from instance configuration file")
 	ErrCantDaemonizeInstance     = errors.New("Impossible to run instance - 'daemonize' property set to 'no' in configuration file")
 	ErrUnknownReplicationType    = errors.New("Unsupported replication type")
+	ErrUnknownTemplateSource     = errors.New("Unknown template source")
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -617,6 +628,33 @@ func ReadSUAuth() (*SuperuserAuth, error) {
 	return auth, err
 }
 
+// ValidateTemplates validates templates for Redis and Sentinel
+func ValidateTemplates() []error {
+	var errs errutil.Errors
+
+	meta, err := NewInstanceMeta("test", "test")
+
+	if err != nil {
+		errs.Add(fmt.Errorf("Can't generate instance meta for validation: %w", err))
+	} else {
+		_, err = generateConfigFromTemplate(
+			TEMPLATE_SOURCE_REDIS,
+			createConfigFromMeta(meta),
+		)
+
+		errs.Add(err)
+	}
+
+	_, err = generateConfigFromTemplate(
+		TEMPLATE_SOURCE_SENTINEL,
+		&sentinelConfigData{},
+	)
+
+	errs.Add(err)
+
+	return errs.All()
+}
+
 // HasInstances returns true if that at least one instance exists
 func HasInstances() bool {
 	return !fsutil.IsEmptyDir(Config.GetS(PATH_META_DIR))
@@ -650,6 +688,11 @@ func GetInstanceLogFilePath(id int) string {
 // GetInstancePIDFilePath returns path to PID file for instance with given ID
 func GetInstancePIDFilePath(id int) string {
 	return path.Join(Config.GetS(PATH_PID_DIR), strconv.Itoa(id)+".pid")
+}
+
+// GetStatesFilePath returns path to global states file
+func GetStatesFilePath() string {
+	return path.Join(Config.GetS(MAIN_DIR), STATES_DATA_FILE)
 }
 
 // GetInstancePort returns port used by redis for given instance
@@ -710,9 +753,9 @@ func GetInstanceMeta(id int) (*InstanceMeta, error) {
 		metaCache = &MetaCache{}
 	}
 
-	hit, meta := metaCache.Get(id)
+	meta, ok := metaCache.Get(id)
 
-	if hit {
+	if ok {
 		return meta, nil
 	}
 
@@ -732,7 +775,7 @@ func GetInstanceMeta(id int) (*InstanceMeta, error) {
 
 	metaCache.Set(id, meta)
 
-	_, meta = metaCache.Get(id)
+	meta, _ = metaCache.Get(id)
 
 	return meta, err
 }
@@ -1984,11 +2027,6 @@ func ParseTag(tag string) (string, string) {
 	return tag, ""
 }
 
-// GetStatesFilePath returns path to global states file
-func GetStatesFilePath() string {
-	return path.Join(Config.GetS(MAIN_DIR), STATES_DATA_FILE)
-}
-
 // IsSyncDaemonActive returns true if sync daemon is works
 func IsSyncDaemonActive() bool {
 	isWorks, _ := initsystem.IsWorks("rds-sync.service")
@@ -2540,8 +2578,6 @@ func validateConfig(c *knf.Config) []error {
 			&knf.Validator{REPLICATION_AUTH_TOKEN, knfv.NotLen, TOKEN_LENGTH},
 			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MIN_SYNC_WAIT},
 			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MAX_SYNC_WAIT},
-			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Less, MIN_INIT_SYNC_WAIT},
-			&knf.Validator{REPLICATION_MAX_INIT_SYNC_WAIT, knfv.Greater, MAX_INIT_SYNC_WAIT},
 			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.NotContains, []string{
 				string(FAILOVER_METHOD_STANDBY), string(FAILOVER_METHOD_SENTINEL),
 			}},
@@ -2617,36 +2653,21 @@ func saveInstanceMeta(meta *InstanceMeta) error {
 
 // createInstanceConfig create redis config from template
 func createInstanceConfig(meta *InstanceMeta) error {
-	templateData, err := getConfigTemplateData(false)
-
-	if err != nil {
-		return err
-	}
-
-	t, err := template.New("redis.conf").Parse(templateData)
-
-	if err != nil {
-		return err
-	}
-
-	var bf bytes.Buffer
-
-	ct := template.Must(t, nil)
 	cfg := createConfigFromMeta(meta)
-	err = ct.Execute(&bf, cfg)
+	confData, err := generateConfigFromTemplate(TEMPLATE_SOURCE_REDIS, cfg)
 
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(GetInstanceConfigFilePath(meta.ID), bf.Bytes(), 0640)
+	err = os.WriteFile(GetInstanceConfigFilePath(meta.ID), confData, 0640)
 
 	if err != nil {
 		return err
 	}
 
 	hasher := sha256.New()
-	hasher.Write(bf.Bytes())
+	hasher.Write(confData)
 
 	meta.Config.Hash = fmt.Sprintf("%064x", hasher.Sum(nil))
 	meta.Config.Date = time.Now().Unix()
@@ -2926,45 +2947,27 @@ func generateSentinelConfig() error {
 		return err
 	}
 
-	templateData, err := getConfigTemplateData(true)
+	confData, err := generateConfigFromTemplate(
+		TEMPLATE_SOURCE_SENTINEL,
+		&sentinelConfigData{
+			Port:    sentinelPort,
+			PidFile: sentinelPidFile,
+			LogFile: sentinelLogFile,
+		},
+	)
 
 	if err != nil {
 		return err
 	}
 
-	t, err := template.New("sentinel.conf").Parse(templateData)
-
-	if err != nil {
-		return err
-	}
-
-	var bf bytes.Buffer
-
-	sentinelProps := struct {
-		Port    string
-		PidFile string
-		LogFile string
-	}{
-		Port:    sentinelPort,
-		PidFile: sentinelPidFile,
-		LogFile: sentinelLogFile,
-	}
-
-	ct := template.Must(t, nil)
-	err = ct.Execute(&bf, &sentinelProps)
-
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(sentinelConfig, bf.Bytes(), 0640)
+	err = os.WriteFile(sentinelConfig, confData, 0640)
 
 	if err != nil {
 		return err
 	}
 
 	if !fsutil.IsExist(sentinelLogFile) {
-		err = os.WriteFile(sentinelLogFile, []byte(""), 0640)
+		err = fsutil.TouchFile(sentinelLogFile, 0640)
 
 		if err != nil {
 			return err
@@ -2981,35 +2984,66 @@ func generateSentinelConfig() error {
 
 // getConfigTemplateData reads configuration data from template
 // for currently installed Redis/Sentinel version
-func getConfigTemplateData(sentinel bool) (string, error) {
+func getConfigTemplateData(source TemplateSource) (string, string, error) {
 	var err error
-	var templateFile string
+	var templateFile, templateFilePath string
 
 	currentRedisVer, err := GetRedisVersion()
 
 	if err != nil {
-		return "", fmt.Errorf("Can't get Redis version: %w", err)
+		return "", "", fmt.Errorf("Can't get Redis version: %w", err)
 	}
 
 	majorRedisVer := fmt.Sprintf("%d.%d", currentRedisVer.Major(), currentRedisVer.Minor())
 
-	if sentinel {
-		templateFile, err = path.JoinSecure(Config.GetS(TEMPLATES_SENTINEL), "sentinel-"+majorRedisVer+".conf")
-	} else {
-		templateFile, err = path.JoinSecure(Config.GetS(TEMPLATES_REDIS), "redis-"+majorRedisVer+".conf")
+	switch source {
+	case TEMPLATE_SOURCE_REDIS:
+		templateFile = "redis-" + majorRedisVer + ".conf"
+		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_REDIS), templateFile)
+	case TEMPLATE_SOURCE_SENTINEL:
+		templateFile = "sentinel-" + majorRedisVer + ".conf"
+		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_SENTINEL), templateFile)
+	default:
+		return "", "", ErrUnknownTemplateSource
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("Can't create path to configuration template: %w", err)
+		return "", "", fmt.Errorf("Can't create path to configuration template: %w", err)
 	}
 
-	data, err := os.ReadFile(templateFile)
+	data, err := os.ReadFile(templateFilePath)
 
 	if err != nil {
-		return "", fmt.Errorf("Can't read configuration template data: %w", err)
+		return "", "", fmt.Errorf("Can't read configuration template data: %w", err)
 	}
 
-	return string(data), nil
+	return templateFile, string(data), nil
+}
+
+// generateConfigFromTemplate generates configuration from template
+func generateConfigFromTemplate(source TemplateSource, data any) ([]byte, error) {
+	templateFile, templateData, err := getConfigTemplateData(source)
+
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := template.New(templateFile).Parse(templateData)
+
+	if err != nil {
+		return nil, fmt.Errorf("Can't parse template data: %w", err)
+	}
+
+	var bf bytes.Buffer
+
+	ct := template.Must(t, nil)
+	err = ct.Execute(&bf, data)
+
+	if err != nil {
+		return nil, fmt.Errorf("Can't render template data: %w", err)
+	}
+
+	return bf.Bytes(), nil
 }
 
 // addAllReplicasToSentinelMonitoring adds all relicas to Sentinel monitoring
@@ -3129,6 +3163,9 @@ func runAsUser(user, logFile string, args ...string) error {
 	}
 
 	defer logFd.Close()
+
+	oldUMask := syscall.Umask(027)
+	defer syscall.Umask(oldUMask)
 
 	w := bufio.NewWriter(logFd)
 	cmdArgs := []string{"-s", "/bin/bash", user, "-c", strings.Join(args, " ")}

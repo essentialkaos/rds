@@ -87,6 +87,7 @@ func BatchCreateCommand(args CommandArgs) int {
 		}
 
 		meta.Desc = info.Desc
+		meta.Auth.User = info.Owner
 		meta.Preferencies.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 		meta.Preferencies.IsSaveDisabled = options.GetB(OPT_DISABLE_SAVES)
 
@@ -97,6 +98,8 @@ func BatchCreateCommand(args CommandArgs) int {
 			hasErrors = true
 			continue
 		}
+
+		logger.Info(meta.ID, "Instance created (batch)")
 
 		err = SC.PropagateCommand(API.COMMAND_CREATE, meta.ID, meta.UUID)
 

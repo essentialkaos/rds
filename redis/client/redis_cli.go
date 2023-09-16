@@ -168,7 +168,7 @@ func RunRedisCli(cfg *Config) error {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// execCommand exec one command
+// execCommand execs one command
 func execCommand(cfg *Config) error {
 	client := getClient(cfg.Port, time.Second*time.Duration(cfg.Timeout))
 
@@ -179,6 +179,8 @@ func execCommand(cfg *Config) error {
 	}
 
 	defer client.Close()
+
+	configureClient(client, cfg)
 
 	var resp *redy.Resp
 

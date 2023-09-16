@@ -58,7 +58,7 @@ func printErrorStatsInfo(info *REDIS.Info) {
 	section := info.Sections["errorstats"]
 
 	if section == nil || len(section.Fields) == 0 {
-		terminal.Warn("There is no info about latency")
+		terminal.Warn("There is no info about errors")
 		return
 	}
 

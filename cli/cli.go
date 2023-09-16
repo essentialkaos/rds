@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.1.0"
+	VER  = "1.2.0"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -71,6 +71,7 @@ const (
 	OPT_DISABLE_SAVES   = "ds:disable-saves"
 	OPT_YES             = "y:yes"
 	OPT_SIMPLE          = "S:simple"
+	OPT_RAW             = "R:raw"
 	OPT_NO_COLOR        = "nc:no-color"
 	OPT_HELP            = "h:help"
 	OPT_VERSION         = "v:version"
@@ -82,6 +83,10 @@ const (
 
 // Supported commands
 const (
+	COMMAND_BACKUP_CREATE        = "backup-create"
+	COMMAND_BACKUP_RESTORE       = "backup-restore"
+	COMMAND_BACKUP_CLEAN         = "backup-clean"
+	COMMAND_BACKUP_LIST          = "backup-list"
 	COMMAND_BATCH_CREATE         = "batch-create"
 	COMMAND_BATCH_EDIT           = "batch-edit"
 	COMMAND_CHECK                = "check"
@@ -144,6 +149,7 @@ const (
 	COMMAND_TOP_DIFF             = "top-diff"
 	COMMAND_TOP_DUMP             = "top-dump"
 	COMMAND_TRACK                = "track"
+	COMMAND_VALIDATE_TEMPLATES   = "validate-templates"
 )
 
 const (
@@ -168,6 +174,13 @@ const (
 	AUTH_SUPERUSER
 )
 
+type CommandRoutine struct {
+	Handler           CommandHandler
+	Auth              AuthType
+	RequireStrictAuth bool
+	PrettyOutput      bool
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // optMap is map with options data
@@ -179,6 +192,7 @@ var optMap = options.Map{
 	OPT_DISABLE_SAVES:   {Type: options.BOOL},
 	OPT_NO_COLOR:        {Type: options.BOOL},
 	OPT_SIMPLE:          {Type: options.BOOL},
+	OPT_RAW:             {Type: options.BOOL},
 	OPT_YES:             {Type: options.BOOL},
 	OPT_HELP:            {Type: options.BOOL},
 	OPT_VERSION:         {Type: options.MIXED},
@@ -203,6 +217,9 @@ var safeCommands = []string{
 	COMMAND_HELP,
 	COMMAND_SETTINGS,
 }
+
+// logger is CLI logger
+var logger *Logger
 
 // commands is list of command handlers
 var commands map[string]*CommandRoutine
@@ -343,6 +360,10 @@ func configureUI() {
 	if options.GetB(OPT_YES) {
 		terminal.AlwaysYes = true
 	}
+
+	if options.GetB(OPT_RAW) {
+		useRawOutput = true
+	}
 }
 
 // parseOptions parse command line options
@@ -371,6 +392,8 @@ func setupLogger() {
 		terminal.Error(err.Error())
 		os.Exit(EC_ERROR)
 	}
+
+	logger = &Logger{}
 }
 
 // disableProxy disable proxy for requests to sync daemon
@@ -433,6 +456,10 @@ func initCommands() {
 		commands[COMMAND_RELOAD] = &CommandRoutine{ReloadCommand, AUTH_SUPERUSER, true, true}
 		commands[COMMAND_REGEN] = &CommandRoutine{RegenCommand, AUTH_SUPERUSER, true, true}
 		commands[COMMAND_MAINTENANCE] = &CommandRoutine{MaintenanceCommand, AUTH_SUPERUSER, true, true}
+		commands[COMMAND_BACKUP_CREATE] = &CommandRoutine{BackupCreateCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
+		commands[COMMAND_BACKUP_RESTORE] = &CommandRoutine{BackupRestoreCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
+		commands[COMMAND_BACKUP_CLEAN] = &CommandRoutine{BackupCleanCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
+		commands[COMMAND_BACKUP_LIST] = &CommandRoutine{BackupListCommand, AUTH_INSTANCE | AUTH_SUPERUSER, false, true}
 	}
 
 	if isMaster {
@@ -467,7 +494,7 @@ func initCommands() {
 		}
 	} else {
 		commands[COMMAND_CONF] = &CommandRoutine{ConfCommand, AUTH_NO, false, true}
-		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_NO, true, useRawOutput == false}
+		commands[COMMAND_CLI] = &CommandRoutine{CliCommand, AUTH_NO, false, useRawOutput == false}
 		commands[COMMAND_SETTINGS] = &CommandRoutine{SettingsCommand, AUTH_NO, false, true}
 	}
 
@@ -506,13 +533,13 @@ func initCommands() {
 			}
 		}
 
-		commands[COMMAND_SENTINEL_STATUS] = &CommandRoutine{SentinelStatusCommand, AUTH_NO, true, true}
+		commands[COMMAND_SENTINEL_STATUS] = &CommandRoutine{SentinelStatusCommand, AUTH_NO, false, true}
 
 		if CORE.IsSentinelActive() {
-			commands[COMMAND_SENTINEL_CHECK] = &CommandRoutine{SentinelCheckCommand, AUTH_NO, true, true}
-			commands[COMMAND_SENTINEL_INFO] = &CommandRoutine{SentinelInfoCommand, AUTH_NO, true, true}
-			commands[COMMAND_SENTINEL_MASTER] = &CommandRoutine{SentinelMasterCommand, AUTH_NO, true, true}
-			commands[COMMAND_SENTINEL_RESET] = &CommandRoutine{SentinelResetCommand, AUTH_SUPERUSER, true, true}
+			commands[COMMAND_SENTINEL_CHECK] = &CommandRoutine{SentinelCheckCommand, AUTH_NO, false, true}
+			commands[COMMAND_SENTINEL_INFO] = &CommandRoutine{SentinelInfoCommand, AUTH_NO, false, true}
+			commands[COMMAND_SENTINEL_MASTER] = &CommandRoutine{SentinelMasterCommand, AUTH_NO, false, true}
+			commands[COMMAND_SENTINEL_RESET] = &CommandRoutine{SentinelResetCommand, AUTH_SUPERUSER, false, true}
 		}
 	}
 
@@ -534,7 +561,8 @@ func initCommands() {
 		commands[COMMAND_RESTART_ALL_PROP] = &CommandRoutine{RestartAllPropCommand, AUTH_SUPERUSER, true, true}
 	}
 
-	commands[COMMAND_GEN_TOKEN] = &CommandRoutine{GenTokenCommand, AUTH_NO, true, useRawOutput == false}
+	commands[COMMAND_VALIDATE_TEMPLATES] = &CommandRoutine{ValidateTemplatesCommand, AUTH_NO, false, true}
+	commands[COMMAND_GEN_TOKEN] = &CommandRoutine{GenTokenCommand, AUTH_NO, false, useRawOutput == false}
 	commands[COMMAND_HELP] = &CommandRoutine{HelpCommand, AUTH_NO, false, true}
 
 	for a, c := range aliases {
@@ -682,9 +710,17 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 		CORE.Shutdown(EC_OK)
 	}
 
+	passwordVariations := passwd.GenPasswordVariations(password)
+
 	if iAuth != nil {
 		if passwd.Check(password, iAuth.Pepper, iAuth.Hash) {
 			return true, nil
+		}
+
+		for _, pwd := range passwordVariations {
+			if passwd.Check(pwd, iAuth.Pepper, iAuth.Hash) {
+				return true, nil
+			}
 		}
 	}
 
@@ -698,6 +734,12 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 		if passwd.Check(password, sAuth.Pepper, sAuth.Hash) {
 			return true, nil
 		}
+
+		for _, pwd := range passwordVariations {
+			if passwd.Check(pwd, sAuth.Pepper, sAuth.Hash) {
+				return true, nil
+			}
+		}
 	}
 
 	return false, nil
@@ -706,10 +748,11 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 // getSpellcheckModel train spellchecker with supported commands
 func getSpellcheckModel() *spellcheck.Model {
 	return spellcheck.Train([]string{
-		COMMAND_BATCH_CREATE, COMMAND_BATCH_EDIT, COMMAND_CHECK, COMMAND_CLI,
-		COMMAND_CPU, COMMAND_CONF, COMMAND_CREATE, COMMAND_DELETE, COMMAND_DESTROY,
-		COMMAND_EDIT, COMMAND_GEN_TOKEN, COMMAND_GO, COMMAND_HELP, COMMAND_INFO,
-		COMMAND_INIT, COMMAND_KILL, COMMAND_LIST, COMMAND_MAINTENANCE,
+		COMMAND_BACKUP_CREATE, COMMAND_BACKUP_RESTORE, COMMAND_BACKUP_CLEAN,
+		COMMAND_BACKUP_LIST, COMMAND_BATCH_CREATE, COMMAND_BATCH_EDIT, COMMAND_CHECK,
+		COMMAND_CLI, COMMAND_CPU, COMMAND_CONF, COMMAND_CREATE, COMMAND_DELETE,
+		COMMAND_DESTROY, COMMAND_EDIT, COMMAND_GEN_TOKEN, COMMAND_GO, COMMAND_HELP,
+		COMMAND_INFO, COMMAND_INIT, COMMAND_KILL, COMMAND_LIST, COMMAND_MAINTENANCE,
 		COMMAND_MEMORY, COMMAND_REGEN, COMMAND_RELEASE, COMMAND_RELOAD,
 		COMMAND_REMOVE, COMMAND_REPLICATION, COMMAND_REPLICATION_ROLE_SET,
 		COMMAND_RESTART, COMMAND_RESTART_ALL, COMMAND_RESTART_ALL_PROP,
@@ -722,7 +765,7 @@ func getSpellcheckModel() *spellcheck.Model {
 		COMMAND_STATS_COMMAND, COMMAND_STATS_LATENCY, COMMAND_STATS_ERROR,
 		COMMAND_STATUS, COMMAND_STOP, COMMAND_STOP_ALL, COMMAND_STOP_ALL_PROP,
 		COMMAND_STOP_PROP, COMMAND_TAG_ADD, COMMAND_TAG_REMOVE, COMMAND_TOP,
-		COMMAND_TOP_DIFF, COMMAND_TOP_DUMP, COMMAND_TRACK,
+		COMMAND_TOP_DIFF, COMMAND_TOP_DUMP, COMMAND_TRACK, COMMAND_VALIDATE_TEMPLATES,
 	})
 }
 
@@ -831,7 +874,7 @@ func showSmartUsage() {
 		}
 	}
 
-	info.AddGroup("Instances commands")
+	info.AddGroup("Basic commands")
 
 	if isMaster {
 		info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
@@ -851,11 +894,11 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_CLI, "Run CLI connected to Redis instance", "id:db", "?command")
 		info.AddCommand(COMMAND_CPU, "Calculate instance CPU usage", "id", "?period")
 		info.AddCommand(COMMAND_MEMORY, "Show instance memory usage", "id")
-		info.AddCommand(COMMAND_INFO, "Show system info about Redis instance", "id", "?section")
+		info.AddCommand(COMMAND_INFO, "Show system info about Redis instance", "id", "?section…")
 		info.AddCommand(COMMAND_CLIENTS, "Show list of connected clients", "id", "?filter")
 		info.AddCommand(COMMAND_TRACK, "Show interactive info about Redis instance", "id", "?interval")
-		info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?property")
-		info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter")
+		info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?filter…")
+		info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter…")
 		info.AddCommand(COMMAND_STATS, "Show overall statistics")
 		info.AddCommand(COMMAND_STATS_COMMAND, "Show statistics based on the command type", "id")
 		info.AddCommand(COMMAND_STATS_LATENCY, "Show latency statistics based on the command type", "id")
@@ -865,13 +908,21 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_TOP_DUMP, "Dump top data to file", "file")
 		info.AddCommand(COMMAND_SLOWLOG_GET, "Show last entries from slow log", "id", "?num")
 		info.AddCommand(COMMAND_SLOWLOG_RESET, "Clear slow log", "id")
-		info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 
 		if isMaster {
 			info.AddCommand(COMMAND_TAG_ADD, "Add tag to instance", "id", "tag")
 			info.AddCommand(COMMAND_TAG_REMOVE, "Remove tag from instance", "id", "tag")
 		}
+
+		info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 	}
+
+	info.AddGroup("Backup commands")
+
+	info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
+	info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
+	info.AddCommand(COMMAND_BACKUP_CLEAN, "Remove all backup snapshots", "id")
+	info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
 
 	info.AddGroup("Superuser commands")
 
@@ -934,6 +985,7 @@ func showSmartUsage() {
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
 	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
+	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Redis and Sentinel templates")
 
 	if isMaster {
 		info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support ({y}create{!})")
@@ -945,6 +997,7 @@ func showSmartUsage() {
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
+	info.AddOption(OPT_RAW, "Force raw output {s-}(useful for scripts){!}")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VERSION, "Show information about version")
@@ -961,7 +1014,8 @@ func genUsage() *usage.Info {
 
 	info.AppNameColorTag = "{*}" + colorTagApp
 
-	info.AddGroup("Instances commands")
+	info.AddGroup("Basic commands")
+
 	info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
 	info.AddCommand(COMMAND_DESTROY, "Destroy (delete) Redis instance", "id")
 	info.AddCommand(COMMAND_EDIT, "Edit metadata for instance", "id")
@@ -973,25 +1027,33 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_CLI, "Run CLI connected to Redis instance", "id:db", "?command")
 	info.AddCommand(COMMAND_CPU, "Calculate instance CPU usage", "id", "?period")
 	info.AddCommand(COMMAND_MEMORY, "Show instance memory usage", "id")
-	info.AddCommand(COMMAND_INFO, "Show system info about Redis instance", "id", "?section")
+	info.AddCommand(COMMAND_INFO, "Show system info about Redis instance", "id", "?section…")
 	info.AddCommand(COMMAND_STATS_COMMAND, "Show statistics based on the command type", "id")
 	info.AddCommand(COMMAND_STATS_LATENCY, "Show latency statistics based on the command type", "id")
 	info.AddCommand(COMMAND_STATS_ERROR, "Show error statistics", "id")
 	info.AddCommand(COMMAND_CLIENTS, "Show list of connected clients", "id", "?filter")
 	info.AddCommand(COMMAND_TRACK, "Show interactive info about Redis instance", "id", "?interval")
-	info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?property")
-	info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter")
+	info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?filter…")
+	info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter…")
 	info.AddCommand(COMMAND_STATS, "Show overall statistics")
 	info.AddCommand(COMMAND_TOP, "Show instances top", "?field", "?num")
 	info.AddCommand(COMMAND_TOP_DIFF, "Compare current and dumped top data", "file", "?field", "?num")
 	info.AddCommand(COMMAND_TOP_DUMP, "Dump top data to file", "file")
 	info.AddCommand(COMMAND_SLOWLOG_GET, "Show last entries from slow log", "id", "?num")
 	info.AddCommand(COMMAND_SLOWLOG_RESET, "Clear slow log", "id")
-	info.AddCommand(COMMAND_CHECK, "Check for dead instances")
 	info.AddCommand(COMMAND_TAG_ADD, "Add tag to instance", "id", "tag")
 	info.AddCommand(COMMAND_TAG_REMOVE, "Remove tag from instance", "id", "tag")
+	info.AddCommand(COMMAND_CHECK, "Check for dead instances")
+
+	info.AddGroup("Backup commands")
+
+	info.AddCommand(COMMAND_BACKUP_CREATE, "Create snapshot of RDB file", "id")
+	info.AddCommand(COMMAND_BACKUP_RESTORE, "Restore instance data from snapshot", "id")
+	info.AddCommand(COMMAND_BACKUP_CLEAN, "Remove all backup snapshots", "id")
+	info.AddCommand(COMMAND_BACKUP_LIST, "List backup snapshots", "id")
 
 	info.AddGroup("Superuser commands")
+
 	info.AddCommand(COMMAND_GO, "Generate superuser access credentials")
 	info.AddCommand(COMMAND_BATCH_CREATE, "Create many instances at once", "csv-file")
 	info.AddCommand(COMMAND_BATCH_EDIT, "Edit many instances at once", "id")
@@ -1005,10 +1067,12 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_MAINTENANCE, "Enable or disable maintenance mode", "flag")
 
 	info.AddGroup("Replication commands")
+
 	info.AddCommand(COMMAND_REPLICATION, "Show replication info")
 	info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Reconfigure node after changing the role")
 
 	info.AddGroup("Sentinel commands")
+
 	info.AddCommand(COMMAND_SENTINEL_START, "Start Redis Sentinel daemon")
 	info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Redis Sentinel daemon")
 	info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
@@ -1019,9 +1083,11 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_SENTINEL_SWITCH, "Switch instance to master role", "id")
 
 	info.AddGroup("Common commands")
+
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
 	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
+	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Redis and Sentinel templates")
 
 	info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support")
 	info.AddOption(OPT_DISABLE_SAVES, "Disable saves for created instance")
@@ -1030,6 +1096,7 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
+	info.AddOption(OPT_RAW, "Force raw output {s-}(useful for scripts){!}")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VERSION, "Show information about version")

@@ -9,7 +9,6 @@ package cli
 
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/terminal"
 
 	API "github.com/essentialkaos/rds/api"
@@ -73,7 +72,7 @@ func DestroyCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	log.Info("(%s) Destroyed instance with ID %d", CORE.User.RealName, id)
+	logger.Info(id, "Instance destroyed")
 	fmtc.Printf("{*}Done. Instance with ID %d successfully destroyed.{!}\n", id)
 
 	err = SC.PropagateCommand(API.COMMAND_DESTROY, id, meta.UUID)

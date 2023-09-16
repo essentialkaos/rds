@@ -31,11 +31,12 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 type topItem struct {
-	ID    int
-	Value float64
+	ID      int
+	Value   float64
+	IsFloat bool
 }
 
-type topItems []*topItem
+type topItems []topItem
 
 type topDump struct {
 	Data []*topDumpItem `json:"data"`
@@ -199,10 +200,10 @@ func collectTopInfo(field string) (topItems, error) {
 
 		switch field {
 		case "keys":
-			items = append(items, &topItem{id, float64(info.Keyspace.Keys())})
+			items = append(items, topItem{id, float64(info.Keyspace.Keys()), false})
 			continue
 		case "expires":
-			items = append(items, &topItem{id, float64(info.Keyspace.Expires())})
+			items = append(items, topItem{id, float64(info.Keyspace.Expires()), false})
 			continue
 		}
 
@@ -221,7 +222,7 @@ func collectTopInfo(field string) (topItems, error) {
 			return nil, fmt.Errorf("Field \"%s\" has an unsupported type", field)
 		}
 
-		items = append(items, &topItem{id, value})
+		items = append(items, topItem{id, value, strings.Contains(str, ".")})
 	}
 
 	return items, nil
@@ -272,17 +273,17 @@ func collectTopCPUInfo(field string) (topItems, error) {
 
 		switch field {
 		case "cpu_sys":
-			items = append(items, &topItem{id, usage[0]})
+			items = append(items, topItem{id, usage[0], true})
 		case "cpu_user":
-			items = append(items, &topItem{id, usage[1]})
+			items = append(items, topItem{id, usage[1], true})
 		case "cpu_sys_children":
-			items = append(items, &topItem{id, usage[2]})
+			items = append(items, topItem{id, usage[2], true})
 		case "cpu_user_children":
-			items = append(items, &topItem{id, usage[3]})
+			items = append(items, topItem{id, usage[3], true})
 		case "cpu":
-			items = append(items, &topItem{id, usage[0] + usage[1]})
+			items = append(items, topItem{id, usage[0] + usage[1], true})
 		case "cpu_children":
-			items = append(items, &topItem{id, usage[2] + usage[3]})
+			items = append(items, topItem{id, usage[2] + usage[3], true})
 		}
 	}
 
@@ -342,7 +343,11 @@ func printTopInfo(items topItems, resultNum int, diff bool) {
 			}
 
 		} else {
-			fmtc.Printf("%d %v\n", item.ID, items[i].Value)
+			if items[i].IsFloat {
+				fmtc.Printf("%d %f\n", item.ID, items[i].Value)
+			} else {
+				fmtc.Printf("%d %.0f\n", item.ID, items[i].Value)
+			}
 		}
 
 		if i == resultNum-1 {
@@ -409,7 +414,7 @@ func diffTopData(field string, curTop topItems, dumpData []*topDumpItem) (topIte
 			return nil, fmt.Errorf("Field \"%s\" has an unsupported type", field)
 		}
 
-		result = append(result, &topItem{c.ID, diff})
+		result = append(result, topItem{c.ID, diff, strings.Contains(v, ".")})
 	}
 
 	return result, nil
