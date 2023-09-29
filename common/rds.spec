@@ -183,6 +183,7 @@ systemctl daemon-reload &>/dev/null || :
 
 %changelog
 * Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-0
+- [cli] Verbose log messages about meta editing
 - Fixed sync user credentials rendering for standby instances
 
 * Sun Sep 10 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0

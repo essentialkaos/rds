@@ -83,6 +83,8 @@ func BatchEditCommand(args CommandArgs) int {
 			continue
 		}
 
+		var changes []string
+
 		if info.InstancePassword != "" {
 			auth, err := CORE.NewInstanceAuth(info.InstancePassword)
 
@@ -96,13 +98,17 @@ func BatchEditCommand(args CommandArgs) int {
 
 			meta.Auth.Pepper = auth.Pepper
 			meta.Auth.Hash = auth.Hash
+
+			changes = append(changes, "password updated")
 		}
 
 		if info.Owner != "" {
+			changes = append(changes, fmt.Sprintf("owner changed %s → %s", meta.Auth.User, info.Owner))
 			meta.Auth.User = info.Owner
 		}
 
 		if info.ReplicationType != "" {
+			changes = append(changes, fmt.Sprintf("description changed %q → %q", meta.Desc, info.Desc))
 			meta.Preferencies.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 		}
 
@@ -116,7 +122,9 @@ func BatchEditCommand(args CommandArgs) int {
 			continue
 		}
 
-		logger.Info(id, "Instance info updated (batch)")
+		for _, c := range changes {
+			logger.Info(id, "Instance meta updated (batch): %s", c)
+		}
 
 		err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)
 
