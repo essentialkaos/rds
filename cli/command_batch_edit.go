@@ -103,7 +103,7 @@ func BatchEditCommand(args CommandArgs) int {
 		}
 
 		if info.Owner != "" {
-			changes = append(changes, fmt.Sprintf("owner changed %s → %s", meta.Auth.User, info.Owner))
+			changes = append(changes, fmt.Sprintf("owner changed %q → %q", meta.Auth.User, info.Owner))
 			meta.Auth.User = info.Owner
 		}
 

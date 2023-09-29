@@ -99,7 +99,7 @@ func EditCommand(args CommandArgs) int {
 	}
 
 	if info.Owner != "" {
-		changes = append(changes, fmt.Sprintf("owner changed %s → %s", meta.Auth.User, info.Owner))
+		changes = append(changes, fmt.Sprintf("owner changed %q → %q", meta.Auth.User, info.Owner))
 		meta.Auth.User = info.Owner
 	}
 
@@ -110,7 +110,7 @@ func EditCommand(args CommandArgs) int {
 
 	if info.ReplicationType != "" {
 		changes = append(changes, fmt.Sprintf(
-			"replication type changed %s → %s",
+			"replication type changed %q → %q",
 			meta.Preferencies.ReplicationType,
 			info.ReplicationType),
 		)
