@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.2.0
+Version:        1.2.1
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -182,6 +182,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-0
+- Fixed sync user credentials rendering for standby instances
+
 * Sun Sep 10 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
 - [cli] Added 'validate-templates' command for templates validation
 - [cli] Added 'backup-create' command for creating RDB snapshots
