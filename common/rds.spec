@@ -203,7 +203,7 @@ systemctl daemon-reload &>/dev/null || :
 - [cli] Added using of password variations for password auth
 - [cli] Improved instance listing filtering
 - [cli] Improved actions logging
-- [sync] 'max-init-sync-wait' depricated
+- [sync] 'max-init-sync-wait' deprecated
 - [cli] Fixed raw output from 'top' command for long numbers
 - [cli] Fixed command execution with 'cli'
 - [cli] Fixed password check using password variations
