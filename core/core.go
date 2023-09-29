@@ -199,11 +199,17 @@ const (
 	INSTANCE_STATE_STOPPED State = 1 << iota
 	INSTANCE_STATE_WORKS
 	INSTANCE_STATE_DEAD
-	INSTANCE_STATE_IDLE
-	INSTANCE_STATE_SYNCING
-	INSTANCE_STATE_LOADING
-	INSTANCE_STATE_SAVING
-	INSTANCE_STATE_HANG
+	INSTANCE_STATE_IDLE         // Extended
+	INSTANCE_STATE_SYNCING      // Extended
+	INSTANCE_STATE_LOADING      // Extended
+	INSTANCE_STATE_SAVING       // Extended
+	INSTANCE_STATE_HANG         // Extended
+	INSTANCE_STATE_ABANDONED    // Extended
+	INSTANCE_STATE_MASTER_UP    // Extended
+	INSTANCE_STATE_MASTER_DOWN  // Extended
+	INSTANCE_STATE_NO_REPLICA   // Extended
+	INSTANCE_STATE_WITH_REPLICA // Extended
+	INSTANCE_STATE_WITH_ERRORS  // Extended
 )
 
 type ReplicationType string
@@ -488,9 +494,36 @@ func (s State) IsSaving() bool {
 	return s&INSTANCE_STATE_SAVING == INSTANCE_STATE_SAVING
 }
 
-// IsSaving returns true if instance blocked by some command
+// IsHang returns true if instance blocked by some command
 func (s State) IsHang() bool {
 	return s&INSTANCE_STATE_HANG == INSTANCE_STATE_HANG
+}
+
+// IsAbandoned returns true if instance abandoned (no traffic for long time)
+func (s State) IsAbandoned() bool {
+	return s&INSTANCE_STATE_ABANDONED == INSTANCE_STATE_ABANDONED
+}
+
+// IsMasterUp returns true if instance master is up
+func (s State) IsMasterUp() bool {
+	return s&INSTANCE_STATE_MASTER_UP == INSTANCE_STATE_MASTER_UP
+}
+
+// IsMasterDown returns true if instance master is down
+func (s State) IsMasterDown() bool {
+	return s&INSTANCE_STATE_MASTER_DOWN == INSTANCE_STATE_MASTER_DOWN
+}
+
+func (s State) NoReplica() bool {
+	return s&INSTANCE_STATE_NO_REPLICA == INSTANCE_STATE_NO_REPLICA
+}
+
+func (s State) WithReplica() bool {
+	return s&INSTANCE_STATE_WITH_REPLICA == INSTANCE_STATE_WITH_REPLICA
+}
+
+func (s State) WithErrors() bool {
+	return s&INSTANCE_STATE_WITH_ERRORS == INSTANCE_STATE_WITH_ERRORS
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -2729,7 +2762,7 @@ func getInstanceExtendedState(id int) State {
 		return INSTANCE_STATE_SAVING
 	}
 
-	info, err := GetInstanceInfo(id, time.Second, false)
+	info, err := GetInstanceInfo(id, time.Second, true)
 
 	if err != nil {
 		return INSTANCE_STATE_HANG
@@ -2739,6 +2772,12 @@ func getInstanceExtendedState(id int) State {
 
 	if info.GetI("stats", "instantaneous_ops_per_sec") < 5 {
 		state |= INSTANCE_STATE_IDLE
+
+		if !info.Is("persistence", "rdb_last_save_time", 0) &&
+			info.Is("persistence", "rdb_changes_since_last_save", 0) &&
+			int64(info.GetI("persistence", "rdb_last_save_time")) < time.Now().Unix()-(7*24*3600) {
+			state |= INSTANCE_STATE_ABANDONED
+		}
 	}
 
 	if info.Is("replication", "master_sync_in_progress", true) {
@@ -2750,8 +2789,28 @@ func getInstanceExtendedState(id int) State {
 		state |= INSTANCE_STATE_SAVING
 	}
 
-	if info.Is("persistence", "loading", true) {
+	if info.Is("persistence", "loading", true) ||
+		info.Is("persistence", "async_loading", true) {
 		state |= INSTANCE_STATE_LOADING
+	}
+
+	if info.Is("replication", "connected_slaves", 0) &&
+		info.Is("replication", "connected_replicas", 0) {
+		state |= INSTANCE_STATE_NO_REPLICA
+	} else {
+		state |= INSTANCE_STATE_WITH_REPLICA
+	}
+
+	if info.Is("replication", "master_link_status", "up") {
+		state |= INSTANCE_STATE_MASTER_UP
+	}
+
+	if info.Is("replication", "master_link_status", "down") {
+		state |= INSTANCE_STATE_MASTER_DOWN
+	}
+
+	if info.Sections["errorstats"] != nil && len(info.Sections["errorstats"].Fields) > 0 {
+		state |= INSTANCE_STATE_WITH_ERRORS
 	}
 
 	return state
@@ -3435,19 +3494,10 @@ func applyChangedConfigProps(id int, diff []REDIS.ConfigPropDiff) []error {
 
 // isExtendedState returns true if given state contains extended info
 func isExtendedState(state State) bool {
-	if state&INSTANCE_STATE_IDLE == INSTANCE_STATE_IDLE {
-		return true
-	}
-
-	if state&INSTANCE_STATE_LOADING == INSTANCE_STATE_LOADING {
-		return true
-	}
-
-	if state&INSTANCE_STATE_SAVING == INSTANCE_STATE_SAVING {
-		return true
-	}
-
-	if state&INSTANCE_STATE_HANG == INSTANCE_STATE_HANG {
+	switch {
+	case state.IsIdle(), state.IsLoading(), state.IsSaving(), state.IsHang(),
+		state.IsAbandoned(), state.IsMasterUp(), state.IsMasterDown(),
+		state.NoReplica(), state.WithReplica(), state.WithErrors():
 		return true
 	}
 

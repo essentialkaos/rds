@@ -124,6 +124,18 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 			fit = state.IsWorks() && state.IsSaving()
 		case "loading", "load":
 			fit = state.IsWorks() && state.IsLoading()
+		case "abandoned":
+			fit = state.IsWorks() && state.IsAbandoned()
+		case "master-up":
+			fit = state.IsWorks() && state.IsMasterUp()
+		case "master-down":
+			fit = state.IsWorks() && state.IsMasterDown()
+		case "no-replica":
+			fit = state.IsWorks() && state.NoReplica()
+		case "with-replica":
+			fit = state.IsWorks() && state.WithReplica()
+		case "with-errors":
+			fit = state.IsWorks() && state.WithErrors()
 		case "orphan":
 			fit = isInstanceOwnerExist(meta.Auth.User) == false
 		case "outdated":
