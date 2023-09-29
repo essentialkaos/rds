@@ -8,6 +8,8 @@ package cli
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"fmt"
+
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system"
@@ -78,6 +80,8 @@ func EditCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
+	var changes []string
+
 	// It's safe to modify this metadata, because GetInstanceMeta returns
 	// copy of metadata
 	if info.InstancePassword != "" {
@@ -90,17 +94,26 @@ func EditCommand(args CommandArgs) int {
 
 		meta.Auth.Pepper = auth.Pepper
 		meta.Auth.Hash = auth.Hash
+
+		changes = append(changes, "password updated")
 	}
 
 	if info.Owner != "" {
+		changes = append(changes, fmt.Sprintf("owner changed %q → %q", meta.Auth.User, info.Owner))
 		meta.Auth.User = info.Owner
 	}
 
 	if info.Desc != "" {
+		changes = append(changes, fmt.Sprintf("description changed %q → %q", meta.Desc, info.Desc))
 		meta.Desc = info.Desc
 	}
 
 	if info.ReplicationType != "" {
+		changes = append(changes, fmt.Sprintf(
+			"replication type changed %q → %q",
+			meta.Preferencies.ReplicationType,
+			info.ReplicationType),
+		)
 		meta.Preferencies.ReplicationType = CORE.ReplicationType(info.ReplicationType)
 	}
 
@@ -111,7 +124,10 @@ func EditCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	logger.Info(id, "Instance info updated")
+	for _, c := range changes {
+		logger.Info(id, "Instance meta updated: %s", c)
+	}
+
 	fmtc.Printf("{g}Done. Data for instance with ID %d successfully updated.{!}\n", id)
 
 	err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)

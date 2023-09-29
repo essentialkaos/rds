@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.2.0
+Version:        1.3.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -182,6 +182,11 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.3.0-0
+- [cli] Added more filters to 'list' command
+- [cli] Verbose log messages about meta editing
+- Fixed sync user credentials rendering for standby instances
+
 * Sun Sep 10 2023 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
 - [cli] Added 'validate-templates' command for templates validation
 - [cli] Added 'backup-create' command for creating RDB snapshots
@@ -198,7 +203,7 @@ systemctl daemon-reload &>/dev/null || :
 - [cli] Added using of password variations for password auth
 - [cli] Improved instance listing filtering
 - [cli] Improved actions logging
-- [sync] 'max-init-sync-wait' depricated
+- [sync] 'max-init-sync-wait' deprecated
 - [cli] Fixed raw output from 'top' command for long numbers
 - [cli] Fixed command execution with 'cli'
 - [cli] Fixed password check using password variations
