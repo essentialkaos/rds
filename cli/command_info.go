@@ -22,12 +22,23 @@ import (
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/pluralize"
 	"github.com/essentialkaos/ek/v12/sliceutil"
+	"github.com/essentialkaos/ek/v12/spellcheck"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/timeutil"
 
 	CORE "github.com/essentialkaos/rds/core"
 	REDIS "github.com/essentialkaos/rds/redis"
 )
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+// infoSections contains all supported INFO sections
+var infoSections = []string{
+	"all", "clients", "cluster", "commandstats", "cpu", "errorstats",
+	"keyspace", "latencystats", "memory", "modules", "persistence",
+	"replication", "server", "stats",
+	"instance", // virtual section
+}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -60,9 +71,7 @@ func InfoCommand(args CommandArgs) int {
 	}
 
 	if args.Has(1) {
-		for _, section := range args[1:] {
-			sections = append(sections, strings.ToLower(section))
-		}
+		sections = getCorrectedSections(args[1:])
 	}
 
 	t := table.NewTable().SetSizes(33, 96)
@@ -112,6 +121,19 @@ func InfoCommand(args CommandArgs) int {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+// getCorrectedSections returns slice with autocorrceted sections
+func getCorrectedSections(args CommandArgs) []string {
+	var result []string
+
+	model := spellcheck.Train(infoSections)
+
+	for _, section := range args {
+		result = append(result, model.Correct(strings.ToLower(section)))
+	}
+
+	return result
+}
 
 // renderInfoDataError print error for different formats
 func renderInfoDataError(format, message string) {

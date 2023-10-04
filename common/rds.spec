@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.3.0
+Version:        1.3.1
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -182,6 +182,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
+- [cli] Added autocorrect of section names for the 'info' command
+
 * Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.3.0-0
 - [cli] Added more filters to 'list' command
 - [cli] Verbose log messages about meta editing
