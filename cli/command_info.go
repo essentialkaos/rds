@@ -128,7 +128,7 @@ func getCorrectedSections(args CommandArgs) []string {
 
 	model := spellcheck.Train(infoSections)
 
-	for _, section := range args[1:] {
+	for _, section := range args {
 		result = append(result, model.Correct(strings.ToLower(section)))
 	}
 
