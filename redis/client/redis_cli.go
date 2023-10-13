@@ -82,7 +82,7 @@ func ExecRedisCmd(cfg *Config) error {
 		return fmt.Errorf("RDS currently doesn't have native support of %s command", cmd)
 	}
 
-	if cmd == "MONITOR" {
+	if strings.ToUpper(cmd) == "MONITOR" {
 		if cfg.DisableMonitor {
 			return fmt.Errorf("Traffic on instance is too high (> %d op/s) for using monitor command", MONITOR_MAX_OPS)
 		}
@@ -132,7 +132,7 @@ func RunRedisCli(cfg *Config) error {
 			continue
 		}
 
-		if cmd[0] == "MONITOR" {
+		if strings.ToUpper(cmd[0]) == "MONITOR" {
 			if cfg.DisableMonitor {
 				fmt.Printf("\nTraffic on instance is too high (> %d op/s) for using monitor command\n\n", MONITOR_MAX_OPS)
 			} else {

@@ -477,8 +477,9 @@ func helpCommandList() {
 		},
 		examples: []helpInfoExample{
 			{"", "", "Show list of all instances"},
-			{"", "my", "Show list of my instances"},
+			{"", "my", "Show list of your instances"},
 			{"", "bob active", "Show list of active instances owned by user bob"},
+			{"", "bob active @staging", `Show list of active instances with tag "staging" owned by user bob`},
 		},
 	}
 
@@ -508,8 +509,11 @@ func helpCommandList() {
 	fmtc.Printf("    {b}%-13s{!} %s\n", "standby", "Instances with standby replication")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "replica", "Instances with real replicas")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "secure", "Instances with enabled authentication")
+	fmtc.Printf("    {b}%-13s{!} %s\n", "@{tag}", "Instances tagged by given tag")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "{username}", "Instances owned by given user")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "{tag}", "Instances tagged by given tag")
+	fmtc.NewLine()
+	fmtc.Println("  If no instances are found using the property search, rds will try to find instances using")
+	fmtc.Println("  a full-text search of instance descriptions.")
 	fmtc.NewLine()
 
 	info.renderOptions()

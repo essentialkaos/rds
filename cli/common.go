@@ -334,12 +334,20 @@ func isInstanceOwnerExist(owner string) bool {
 }
 
 // getInstanceDescWithTags returns instance description with rendered tags
-func getInstanceDescWithTags(meta *CORE.InstanceMeta) string {
+func getInstanceDescWithTags(meta *CORE.InstanceMeta, highlights []string) string {
 	if meta == nil {
 		return "{s-}UNKNOWN{!}"
 	}
 
-	return meta.Desc + " " + renderTags(meta.Tags...)
+	desc := meta.Desc
+
+	if len(highlights) != 0 {
+		for _, h := range highlights {
+			desc = strings.ReplaceAll(desc, h, "{_}"+h+"{!}")
+		}
+	}
+
+	return desc + " " + renderTags(meta.Tags...)
 }
 
 // renderTags render all tags with colors
@@ -355,19 +363,19 @@ func renderTags(tags ...string) string {
 
 		switch tagColor {
 		case "r", "red":
-			result = append(result, "{r}["+tagName+"]{!}")
+			result = append(result, "{r}#"+tagName+"{!}")
 		case "b", "blue":
-			result = append(result, "{b}["+tagName+"]{!}")
+			result = append(result, "{b}#"+tagName+"{!}")
 		case "g", "green":
-			result = append(result, "{g}["+tagName+"]{!}")
+			result = append(result, "{g}#"+tagName+"{!}")
 		case "y", "yellow":
-			result = append(result, "{y}["+tagName+"]{!}")
+			result = append(result, "{y}#"+tagName+"{!}")
 		case "c", "cyan":
-			result = append(result, "{c}["+tagName+"]{!}")
+			result = append(result, "{c}#"+tagName+"{!}")
 		case "m", "magenta":
-			result = append(result, "{m}["+tagName+"]{!}")
+			result = append(result, "{m}#"+tagName+"{!}")
 		default:
-			result = append(result, "{s}["+tagName+"]{!}")
+			result = append(result, "{s}#"+tagName+"{!}")
 		}
 	}
 
