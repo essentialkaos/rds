@@ -185,6 +185,7 @@ systemctl daemon-reload &>/dev/null || :
 * Fri Oct 13 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
 - [cli] Changed syntax for listing instances with tags
 - [cli] Added full-text search to 'list' command
+- [cli] Changed tags rendering format
 
 * Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
 - [cli] Added autocorrect of section names for the 'info' command
