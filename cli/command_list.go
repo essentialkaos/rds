@@ -10,6 +10,7 @@ package cli
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
@@ -42,39 +43,10 @@ func ListCommand(args CommandArgs) int {
 	t.SetSizes(idColumnSize, 10, 18)
 	t.SetAlignments(table.ALIGN_RIGHT, table.ALIGN_RIGHT, table.ALIGN_RIGHT, table.ALIGN_LEFT)
 
-	dataShown := false
+	dataShown := listInstanceSearch(t, idList, filter, false)
 
-	for _, id := range idList {
-		state, err := CORE.GetInstanceState(id, true)
-
-		if err != nil {
-			state = CORE.INSTANCE_STATE_UNKNOWN
-		}
-
-		meta, err := CORE.GetInstanceMeta(id)
-
-		if err != nil {
-			state = CORE.INSTANCE_STATE_UNKNOWN
-		}
-
-		if !isFilterFit(filter, state, meta) {
-			continue
-		}
-
-		if useRawOutput {
-			fmt.Println(id)
-			dataShown = true
-			continue
-		}
-
-		t.Print(
-			getInstanceIDWithColor(id, state),
-			getInstanceMemoryUsageWithColor(id, state),
-			getInstanceOwnerWithColor(meta, true),
-			getInstanceDescWithTags(meta),
-		)
-
-		dataShown = true
+	if !dataShown && len(filter) != 0 {
+		dataShown = listInstanceSearch(t, idList, filter, true)
 	}
 
 	if !useRawOutput {
@@ -93,6 +65,61 @@ func ListCommand(args CommandArgs) int {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+func listInstanceSearch(t *table.Table, idList []int, filter []string, fullText bool) bool {
+	dataShown := false
+
+	for _, id := range idList {
+		state, err := CORE.GetInstanceState(id, true)
+
+		if err != nil {
+			state = CORE.INSTANCE_STATE_UNKNOWN
+		}
+
+		meta, err := CORE.GetInstanceMeta(id)
+
+		if err != nil {
+			state = CORE.INSTANCE_STATE_UNKNOWN
+		}
+
+		switch fullText {
+		case true:
+			if !isDescFit(filter, meta.Desc) {
+				continue
+			}
+		case false:
+			if !isFilterFit(filter, state, meta) {
+				continue
+			}
+		}
+
+		if useRawOutput {
+			fmt.Println(id)
+			dataShown = true
+			continue
+		}
+
+		if fullText {
+			t.Print(
+				getInstanceIDWithColor(id, state),
+				getInstanceMemoryUsageWithColor(id, state),
+				getInstanceOwnerWithColor(meta, true),
+				getInstanceDescWithTags(meta, filter),
+			)
+		} else {
+			t.Print(
+				getInstanceIDWithColor(id, state),
+				getInstanceMemoryUsageWithColor(id, state),
+				getInstanceOwnerWithColor(meta, true),
+				getInstanceDescWithTags(meta, nil),
+			)
+		}
+
+		dataShown = true
+	}
+
+	return dataShown
+}
 
 // isFilterFit return true if instance fit for filter
 func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) bool {
@@ -152,7 +179,11 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 		case "secure":
 			fit = meta.Preferencies.ServicePassword != ""
 		default:
-			fit = (meta.Auth.User == filterValue || isMetaContainsTag(meta, filterValue))
+			fit = meta.Auth.User == filterValue
+		}
+
+		if !fit && strings.HasPrefix(filterValue, "@") {
+			fit = isMetaContainsTag(meta, strings.TrimLeft(filterValue, "@"))
 		}
 
 		if !fit {
@@ -161,6 +192,17 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 	}
 
 	return fit
+}
+
+// isDescFit return true if
+func isDescFit(filter []string, desc string) bool {
+	for _, f := range filter {
+		if strings.Contains(desc, f) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // getInstanceMemoryUsageWithColor returns instance memory usage

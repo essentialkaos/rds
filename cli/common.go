@@ -334,12 +334,20 @@ func isInstanceOwnerExist(owner string) bool {
 }
 
 // getInstanceDescWithTags returns instance description with rendered tags
-func getInstanceDescWithTags(meta *CORE.InstanceMeta) string {
+func getInstanceDescWithTags(meta *CORE.InstanceMeta, highlights []string) string {
 	if meta == nil {
 		return "{s-}UNKNOWN{!}"
 	}
 
-	return meta.Desc + " " + renderTags(meta.Tags...)
+	desc := meta.Desc
+
+	if len(highlights) != 0 {
+		for _, h := range highlights {
+			desc = strings.ReplaceAll(desc, h, "{_}"+h+"{!}")
+		}
+	}
+
+	return desc + " " + renderTags(meta.Tags...)
 }
 
 // renderTags render all tags with colors
