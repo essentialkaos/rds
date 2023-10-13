@@ -186,6 +186,7 @@ systemctl daemon-reload &>/dev/null || :
 - [cli] Changed syntax for listing instances with tags
 - [cli] Added full-text search to 'list' command
 - [cli] Changed tags rendering format
+- [cli] Fixed bug with handling 'MONITOR' command
 
 * Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
 - [cli] Added autocorrect of section names for the 'info' command
