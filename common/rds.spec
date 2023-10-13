@@ -187,6 +187,7 @@ systemctl daemon-reload &>/dev/null || :
 - [cli] Added full-text search to 'list' command
 - [cli] Changed tags rendering format
 - [cli] Fixed bug with handling 'MONITOR' command
+- Dependencies update
 
 * Fri Sep 29 2023 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
 - [cli] Added autocorrect of section names for the 'info' command
