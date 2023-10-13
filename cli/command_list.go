@@ -66,6 +66,7 @@ func ListCommand(args CommandArgs) int {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// listInstanceSearch prints list of instances
 func listInstanceSearch(t *table.Table, idList []int, filter []string, fullText bool) bool {
 	dataShown := false
 
@@ -194,10 +195,12 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 	return fit
 }
 
-// isDescFit return true if
+// isDescFit return true if instance description fits filter value
 func isDescFit(filter []string, desc string) bool {
+	desc = strings.ToLower(desc)
+
 	for _, f := range filter {
-		if strings.Contains(desc, f) {
+		if strings.Contains(desc, strings.ToLower(f)) {
 			return true
 		}
 	}
