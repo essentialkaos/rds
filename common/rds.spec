@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.4.0
+Version:        1.4.1
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -182,6 +182,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Oct 13 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-0
+- [cli] Improved full-text search using 'list' command
+
 * Fri Oct 13 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
 - [cli] Changed syntax for listing instances with tags
 - [cli] Added full-text search to 'list' command
