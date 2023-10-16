@@ -185,6 +185,7 @@ systemctl daemon-reload &>/dev/null || :
 * Tue Oct 17 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.2-0
 - [cli] Improved support info output
 - [cli] Improved full-text search using 'list' command
+- [sync] Add extended check for master IP
 - Dependencies update
 
 * Fri Oct 13 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-0
