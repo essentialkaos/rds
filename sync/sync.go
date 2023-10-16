@@ -16,9 +16,11 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/log"
+	"github.com/essentialkaos/ek/v12/netutil"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/req"
 	"github.com/essentialkaos/ek/v12/signal"
+	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system/procname"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/man"
@@ -264,8 +266,20 @@ func checkSystemConfiguration() {
 	CORE.Shutdown(EC_ERROR)
 }
 
-// validateConfig validate auth token
+// validateConfig validate sync specific configuration values
 func validateConfig() {
+	if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
+		ips := netutil.GetAllIP()
+		ips = append(ips, netutil.GetAllIP6()...)
+
+		masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
+
+		if !sliceutil.Contains(ips, masterIP) {
+			log.Crit("The system doesn't have the interface with IP %s", masterIP)
+			CORE.Shutdown(EC_ERROR)
+		}
+	}
+
 	if !CORE.Config.HasProp(CORE.REPLICATION_AUTH_TOKEN) {
 		log.Crit("Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
 		CORE.Shutdown(EC_ERROR)
