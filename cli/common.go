@@ -343,7 +343,7 @@ func getInstanceDescWithTags(meta *CORE.InstanceMeta, highlights []string) strin
 
 	if len(highlights) != 0 {
 		for _, h := range highlights {
-			desc = strings.ReplaceAll(desc, h, "{_}"+h+"{!}")
+			desc = strutil.ReplaceIgnoreCase(desc, h, "{_}"+h+"{!}")
 		}
 	}
 
