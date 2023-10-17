@@ -11,9 +11,6 @@
 
 [main]
 
-  # Maintenance mode flag (superuser password will be required for ANY command)
-  maintenance: false
-
   # The maximum number of Redis instances (16-1024)
   max-instances: 128
 
