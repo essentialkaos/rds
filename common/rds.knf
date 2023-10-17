@@ -125,7 +125,7 @@
   role:
 
   # IP of master sync daemon
-  # If the role is master, this IP can be used for Sentinel monitoring
+  # If the role is master, this IP will be used for Sentinel monitoring
   master-ip:
 
   # Port for master sync daemon (1025-65535)

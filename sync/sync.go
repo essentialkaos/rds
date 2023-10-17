@@ -276,19 +276,19 @@ func validateConfig() {
 			masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
 
 			if !sliceutil.Contains(ips, masterIP) {
-				log.Crit("The system doesn't have the interface with IP %s", masterIP)
+				log.Crit("Configuration error: The system doesn't have the interface with IP %s", masterIP)
 				CORE.Shutdown(EC_ERROR)
 			}
 		}
 	}
 
 	if !CORE.Config.HasProp(CORE.REPLICATION_AUTH_TOKEN) {
-		log.Crit("Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
+		log.Crit("Configuration error: Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
 		CORE.Shutdown(EC_ERROR)
 	}
 
 	if len(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)) != CORE.TOKEN_LENGTH {
-		log.Crit("Auth token have wrong size")
+		log.Crit("Configuration error: Auth token must be %d symbols long", CORE.TOKEN_LENGTH)
 		CORE.Shutdown(EC_ERROR)
 	}
 }
