@@ -114,12 +114,13 @@ func Init(gitRev string, gomod []byte) {
 	}
 
 	setupLogger()
+
+	req.Global.SetUserAgent("RDS-Sync", VER)
+	log.Aux(strings.Repeat("-", 88))
+
 	validateConfig()
 	addSignalHandlers()
 	disableProxy()
-
-	req.Global.SetUserAgent("RSS", VER)
-	log.Aux(strings.Repeat("-", 88))
 
 	checkSystemConfiguration()
 	renameProcess()
@@ -268,16 +269,19 @@ func checkSystemConfiguration() {
 
 // validateConfig validate sync specific configuration values
 func validateConfig() {
-	if !CORE.Config.GetB(CORE.MAIN_DISABLE_IP_CHECK) {
-		if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
-			ips := netutil.GetAllIP()
-			ips = append(ips, netutil.GetAllIP6()...)
 
-			masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
+	if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
+		ips := netutil.GetAllIP()
+		ips = append(ips, netutil.GetAllIP6()...)
 
-			if !sliceutil.Contains(ips, masterIP) {
-				log.Crit("Configuration error: The system doesn't have the interface with IP %s", masterIP)
+		masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
+
+		if !sliceutil.Contains(ips, masterIP) {
+			if !CORE.Config.GetB(CORE.MAIN_DISABLE_IP_CHECK) {
+				log.Crit("Configuration error: The system has no interface with IP %s", masterIP)
 				CORE.Shutdown(EC_ERROR)
+			} else {
+				log.Warn("Configuration warning: The system has no interface with IP %s", masterIP)
 			}
 		}
 	}
