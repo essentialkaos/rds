@@ -16,9 +16,11 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/log"
+	"github.com/essentialkaos/ek/v12/netutil"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/req"
 	"github.com/essentialkaos/ek/v12/signal"
+	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system/procname"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/man"
@@ -35,7 +37,7 @@ import (
 
 const (
 	APP  = "RDS Sync"
-	VER  = "1.1.1"
+	VER  = "1.1.2"
 	DESC = "Syncing daemon for RDS"
 )
 
@@ -112,12 +114,13 @@ func Init(gitRev string, gomod []byte) {
 	}
 
 	setupLogger()
+
+	req.Global.SetUserAgent("RDS-Sync", VER)
+	log.Aux(strings.Repeat("-", 88))
+
 	validateConfig()
 	addSignalHandlers()
 	disableProxy()
-
-	req.Global.SetUserAgent("RSS", VER)
-	log.Aux(strings.Repeat("-", 88))
 
 	checkSystemConfiguration()
 	renameProcess()
@@ -264,15 +267,32 @@ func checkSystemConfiguration() {
 	CORE.Shutdown(EC_ERROR)
 }
 
-// validateConfig validate auth token
+// validateConfig validate sync specific configuration values
 func validateConfig() {
+
+	if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
+		ips := netutil.GetAllIP()
+		ips = append(ips, netutil.GetAllIP6()...)
+
+		masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
+
+		if !sliceutil.Contains(ips, masterIP) {
+			if !CORE.Config.GetB(CORE.MAIN_DISABLE_IP_CHECK) {
+				log.Crit("Configuration error: The system has no interface with IP %s", masterIP)
+				CORE.Shutdown(EC_ERROR)
+			} else {
+				log.Warn("Configuration warning: The system has no interface with IP %s", masterIP)
+			}
+		}
+	}
+
 	if !CORE.Config.HasProp(CORE.REPLICATION_AUTH_TOKEN) {
-		log.Crit("Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
+		log.Crit("Configuration error: Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
 		CORE.Shutdown(EC_ERROR)
 	}
 
 	if len(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)) != CORE.TOKEN_LENGTH {
-		log.Crit("Auth token have wrong size")
+		log.Crit("Configuration error: Auth token must be %d symbols long", CORE.TOKEN_LENGTH)
 		CORE.Shutdown(EC_ERROR)
 	}
 }

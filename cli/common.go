@@ -10,6 +10,8 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -342,9 +344,7 @@ func getInstanceDescWithTags(meta *CORE.InstanceMeta, highlights []string) strin
 	desc := meta.Desc
 
 	if len(highlights) != 0 {
-		for _, h := range highlights {
-			desc = strings.ReplaceAll(desc, h, "{_}"+h+"{!}")
-		}
+		desc = applyHighlights(desc, highlights)
 	}
 
 	return desc + " " + renderTags(meta.Tags...)
@@ -639,4 +639,33 @@ func parseFieldsLine(line, separator string) map[string]string {
 	}
 
 	return result
+}
+
+// applyHighlights applies highlights to given string
+func applyHighlights(data string, highlights []string) string {
+	if len(highlights) == 0 {
+		return data
+	}
+
+	// Reverse sort by highlight token length
+	sort.Slice(highlights, func(i, j int) bool {
+		return len(highlights[i]) > len(highlights[j])
+	})
+
+	highlightRe := regexp.MustCompile(fmt.Sprintf("(?i)(%s)", strings.Join(highlights, "|")))
+
+	data = highlightRe.ReplaceAllStringFunc(data, func(s string) string {
+		return "{_}" + s + "{!}"
+	})
+
+	closeRe := regexp.MustCompile(`\{!\}([^\{]*)\{!\}`)
+
+	// Deduplicate all closing tags
+	for closeRe.MatchString(data) {
+		data = closeRe.ReplaceAllStringFunc(data, func(s string) string {
+			return strutil.Substr(s, 3, 999) // Remove leading tag
+		})
+	}
+
+	return data
 }

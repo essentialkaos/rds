@@ -158,7 +158,7 @@ func showConfigurationInfo() {
 	fmtFlag := func(v bool) string {
 		switch v {
 		case true:
-			return fmtc.Sprintf("{r}Has issues{!}")
+			return fmtc.Sprintf("{r~}Has issues{!}")
 		default:
 			return fmtc.Sprintf("No issues")
 		}

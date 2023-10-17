@@ -26,6 +26,9 @@
   # Disable data directory size check (highly unrecommended)
   disable-filesystem-check: false
 
+  # Disable master IP check (highly unrecommended)
+  disable-ip-check: false
+
   # Warn if system memory usage greater than the defined value (in percentage)
   warn-used-memory: 50
 
@@ -122,7 +125,7 @@
   role:
 
   # IP of master sync daemon
-  # If the role is master, this IP can be used for Sentinel monitoring
+  # If the role is master, this IP will be used for Sentinel monitoring
   master-ip:
 
   # Port for master sync daemon (1025-65535)
