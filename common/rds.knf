@@ -26,6 +26,9 @@
   # Disable data directory size check (highly unrecommended)
   disable-filesystem-check: false
 
+  # Disable master IP check (highly unrecommended)
+  disable-ip-check: false
+
   # Warn if system memory usage greater than the defined value (in percentage)
   warn-used-memory: 50
 

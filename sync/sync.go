@@ -268,15 +268,17 @@ func checkSystemConfiguration() {
 
 // validateConfig validate sync specific configuration values
 func validateConfig() {
-	if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
-		ips := netutil.GetAllIP()
-		ips = append(ips, netutil.GetAllIP6()...)
+	if !CORE.Config.GetB(CORE.MAIN_DISABLE_IP_CHECK) {
+		if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
+			ips := netutil.GetAllIP()
+			ips = append(ips, netutil.GetAllIP6()...)
 
-		masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
+			masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
 
-		if !sliceutil.Contains(ips, masterIP) {
-			log.Crit("The system doesn't have the interface with IP %s", masterIP)
-			CORE.Shutdown(EC_ERROR)
+			if !sliceutil.Contains(ips, masterIP) {
+				log.Crit("The system doesn't have the interface with IP %s", masterIP)
+				CORE.Shutdown(EC_ERROR)
+			}
 		}
 	}
 
