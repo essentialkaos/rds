@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.4.2"
+	VER  = "1.4.3"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -599,12 +599,12 @@ func runCommand(args options.Arguments) {
 	cr := commands[cmd]
 
 	if isMaintenanceLockSet() {
+		fmtc.NewLine()
 		panel.Warn(
 			"Node in maintenance mode",
 			`This RDS node currently in maintenance mode. Superuser password is required for {*}ANY{!} command.`,
-			panel.WRAP,
+			panel.WRAP, panel.BOTTOM_LINE,
 		)
-		fmtc.Println()
 	}
 
 	executeCommandRoutine(cr, args.Strings()[1:])
