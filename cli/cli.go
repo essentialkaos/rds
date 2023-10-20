@@ -602,8 +602,13 @@ func runCommand(args options.Arguments) {
 		fmtc.NewLine()
 		panel.Warn(
 			"Node in maintenance mode",
-			`This RDS node currently in maintenance mode. Superuser password is required for {*}ANY{!} command.`,
-			panel.WRAP, panel.BOTTOM_LINE,
+			`This RDS node is currently in maintenance mode. The superuser password is required
+for {*_}ANY{!} command.
+
+{s}Maintenance mode is used as a protection when devops/sysadmins perform some dangerous{!}
+{s}actions like Redis update or node reconfiguration. Please be patient, it usually{!}
+{s}doesn't take long.{!}`,
+			panel.BOTTOM_LINE,
 		)
 	}
 
