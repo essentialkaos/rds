@@ -498,7 +498,7 @@ func helpCommandList() {
 	fmtc.Printf("    {b}%-13s{!} %s\n", "syncing", "Syncing instances")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "saving", "Saving instances")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "loading", "Loading instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "abandoned", "Instances with no traffic for a long time")
+	fmtc.Printf("    {b}%-13s{!} %s\n", "abandoned", "Instances with no traffic for a long time (≥ week)")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "master-up", "Instances with working syncing")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "master-down", "Instances with broken syncing")
 	fmtc.Printf("    {b}%-13s{!} %s\n", "no-replica", "Instances with no replicas")
