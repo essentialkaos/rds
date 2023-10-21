@@ -26,6 +26,9 @@
   # Disable master IP check (highly unrecommended)
   disable-ip-check: false
 
+  # Disable protips
+  disable-tips: false
+
   # Warn if system memory usage greater than the defined value (in percentage)
   warn-used-memory: 50
 

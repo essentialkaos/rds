@@ -125,6 +125,7 @@ const (
 	MAIN_DISABLE_CONFIGURATION_CHECK = "main:disable-configuration-check"
 	MAIN_DISABLE_FILESYSTEM_CHECK    = "main:disable-filesystem-check"
 	MAIN_DISABLE_IP_CHECK            = "main:disable-ip-check"
+	MAIN_DISABLE_TIPS                = "main:disable-tips"
 	MAIN_WARN_USED_MEMORY            = "main:warn-used-memory"
 	MAIN_DIR                         = "main:dir"
 	MAIN_MIN_PASS_LENGTH             = "main:min-pass-length"

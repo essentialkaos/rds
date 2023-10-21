@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.4.3"
+	VER  = "1.5.0"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -229,6 +229,9 @@ var colorTagApp, colorTagVer string
 
 // useRawOutput is raw output flag (for cli command)
 var useRawOutput = false
+
+// isTipsEnabled is protip usage flag
+var isTipsEnabled bool
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -612,6 +615,8 @@ for {*_}ANY{!} command.
 		)
 	}
 
+	isTipsEnabled = checkForTips(cmd)
+
 	executeCommandRoutine(cr, args.Strings()[1:])
 }
 
@@ -662,7 +667,13 @@ func executeCommandRoutine(cr *CommandRoutine, args []string) {
 	ec := cr.Handler(CommandArgs(args))
 
 	if cr.PrettyOutput {
-		fmtc.NewLine()
+		if ec == 0 && isTipsEnabled {
+			if !showTip() {
+				fmtc.NewLine()
+			}
+		} else {
+			fmtc.NewLine()
+		}
 	}
 
 	CORE.Shutdown(ec)
@@ -748,6 +759,21 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 	}
 
 	return false, nil
+}
+
+// checkForTips checks if protip must be shown
+func checkForTips(cmd string) bool {
+	if CORE.Config.GetB(CORE.MAIN_DISABLE_TIPS) {
+		return false
+	}
+
+	switch cmd {
+	case COMMAND_GEN_TOKEN, COMMAND_GO, COMMAND_HELP,
+		COMMAND_REPLICATION, COMMAND_TRACK:
+		return false
+	}
+
+	return true
 }
 
 // getSpellcheckModel train spellchecker with supported commands
