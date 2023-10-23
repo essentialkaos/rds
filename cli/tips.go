@@ -171,6 +171,15 @@ and returns the result to the terminal.
 {?more}More information: sudo rds help cli{!}`,
 		},
 		&protip.Tip{
+			Title: `CLI with admin privileges`,
+			Message: `Default Redis user does not have permissions for {*}@admin{!} and {*}@dangerous{!} commands. For
+CLI with admin privileges, use {?cmd}cli{!} command with {?opt}--private{!}/{?opt}-p{!} option:
+
+{?exec}sudo rds cli -p 42:2 SAVE ASYNC{!}
+
+{?more}More information: sudo rds help cli{!}`,
+		},
+		&protip.Tip{
 			Title: `View metrics that have changed over time`,
 			Message: `You can dump metrics to the file and compare them to the current metrics. Save current
 metrics with {?cmd}top-dump{!} command:
