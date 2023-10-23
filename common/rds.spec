@@ -184,6 +184,8 @@ systemctl daemon-reload &>/dev/null || :
 %changelog
 * Sat Oct 21 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
 - [cli] Added protip tips
+- [cli] Improved checks before role changing
+- [cli] Minor fixes
 
 * Tue Oct 17 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.3-0
 - [cli] Fixed maintenance mode notification position

@@ -815,9 +815,13 @@ func helpCommandReplication() {
 func helpCommandReplicationRoleSet() {
 	helpInfo{
 		command: COMMAND_REPLICATION_ROLE_SET,
-		desc:    "Reconfigure node after changing the role.",
+		desc:    "Change node role.",
+		arguments: []helpInfoArgument{
+			{"target-role", fmt.Sprintf("Target role (%s/%s)", CORE.ROLE_MASTER, CORE.ROLE_MINION), false},
+		},
 		examples: []helpInfoExample{
-			{"", "", "Set node role to the new one, currently defined in the configuration file"},
+			{"", "master", "Change node role from minion to master"},
+			{"", "minion", "Change node role from master to minion"},
 		},
 	}.render()
 }

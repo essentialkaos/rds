@@ -990,7 +990,7 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_REPLICATION, "Show replication info")
 
 		if !isSentinelFailover {
-			info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Reconfigure node after changing the role")
+			info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Change node role", "target-role")
 		}
 	}
 
@@ -1107,7 +1107,7 @@ func genUsage() *usage.Info {
 	info.AddGroup("Replication commands")
 
 	info.AddCommand(COMMAND_REPLICATION, "Show replication info")
-	info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Reconfigure node after changing the role")
+	info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Change node role", "target-role")
 
 	info.AddGroup("Sentinel commands")
 

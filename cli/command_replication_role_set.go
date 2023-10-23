@@ -8,6 +8,7 @@ package cli
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"strings"
 	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
@@ -22,35 +23,59 @@ import (
 
 // ReplicationCommand is "replication" command handler
 func ReplicationRoleSetCommand(args CommandArgs) int {
-	if CORE.IsSyncDaemonActive() {
+	if len(args) == 0 {
+		terminal.Error(
+			"You must specify target role (%s or %s)",
+			CORE.ROLE_MASTER, CORE.ROLE_MINION,
+		)
+		return EC_ERROR
+	}
+
+	targetRole := strings.ToLower(args.Get(0))
+
+	switch {
+	case CORE.IsSyncDaemonActive():
 		terminal.Warn("You must stop RDS Sync daemon before reconfiguration")
 		return EC_WARN
-	}
 
-	if !CORE.HasInstances() {
+	case !CORE.HasInstances():
 		terminal.Warn("No instances are created on this node. Reconfiguration is not required.")
 		return EC_WARN
+
+	case targetRole != CORE.ROLE_MASTER && targetRole != CORE.ROLE_MINION:
+		terminal.Error(
+			"Unknown target role %s (must be %q or %q)",
+			targetRole, CORE.ROLE_MASTER, CORE.ROLE_MINION,
+		)
+		return EC_ERROR
+
+	case CORE.Config.GetS(CORE.REPLICATION_ROLE) == "":
+		terminal.Error("Node role in configuration file is empty")
+		return EC_ERROR
+
+	case targetRole == CORE.ROLE_MASTER && !CORE.IsMaster(),
+		targetRole == CORE.ROLE_MINION && !CORE.IsMinion():
+		terminal.Error(
+			"Target role is %q but role in configuration file is set to %q",
+			targetRole, CORE.Config.GetS(CORE.REPLICATION_ROLE),
+		)
+		return EC_ERROR
 	}
 
-	if !CORE.IsMinion() && !CORE.IsMaster() {
-		terminal.Warn("Node must have \"master\" or \"minion\" role for reconfiguration")
-		return EC_WARN
-	}
-
-	switch CORE.Config.GetS(CORE.REPLICATION_ROLE) {
+	switch targetRole {
 	case CORE.ROLE_MASTER:
 		fmtc.Println("This command will reconfigure this node from {*}MINION{!} to {*}MASTER{!} role.")
 		fmtc.NewLine()
 		fmtc.Println("What will be done:")
-		fmtc.Println("{s}1.{!} For all instances will be disabled syncing with masters;")
-		fmtc.Println("{s}2.{!} For all instances will be regenerated configuration files.")
+		fmtc.Println("{s}1.{!} Synchronization with masters will be disabled for all instances;")
+		fmtc.Println("{s}2.{!} Configuration files will be regenerated for all instances.")
 
 	case CORE.ROLE_MINION:
 		fmtc.Println("This command will reconfigure this node from {*}MASTER{!} to {*}MINION{!} role.")
 		fmtc.NewLine()
 		fmtc.Println("What will be done:")
 		fmtc.Println("{s}1.{!} All instances will be stopped;")
-		fmtc.Println("{s}2.{!} For all instances will be regenerated configuration files.")
+		fmtc.Println("{s}2.{!} Configuration files will be regenerated for all instances.")
 	}
 
 	fmtc.NewLine()
@@ -97,7 +122,7 @@ func setRoleFromMasterToMinion() int {
 		return EC_ERROR
 	}
 
-	logger.Info(-1, "Node reconfigurated to minion role")
+	logger.Info(-1, "Node reconfigurated from master to minion role")
 
 	return EC_OK
 }
@@ -114,7 +139,7 @@ func setRoleFromMinionToMaster() int {
 		return EC_ERROR
 	}
 
-	logger.Info(-1, "Node reconfigurated to minion role")
+	logger.Info(-1, "Node reconfigurated from minion to master role")
 
 	return EC_OK
 }
@@ -162,7 +187,7 @@ func disableSyncingForAllInstances() int {
 	}
 
 	for _, id := range idList {
-		spinner.Show("Disable saving for instance %d", id)
+		spinner.Show("Disable syncing for instance %d", id)
 
 		resp, err := CORE.ExecCommand(id, &REDIS.Request{
 			Command: []string{"REPLICAOF", "NO", "ONE"},
