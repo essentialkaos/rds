@@ -32,8 +32,6 @@ func showTip() bool {
 
 {?exec}sudo rds tag-add 1 testing{!}
 
-Note that you can only add 3 tags to an instance.
-
 {?more}More information: sudo rds help tag-add{!}`,
 			Weight: 0.75,
 		},
