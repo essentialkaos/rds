@@ -27,13 +27,17 @@ func showTip() bool {
 
 	protip.Add(
 		&protip.Tip{
+			Title:   `Official RDS FAQ`,
+			Message: `Don't know how to do something? Checkout official RDS FAQ on {_}https://kaos.sh/rds/w/FAQ{!}`,
+			Weight:  0.75,
+		},
+		&protip.Tip{
 			Title: `Mark instance with tags`,
 			Message: `You can tag your instances with {?cmd}tag-add{!} command:
 
 {?exec}sudo rds tag-add 1 testing{!}
 
 {?more}More information: sudo rds help tag-add{!}`,
-			Weight: 0.75,
 		},
 		&protip.Tip{
 			Title: `Using colors with tags`,
