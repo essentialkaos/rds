@@ -96,6 +96,8 @@ pushd %{name}
                    %{buildroot}%{_sysconfdir}/sysctl.d/50-rds.conf
   install -pDm 644 common/tuning/50-rds.limits \
                    %{buildroot}%{_sysconfdir}/security/limits.d/50-rds.conf
+  install -pDm 640 common/tuning/rds.sudoers \
+                   %{buildroot}%{_sysconfdir}/sudoers.d/rds
 
   cp -r common/templates/* %{buildroot}/opt/%{name}/templates/
 
@@ -164,6 +166,7 @@ systemctl daemon-reload &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/tuned/no-thp/tuned.conf
 %config(noreplace) %{_sysconfdir}/sysctl.d/50-rds.conf
 %config(noreplace) %{_sysconfdir}/security/limits.d/50-rds.conf
+%config(noreplace) %{_sysconfdir}/sudoers.d/rds
 %config(noreplace) %{_sysconfdir}/%{name}.knf
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_localstatedir}/log/%{name}

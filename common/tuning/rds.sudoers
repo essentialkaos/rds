@@ -1,0 +1,6 @@
+# Sudoers configuration for RDS
+
+Cmnd_Alias RDS = /usr/bin/rds
+
+# Allow group "rds" to run RDS without password
+%rds  ALL=(ALL:ALL) NOPASSWD: RDS
