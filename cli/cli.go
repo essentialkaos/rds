@@ -224,6 +224,9 @@ var logger *Logger
 // commands is list of command handlers
 var commands map[string]*CommandRoutine
 
+// prefs contains user-specific preferences
+var prefs Preferences
+
 // colors of app and version
 var colorTagApp, colorTagVer string
 
@@ -251,6 +254,8 @@ func Init(gitRev string, gomod []byte) {
 		genManPage()
 		os.Exit(EC_OK)
 	}
+
+	prefs = GetPreferences()
 
 	configureUI()
 	validateOptions()
@@ -339,12 +344,12 @@ func configureUI() {
 
 	terminal.TitleColorTag = "{s}"
 
-	if !options.GetB(OPT_SIMPLE) {
-		terminal.Prompt = "› "
+	if !options.GetB(OPT_SIMPLE) && !prefs.SimpleUI {
+		terminal.Prompt = "{s}›{!} "
 		terminal.MaskSymbol = "•"
-		terminal.MaskSymbolColorTag = "{s}"
+		terminal.MaskSymbolColorTag = "{s-}"
 
-		RC.Prompt = "› "
+		RC.Prompt = "{s}›{!} "
 		RC.UseColoredPrompt = true
 
 		fmtutil.SeparatorSymbol = "–"
@@ -366,6 +371,12 @@ func configureUI() {
 
 	if options.GetB(OPT_RAW) {
 		useRawOutput = true
+	}
+
+	panel.DefaultOptions = append(panel.DefaultOptions, panel.BOTTOM_LINE)
+
+	if prefs.EnablePowerline && !prefs.SimpleUI {
+		panel.DefaultOptions = append(panel.DefaultOptions, panel.LABEL_POWERLINE)
 	}
 }
 
@@ -611,7 +622,6 @@ for {*_}ANY{!} command.
 {s}Maintenance mode is used as a protection when devops/sysadmins perform some dangerous{!}
 {s}actions like Redis update or node reconfiguration. Please be patient, it usually{!}
 {s}doesn't take long.{!}`,
-			panel.BOTTOM_LINE,
 		)
 	}
 
@@ -763,7 +773,7 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 
 // checkForTips checks if protip must be shown
 func checkForTips(cmd string) bool {
-	if CORE.Config.GetB(CORE.MAIN_DISABLE_TIPS) {
+	if CORE.Config.GetB(CORE.MAIN_DISABLE_TIPS) || prefs.DisableTips {
 		return false
 	}
 

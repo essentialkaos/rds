@@ -21,7 +21,7 @@ Source0:        https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  golang >= 1.20
+BuildRequires:  golang >= 1.21
 
 Requires:       tuned
 
@@ -184,6 +184,7 @@ systemctl daemon-reload &>/dev/null || :
 %changelog
 * Sat Oct 21 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
 - [cli] Added protip tips
+- [cli] Added user-specific preferences
 - [cli] Improved checks before role changing
 - [cli] Minor fixes
 

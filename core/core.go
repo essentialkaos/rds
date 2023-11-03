@@ -3097,8 +3097,7 @@ func generateConfigFromTemplate(source TemplateSource, data any) ([]byte, error)
 
 	var bf bytes.Buffer
 
-	ct := template.Must(t, nil)
-	err = ct.Execute(&bf, data)
+	err = t.Execute(&bf, data)
 
 	if err != nil {
 		return nil, fmt.Errorf("Can't render template data: %w", err)

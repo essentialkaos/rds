@@ -1,0 +1,12 @@
+# User preferencies for RDS
+
+[cli]
+
+  # Disable ProTips
+  disable-tips: false
+
+  # Use powerline-specific symbols
+  enable-powerline: false
+
+  # Simplify user interface by default
+  simple-ui: false
