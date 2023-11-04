@@ -112,6 +112,7 @@ ln -s /opt/%{name}/log \
 rm -rf %{buildroot}
 
 %pre
+getent group %{name} &> /dev/null || groupadd -r %{name} &> /dev/null
 getent group redis &> /dev/null || groupadd -r redis &> /dev/null
 getent passwd redis &> /dev/null || \
 useradd -r -g redis -d %{_sharedstatedir}/redis -s /sbin/nologin \
