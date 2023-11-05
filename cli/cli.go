@@ -43,7 +43,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.4.3"
+	VER  = "1.5.0"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -224,11 +224,17 @@ var logger *Logger
 // commands is list of command handlers
 var commands map[string]*CommandRoutine
 
+// prefs contains user-specific preferences
+var prefs Preferences
+
 // colors of app and version
 var colorTagApp, colorTagVer string
 
 // useRawOutput is raw output flag (for cli command)
 var useRawOutput = false
+
+// isTipsEnabled is protip usage flag
+var isTipsEnabled bool
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -248,6 +254,8 @@ func Init(gitRev string, gomod []byte) {
 		genManPage()
 		os.Exit(EC_OK)
 	}
+
+	prefs = GetPreferences()
 
 	configureUI()
 	validateOptions()
@@ -336,12 +344,12 @@ func configureUI() {
 
 	terminal.TitleColorTag = "{s}"
 
-	if !options.GetB(OPT_SIMPLE) {
-		terminal.Prompt = "› "
+	if !options.GetB(OPT_SIMPLE) && !prefs.SimpleUI {
+		terminal.Prompt = "{s}›{!} "
 		terminal.MaskSymbol = "•"
-		terminal.MaskSymbolColorTag = "{s}"
+		terminal.MaskSymbolColorTag = "{s-}"
 
-		RC.Prompt = "› "
+		RC.Prompt = "{s}›{!} "
 		RC.UseColoredPrompt = true
 
 		fmtutil.SeparatorSymbol = "–"
@@ -363,6 +371,12 @@ func configureUI() {
 
 	if options.GetB(OPT_RAW) {
 		useRawOutput = true
+	}
+
+	panel.DefaultOptions = append(panel.DefaultOptions, panel.BOTTOM_LINE)
+
+	if prefs.EnablePowerline && !prefs.SimpleUI {
+		panel.DefaultOptions = append(panel.DefaultOptions, panel.LABEL_POWERLINE)
 	}
 }
 
@@ -608,9 +622,10 @@ for {*_}ANY{!} command.
 {s}Maintenance mode is used as a protection when devops/sysadmins perform some dangerous{!}
 {s}actions like Redis update or node reconfiguration. Please be patient, it usually{!}
 {s}doesn't take long.{!}`,
-			panel.BOTTOM_LINE,
 		)
 	}
+
+	isTipsEnabled = checkForTips(cmd)
 
 	executeCommandRoutine(cr, args.Strings()[1:])
 }
@@ -662,7 +677,13 @@ func executeCommandRoutine(cr *CommandRoutine, args []string) {
 	ec := cr.Handler(CommandArgs(args))
 
 	if cr.PrettyOutput {
-		fmtc.NewLine()
+		if ec == 0 && isTipsEnabled {
+			if !showTip() {
+				fmtc.NewLine()
+			}
+		} else {
+			fmtc.NewLine()
+		}
 	}
 
 	CORE.Shutdown(ec)
@@ -748,6 +769,28 @@ func authenticate(authType AuthType, strict bool, instanceID string) (bool, erro
 	}
 
 	return false, nil
+}
+
+// checkForTips checks if protip must be shown
+func checkForTips(cmd string) bool {
+	if CORE.Config.GetB(CORE.MAIN_DISABLE_TIPS) || prefs.DisableTips {
+		return false
+	}
+
+	switch cmd {
+	case COMMAND_CREATE, COMMAND_DESTROY, COMMAND_EDIT,
+		COMMAND_START, COMMAND_STOP, COMMAND_RESTART, COMMAND_KILL,
+		COMMAND_STATUS, COMMAND_CPU, COMMAND_MEMORY, COMMAND_INFO,
+		COMMAND_CLIENTS, COMMAND_CONF, COMMAND_LIST, COMMAND_STATS,
+		COMMAND_STATS_COMMAND, COMMAND_STATS_LATENCY, COMMAND_STATS_ERROR,
+		COMMAND_TOP, COMMAND_TOP_DIFF, COMMAND_TOP_DUMP, COMMAND_SLOWLOG_GET,
+		COMMAND_SLOWLOG_RESET, COMMAND_TAG_ADD, COMMAND_TAG_REMOVE,
+		COMMAND_CHECK, COMMAND_BACKUP_CREATE, COMMAND_BACKUP_RESTORE,
+		COMMAND_BACKUP_CLEAN, COMMAND_BACKUP_LIST:
+		return true
+	}
+
+	return false
 }
 
 // getSpellcheckModel train spellchecker with supported commands
@@ -957,7 +1000,7 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_REPLICATION, "Show replication info")
 
 		if !isSentinelFailover {
-			info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Reconfigure node after changing the role")
+			info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Change node role", "target-role")
 		}
 	}
 
@@ -1074,7 +1117,7 @@ func genUsage() *usage.Info {
 	info.AddGroup("Replication commands")
 
 	info.AddCommand(COMMAND_REPLICATION, "Show replication info")
-	info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Reconfigure node after changing the role")
+	info.AddCommand(COMMAND_REPLICATION_ROLE_SET, "Change node role", "target-role")
 
 	info.AddGroup("Sentinel commands")
 

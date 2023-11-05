@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.4.3
+Version:        1.5.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -21,7 +21,7 @@ Source0:        https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  golang >= 1.20
+BuildRequires:  golang >= 1.21
 
 Requires:       tuned
 
@@ -36,7 +36,7 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.1.2
+Version:   1.1.3
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -96,6 +96,8 @@ pushd %{name}
                    %{buildroot}%{_sysconfdir}/sysctl.d/50-rds.conf
   install -pDm 644 common/tuning/50-rds.limits \
                    %{buildroot}%{_sysconfdir}/security/limits.d/50-rds.conf
+  install -pDm 640 common/tuning/50-rds.sudoers \
+                   %{buildroot}%{_sysconfdir}/sudoers.d/50-rds
 
   cp -r common/templates/* %{buildroot}/opt/%{name}/templates/
 
@@ -110,6 +112,7 @@ ln -s /opt/%{name}/log \
 rm -rf %{buildroot}
 
 %pre
+getent group %{name} &> /dev/null || groupadd -r %{name} &> /dev/null
 getent group redis &> /dev/null || groupadd -r redis &> /dev/null
 getent passwd redis &> /dev/null || \
 useradd -r -g redis -d %{_sharedstatedir}/redis -s /sbin/nologin \
@@ -164,6 +167,7 @@ systemctl daemon-reload &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/tuned/no-thp/tuned.conf
 %config(noreplace) %{_sysconfdir}/sysctl.d/50-rds.conf
 %config(noreplace) %{_sysconfdir}/security/limits.d/50-rds.conf
+%config(noreplace) %{_sysconfdir}/sudoers.d/50-rds
 %config(noreplace) %{_sysconfdir}/%{name}.knf
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_localstatedir}/log/%{name}
@@ -182,6 +186,12 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Sat Oct 21 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
+- [cli] Added protip tips
+- [cli] Added user-specific preferences
+- [cli] Improved checks before role changing
+- [cli] Minor fixes
+
 * Tue Oct 17 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.3-0
 - [cli] Fixed maintenance mode notification position
 - Removed outdated option from configuration file

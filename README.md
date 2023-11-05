@@ -14,7 +14,7 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.st/rds-100.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rds-100a.gif)](#usage-demo)
 
 ### Installation
 
@@ -27,7 +27,7 @@ sudo yum install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /e
 sudo yum install rds rds-sync redis70
 ```
 
-Run `sudo rds go` command and follow the instructions.
+Run `sudo rds go` command and follow the instructions. Check out the [FAQ section](https://kaos.sh/rds/w/FAQ) of our wiki for common questions about using RDS.
 
 <details><summary><b>About Redis versions</b></summary><p>
 

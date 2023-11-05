@@ -19,7 +19,7 @@ import (
 // MaintenanceCommand is "maintenance" command handler
 func MaintenanceCommand(args CommandArgs) int {
 	if len(args) == 0 {
-		terminal.Error("You must maintenance state (enable/disable or yes/no)")
+		terminal.Error("You must specify maintenance state (enable/disable or yes/no)")
 		return EC_ERROR
 	}
 

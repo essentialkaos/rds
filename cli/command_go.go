@@ -66,6 +66,20 @@ We have created a configuration with recommended limits. You can check it here:
 These limits will be applied automatically, so there are no additional actions
 to do.
 
+{*}4. Add sudoers configuration{!}
+
+RDS requires sudo privileges for all commands, so you will need to configure
+{?app}sudoers{!} for it users.
+
+We have created a configuration for {?prop}rds{!} user group. You can check it here:
+
+{s}•{!} {?cfg}/etc/sudoers.d/rds{!}
+
+Note that this configuration will only work if {?cfg}/etc/sudoers{!} includes files from
+{?cfg}/etc/sudoers.d{!}. It must contain this line:
+
+{s}#includedir /etc/sudoers.d{!}
+
 {s-}More info about system configuration can be found at {_}https://redis.io/topics/admin{!}`
 
 	_GUIDE_SYNCING = `{*}1. Generate authentication token{!}
