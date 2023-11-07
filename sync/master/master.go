@@ -172,13 +172,14 @@ func startAPIServer(addr string) {
 
 // registerAPIHandlers register all handlers
 func registerAPIHandlers(mux *http.ServeMux) {
-	mux.HandleFunc("/"+string(API.METHOD_HELLO), helloHandler)
-	mux.HandleFunc("/"+string(API.METHOD_FETCH), fetchHandler)
-	mux.HandleFunc("/"+string(API.METHOD_INFO), infoHandler)
-	mux.HandleFunc("/"+string(API.METHOD_PUSH), pushHandler)
-	mux.HandleFunc("/"+string(API.METHOD_PULL), pullHandler)
-	mux.HandleFunc("/"+string(API.METHOD_STATS), statsHandler)
-	mux.HandleFunc("/"+string(API.METHOD_REPLICATION), replicationHandler)
+	mux.HandleFunc("/"+API.METHOD_HELLO.String(), helloHandler)
+	mux.HandleFunc("/"+API.METHOD_FETCH.String(), fetchHandler)
+	mux.HandleFunc("/"+API.METHOD_INFO.String(), infoHandler)
+	mux.HandleFunc("/"+API.METHOD_PUSH.String(), pushHandler)
+	mux.HandleFunc("/"+API.METHOD_PULL.String(), pullHandler)
+	mux.HandleFunc("/"+API.METHOD_STATS.String(), statsHandler)
+	mux.HandleFunc("/"+API.METHOD_REPLICATION.String(), replicationHandler)
+	mux.HandleFunc("/"+API.METHOD_BYE.String(), byeHandler)
 	mux.HandleFunc("/", anyHandler)
 }
 
@@ -188,7 +189,7 @@ func anyHandler(w http.ResponseWriter, r *http.Request) {
 	encodeAndWrite(w, &API.DefaultResponse{Status: statusWrongRequestError})
 }
 
-// helloHandler client registration handler
+// helloHandler is "hello" command handler
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -246,7 +247,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// infoHandler info command handler
+// infoHandler is "info" command handler
 func infoHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -339,7 +340,7 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// pushHandler push command handler
+// pushHandler is "push" command handler
 func pushHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -392,7 +393,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// pullHandler pull command handler
+// pullHandler is "pull" command handler
 func pullHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -452,7 +453,7 @@ func pullHandler(w http.ResponseWriter, r *http.Request) {
 	client.Syncing = false
 }
 
-// fetchHandler fetch command handler
+// fetchHandler is "fetch" command handler
 func fetchHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -517,7 +518,7 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 	client.LastSync = time.Now().UnixNano()
 }
 
-// replicationHandler replication command handler
+// replicationHandler is "replication" command handler
 func replicationHandler(w http.ResponseWriter, r *http.Request) {
 	appendHeader(w)
 
@@ -548,7 +549,7 @@ func replicationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// statsHandler stats command handler
+// statsHandler is "stats" command handler
 func statsHandler(w http.ResponseWriter, r *http.Request) {
 	appendHeader(w)
 
@@ -591,6 +592,71 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("Can't encode response: %v", err)
 	}
+}
+
+// byeHandler is "bye" command handler
+func byeHandler(w http.ResponseWriter, r *http.Request) {
+	appendHeader(w)
+
+	if !checkAuthHeader(w, r) {
+		return
+	}
+
+	if !checkRequestMethod(w, r, "POST") {
+		return
+	}
+
+	byeRequest := &API.ByeRequest{}
+	err := readAndDecode(r, byeRequest)
+
+	if err != nil {
+		encodeAndWrite(w, &API.DefaultResponse{Status: statusArgError})
+		return
+	}
+
+	client, ok := clients[byeRequest.CID]
+	ip := httputil.GetRemoteHost(r)
+
+	if ip != client.IP {
+		log.Error(
+			"Got bye request from client with CID %s: Client with given CID registered from different IP (%s ≠ %s)",
+			byeRequest.CID, ip, client.IP,
+		)
+
+		encodeAndWrite(w, &API.DefaultResponse{
+			Status: API.ResponseStatus{
+				Code: API.STATUS_UNKNOWN_CLIENT,
+				Desc: fmt.Sprintf("Client with ID %s registered from different IP", byeRequest.CID),
+			},
+		})
+
+		return
+	}
+
+	if !ok {
+		log.Warn(
+			"Got bye request from client with CID %s: There is no client with given CID",
+			byeRequest.CID,
+		)
+
+		encodeAndWrite(w, &API.DefaultResponse{
+			Status: API.ResponseStatus{
+				Code: API.STATUS_UNKNOWN_CLIENT,
+				Desc: fmt.Sprintf("Client with ID %s is not found", byeRequest.CID),
+			},
+		})
+
+		return
+	}
+
+	log.Info(
+		"Got bye request from client with CID %s: Client successfully unregistered",
+		byeRequest.CID,
+	)
+
+	delete(clients, byeRequest.CID)
+
+	encodeAndWrite(w, &API.DefaultResponse{Status: statusOK})
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -796,15 +862,15 @@ func registerClient(ip string, request *API.HelloRequest, cid string) {
 		ConnectionDate: now,
 	}
 
-	for i, c := range clients {
-		if c.IP == client.IP {
-			log.Info(
-				"Client with CID %s unregistered: New hello request received from IP (%s) associated with this client",
-				c.CID, c.IP,
-			)
+	hasClientFromIP, clientCID := hasClient(client.IP)
 
-			delete(clients, i)
-		}
+	if hasClientFromIP {
+		log.Info(
+			"Client with CID %s unregistered: New hello request received from IP (%s) associated with this client",
+			clientCID, client.IP,
+		)
+
+		delete(clients, clientCID)
 	}
 
 	clients[cid] = client
@@ -1006,6 +1072,17 @@ func checkClientsStatus() {
 			delete(clients, client.CID)
 		}
 	}
+}
+
+// hasClient returns true and CID if master has registered client from given IP
+func hasClient(ip string) (bool, string) {
+	for cid, client := range clients {
+		if client.IP == ip {
+			return true, cid
+		}
+	}
+
+	return false, ""
 }
 
 // genCID return new client id

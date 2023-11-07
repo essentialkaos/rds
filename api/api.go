@@ -125,6 +125,7 @@ const (
 	METHOD_INFO        Method = "info"
 	METHOD_REPLICATION Method = "replication"
 	METHOD_STATS       Method = "stats"
+	METHOD_BYE         Method = "bye"
 )
 
 type ResponseStatus struct {
@@ -193,6 +194,10 @@ type StatsResponse struct {
 	Stats  *StatsInfo     `json:"stats"`
 }
 
+type ByeRequest struct {
+	CID string `json:"cid"`
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // GetAuthHeader return API authentication header
@@ -210,7 +215,7 @@ func (s ClientState) String() string {
 	case STATE_ONLINE:
 		return "online"
 	case STATE_POSSIBLE_DOWN:
-		return "possibleDown"
+		return "possible-down"
 	case STATE_DOWN:
 		return "down"
 	case STATE_SYNCING:
@@ -220,4 +225,9 @@ func (s ClientState) String() string {
 	}
 
 	return "unknown"
+}
+
+// String returns string representation of method
+func (m Method) String() string {
+	return string(m)
 }
