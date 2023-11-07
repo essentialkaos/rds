@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.5.0
+Version:        1.5.1
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -186,6 +186,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Mon Nov 06 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.1-0
+- [cli] Tips fixes
+
 * Sat Oct 21 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
 - [cli] Added protip tips
 - [cli] Added user-specific preferences

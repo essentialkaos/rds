@@ -104,7 +104,7 @@ saves using {?opt}--disable-saves{!} option with {?cmd}create{!} command:
 		},
 		&protip.Tip{
 			Title: `Create instance with tags`,
-			Message: `You can't create and mark instance with tags using {?opt}--tags{!} option with {?cmd}create{!} command:
+			Message: `You can create and mark instance with tags using {?opt}--tags{!} option with {?cmd}create{!} command:
 
 {?exec}sudo rds create --tags r:important,b:staging{!}
 
@@ -113,7 +113,7 @@ saves using {?opt}--disable-saves{!} option with {?cmd}create{!} command:
 		&protip.Tip{
 			Title: `Create instance backup`,
 			Message: `Before some destructive actions, it's a good idea to make a backup in case something
-goes wrong. You can create a backup of your instance using {?cmd}backup-create{!} command:
+goes wrong. You can create a backup of your instance data using {?cmd}backup-create{!} command:
 
 {?exec}sudo rds backup-create 42{!}
 
