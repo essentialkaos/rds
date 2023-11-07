@@ -16,6 +16,7 @@ import (
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/timeutil"
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"
@@ -26,14 +27,12 @@ import (
 
 // ReplicationCommand is "replication" command handler
 func ReplicationCommand(args CommandArgs) int {
+	format := options.GetS(OPT_FORMAT)
+
 	if !CORE.IsSyncDaemonActive() {
-		switch options.GetS(OPT_FORMAT) {
-		case FORMAT_TEXT:
-			fmt.Println("")
-		case FORMAT_JSON:
-			fmt.Println("{}")
-		case FORMAT_XML:
-			fmt.Sprintln(`<?xml version="1.0" encoding="UTF-8" ?>\n<replication></replication>`)
+		switch format {
+		case FORMAT_TEXT, FORMAT_JSON, FORMAT_XML:
+			fmt.Print(formatReplicationErrorMessage(format))
 		default:
 			terminal.Warn("Can't show replication info: sync daemon is not working")
 		}
@@ -44,21 +43,15 @@ func ReplicationCommand(args CommandArgs) int {
 	info, err := SC.GetReplicationInfo()
 
 	if err != nil {
-		switch options.GetS(OPT_FORMAT) {
-		case FORMAT_TEXT:
-			fmt.Println("")
-		case FORMAT_JSON:
-			fmt.Println("{}")
-		case FORMAT_XML:
-			fmt.Sprintln(`<?xml version="1.0" encoding="UTF-8" ?>\n<replication></replication>`)
+		switch format {
+		case FORMAT_TEXT, FORMAT_JSON, FORMAT_XML:
+			fmt.Print(formatReplicationErrorMessage(format))
 		default:
 			terminal.Error(err.Error())
 		}
 
 		return EC_ERROR
 	}
-
-	format := options.GetS(OPT_FORMAT)
 
 	if format == "" && useRawOutput {
 		format = FORMAT_TEXT
@@ -82,10 +75,11 @@ func ReplicationCommand(args CommandArgs) int {
 
 // renderReplicationInfo print info about master and clients
 func renderReplicationInfo(info *API.ReplicationInfo) {
-	t := table.NewTable("CID", "ROLE", "STATE", "VERSION", "HOST")
+	t := table.NewTable("CID", "ROLE", "STATE", "VERSION", "LAG", "HOST")
 
-	t.SetSizes(8, 12, 14, 14)
+	t.SetSizes(8, 12, 14, 10, 8, 8)
 	t.SetAlignments(
+		table.ALIGN_RIGHT,
 		table.ALIGN_RIGHT,
 		table.ALIGN_RIGHT,
 		table.ALIGN_RIGHT,
@@ -122,18 +116,23 @@ func printSyncMasterInfo(t *table.Table, master *API.MasterInfo, suppliantCID st
 
 	t.Print(
 		"{s-}--------{!}", getSyncClientRole("master", isSuppliant), "{g}online{!}",
-		getColoredVersion(master.Version), getSyncClientHost(master.Hostname, master.IP),
+		getColoredVersion(master.Version), "{s-}—{!}", getSyncClientHost(master.Hostname, master.IP),
 	).Separator()
 }
 
 // printSyncClientInfo print info about RDS Sync client
 func printSyncClientInfo(t *table.Table, client *API.ClientInfo, suppliantCID string) {
 	isSuppliant := client.CID == suppliantCID
+	lag := "{s-}—{!}"
+
+	if client.LastSyncLag > 0 {
+		lag = timeutil.MiniDuration(timeutil.SecondsToDuration(client.LastSeenLag))
+	}
 
 	t.Print(
 		client.CID, getSyncClientRole(client.Role, isSuppliant),
 		getSyncClientState(client.State), getColoredVersion(client.Version),
-		getSyncClientHost(client.Hostname, client.IP),
+		lag, getSyncClientHost(client.Hostname, client.IP),
 	)
 }
 
@@ -198,6 +197,20 @@ func hasSentinelNodes(clients []*API.ClientInfo) bool {
 	}
 
 	return false
+}
+
+// formatReplicationErrorMessage returns error message data
+func formatReplicationErrorMessage(format string) string {
+	switch format {
+	case FORMAT_TEXT:
+		return fmt.Sprint("")
+	case FORMAT_JSON:
+		return fmt.Sprint("{}\n")
+	case FORMAT_XML:
+		return fmt.Sprint("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<replication></replication>\n")
+	}
+
+	return ""
 }
 
 // renderReplicationInfoText prints replication info in text format

@@ -906,14 +906,19 @@ func getClientsInfo() []*API.ClientInfo {
 	now := time.Now().UnixNano()
 
 	for _, client := range clients {
+		seenLag := mathutil.Round(float64(now-client.LastSeen)/1000000000.0, 3)
+		syncLag := mathutil.Round(float64(now-client.LastSync)/1000000000.0, 3)
+
 		result = append(result, &API.ClientInfo{
 			CID:            client.CID,
 			Role:           client.Role,
 			Version:        client.Version,
 			Hostname:       client.Hostname,
 			IP:             client.IP,
-			State:          getClientState(now, client),
+			LastSeenLag:    seenLag,
+			LastSyncLag:    syncLag,
 			ConnectionDate: client.ConnectionDate,
+			State:          getClientState(now, client),
 		})
 	}
 

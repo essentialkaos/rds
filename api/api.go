@@ -88,6 +88,8 @@ type ClientInfo struct {
 	Hostname       string      `json:"hostname"`
 	IP             string      `json:"ip"`
 	ConnectionDate int64       `json:"connection_date"`
+	LastSeenLag    float64     `json:"last_seen_lag"`
+	LastSyncLag    float64     `json:"last_sync_lag"`
 	State          ClientState `json:"state"`
 }
 
