@@ -1521,6 +1521,7 @@ func StopInstance(id int, force bool) error {
 		if pid.IsProcessWorks(instancePID) {
 			if isInstanceSavingData(id) {
 				time.Sleep(3 * time.Second)
+				cmdStart = time.Now()
 				continue
 			}
 
