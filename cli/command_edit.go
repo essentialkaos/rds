@@ -57,7 +57,7 @@ func EditCommand(args CommandArgs) int {
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	meta, err := CORE.GetInstanceMeta(id)

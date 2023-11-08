@@ -85,7 +85,7 @@ func RestoreStateCommand(args CommandArgs) int {
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
@@ -183,7 +183,7 @@ func checkForRestoreState(args CommandArgs) int {
 	ok, err := terminal.ReadAnswer("Do you want to restore state for all instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()

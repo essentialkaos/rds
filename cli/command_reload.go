@@ -92,7 +92,7 @@ func reloadInstanceConfig(id int) int {
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	diff, err := CORE.GetInstanceConfigChanges(id)
@@ -128,7 +128,7 @@ Use {*}REPLICAOF{!} or {*}SLAVEOF{!} commands for changing replication settings.
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()

@@ -142,7 +142,7 @@ func checkForStartAll() int {
 	ok, err := terminal.ReadAnswer("Do you really want to start ALL instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
@@ -156,7 +156,7 @@ func checkForStartAll() int {
 	ok, err = terminal.ReadAnswer("Do you want to start all instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()

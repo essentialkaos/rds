@@ -60,7 +60,7 @@ func DestroyCommand(args CommandArgs) int {
 	ok, err := terminal.ReadAnswer("Do you want to destroy this instance?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()

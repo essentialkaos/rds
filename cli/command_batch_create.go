@@ -60,7 +60,7 @@ func BatchCreateCommand(args CommandArgs) int {
 	ok, err := terminal.ReadAnswer("Create these instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()

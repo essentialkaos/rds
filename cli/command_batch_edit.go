@@ -48,7 +48,7 @@ func BatchEditCommand(args CommandArgs) int {
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
