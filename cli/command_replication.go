@@ -216,16 +216,16 @@ func formatReplicationErrorMessage(format string) string {
 // renderReplicationInfoText prints replication info in text format
 func renderReplicationInfoText(info *API.ReplicationInfo) {
 	fmt.Printf(
-		"00000000 master %s %s %s online 0\n",
+		"00000000 master %s %s %s online 0 0 0\n",
 		info.Master.IP, info.Master.Hostname,
 		strutil.Exclude(info.Master.Version, " "),
 	)
 
 	for _, c := range info.Clients {
 		fmt.Printf(
-			"%s %s %s %s %s %s %d\n",
+			"%s %s %s %s %s %s %g %g %d\n",
 			c.CID, c.Role, c.IP, c.Hostname, strutil.Exclude(c.Version, " "),
-			c.State, c.ConnectionDate,
+			c.State, c.LastSeenLag, c.LastSyncLag, c.ConnectionDate,
 		)
 	}
 }
@@ -236,7 +236,7 @@ func renderReplicationInfoXML(info *API.ReplicationInfo) {
 	fmt.Println("<replication>")
 
 	fmt.Printf(
-		"  <master ip=\"%s\" hostname=\"%s\" version=\"%s\"/>\n",
+		"  <master ip=\"%s\" hostname=\"%s\" version=\"%s\" />\n",
 		info.Master.IP, info.Master.Hostname, info.Master.Version,
 	)
 
@@ -244,8 +244,9 @@ func renderReplicationInfoXML(info *API.ReplicationInfo) {
 
 	for _, c := range info.Clients {
 		fmt.Printf(
-			"    <client cid=\"%s\" role=\"%s\" ip=\"%s\" hostname=\"%s\" version=\"%s\" state=\"%s\" connected=\"%d\" />\n",
-			c.CID, c.Role, c.IP, c.Hostname, c.Version, c.State, c.ConnectionDate,
+			"    <client cid=\"%s\" role=\"%s\" ip=\"%s\" hostname=\"%s\" version=\"%s\" state=\"%s\" seen-lag=\"%g\" sync-lag=\"%g\" connected=\"%d\" />\n",
+			c.CID, c.Role, c.IP, c.Hostname, c.Version, c.State,
+			c.LastSeenLag, c.LastSyncLag, c.ConnectionDate,
 		)
 	}
 

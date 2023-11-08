@@ -848,7 +848,7 @@ func readAndDecode(r *http.Request, v any) error {
 
 // registerClient register client in index
 func registerClient(ip string, request *API.HelloRequest, cid string) {
-	now := time.Now().UnixNano()
+	now := time.Now()
 
 	client := &ClientInfo{
 		CID:            cid,
@@ -857,9 +857,9 @@ func registerClient(ip string, request *API.HelloRequest, cid string) {
 		Role:           request.Role,
 		IP:             ip,
 		State:          API.STATE_ONLINE,
-		LastSeen:       now,
-		LastSync:       now,
-		ConnectionDate: now,
+		LastSeen:       now.UnixNano(),
+		LastSync:       now.UnixNano(),
+		ConnectionDate: now.Unix(),
 	}
 
 	hasClientFromIP, clientCID := hasClient(client.IP)
