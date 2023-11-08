@@ -112,13 +112,16 @@ func ReplicationRoleSetCommand(args CommandArgs) int {
 
 // setRoleFromMasterToMinion sets current role from master to minion
 func setRoleFromMasterToMinion() int {
-	if stopAllInstancesForRoleSet() != EC_OK {
+	logger.Info(-1, "Started node reconfigurated from master to minion role")
+
+	if stopAllInstancesForRoleSet() == EC_ERROR {
 		return EC_ERROR
 	}
 
 	fmtc.NewLine()
 
-	if regenerateAllConfigs() != EC_OK {
+	if regenerateAllConfigs() == EC_ERROR {
+		logger.Error(-1, "Node reconfigurated finished with error due to problem with configuration files regeneration")
 		return EC_ERROR
 	}
 
@@ -129,14 +132,25 @@ func setRoleFromMasterToMinion() int {
 
 // setRoleFromMinionToMaster sets current role from minion to master
 func setRoleFromMinionToMaster() int {
-	if disableSyncingForAllInstances() != EC_OK {
+	logger.Info(-1, "Started node reconfigurated from minion to master role")
+
+	if disableSyncingForAllInstances() == EC_ERROR {
 		return EC_ERROR
 	}
 
 	fmtc.NewLine()
 
-	if regenerateAllConfigs() != EC_OK {
+	ec := regenerateAllConfigs()
+
+	switch ec {
+	case EC_ERROR:
+		logger.Error(-1, "Node reconfigurated finished with error due to problem with configuration files regeneration")
 		return EC_ERROR
+	case EC_OK:
+		if reloadAllConfigs() == EC_ERROR {
+			logger.Error(-1, "Node reconfigurated finished with error due to problem with configuration files reloading")
+			return EC_ERROR
+		}
 	}
 
 	logger.Info(-1, "Node reconfigurated from minion to master role")
@@ -146,14 +160,6 @@ func setRoleFromMinionToMaster() int {
 
 // stopAllInstancesForRoleSet stops all instances for changing roles
 func stopAllInstancesForRoleSet() int {
-	ok, err := terminal.ReadAnswer("Do you want to stop all instances?", "N")
-
-	if !ok || err != nil {
-		return EC_ERROR
-	}
-
-	fmtc.NewLine()
-
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS)
 
 	if err != nil {
@@ -166,14 +172,6 @@ func stopAllInstancesForRoleSet() int {
 
 // disableSyncingForAllInstances disables syncing for all running instances
 func disableSyncingForAllInstances() int {
-	ok, err := terminal.ReadAnswer("Do you want to disable syncing for all instances?", "N")
-
-	if !ok || err != nil {
-		return EC_ERROR
-	}
-
-	fmtc.NewLine()
-
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS)
 
 	if err != nil {

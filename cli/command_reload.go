@@ -157,7 +157,7 @@ func reloadAllConfigs() int {
 	ok, err := terminal.ReadAnswer("Do you want to reload configurations for all instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()

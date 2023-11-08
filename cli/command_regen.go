@@ -73,7 +73,7 @@ func regenerateInstanceConfig(id int) int {
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
@@ -107,7 +107,7 @@ func regenerateAllConfigs() int {
 	ok, err := terminal.ReadAnswer("Do you want to regenerate configuration files for all instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
