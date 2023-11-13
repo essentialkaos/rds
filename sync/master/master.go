@@ -195,11 +195,11 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 	appendHeader(w)
 
-	if !checkAuthHeader(w, r) {
+	if !checkAuthHeader(w, r, API.METHOD_HELLO) {
 		return
 	}
 
-	if !checkRequestMethod(w, r, "POST") {
+	if !checkRequestMethod(w, r, "POST", API.METHOD_HELLO) {
 		return
 	}
 
@@ -236,9 +236,7 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		log.Warn("Client %s can be not fully compatible with this master", helloResponse.CID)
 	}
 
-	ip := httputil.GetRemoteHost(r)
-
-	registerClient(ip, helloRequest, helloResponse.CID)
+	registerClient(httputil.GetRemoteHost(r), helloRequest, helloResponse.CID)
 
 	err = encodeAndWrite(w, helloResponse)
 
@@ -253,11 +251,11 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 
 	appendHeader(w)
 
-	if !checkAuthHeader(w, r) {
+	if !checkAuthHeader(w, r, API.METHOD_INFO) {
 		return
 	}
 
-	if !checkRequestMethod(w, r, "POST") {
+	if !checkRequestMethod(w, r, "POST", API.METHOD_INFO) {
 		return
 	}
 
@@ -268,6 +266,18 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 		encodeAndWrite(w, &API.DefaultResponse{Status: statusArgError})
 		return
 	}
+
+	if !checkClient(w, r, infoRequest.CID, API.METHOD_INFO) {
+		return
+	}
+
+	client := clients[infoRequest.CID]
+
+	if !checkRequestHost(w, r, client.IP, API.METHOD_INFO) {
+		return
+	}
+
+	client.LastSeen = time.Now().UnixNano()
 
 	if !CORE.IsInstanceExist(infoRequest.ID) {
 		encodeAndWrite(w, &API.DefaultResponse{
@@ -346,11 +356,11 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 
 	appendHeader(w)
 
-	if !checkAuthHeader(w, r) {
+	if !checkAuthHeader(w, r, API.METHOD_PUSH) {
 		return
 	}
 
-	if !checkRequestMethod(w, r, "POST") {
+	if !checkRequestMethod(w, r, "POST", API.METHOD_PUSH) {
 		return
 	}
 
@@ -362,8 +372,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cIP := netutil.GetIP()
-	rIP := httputil.GetRemoteHost(r)
+	cIP, rIP := netutil.GetIP(), httputil.GetRemoteHost(r)
 
 	if rIP != cIP && rIP != CORE.Config.GetS(CORE.REPLICATION_MASTER_IP, "127.0.0.1") {
 		encodeAndWrite(w, &API.DefaultResponse{Status: statusClientError})
@@ -389,7 +398,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	err = encodeAndWrite(w, pushResponse)
 
 	if err != nil {
-		log.Error("Can't encode response: %v", err)
+		log.Error("Can't encode %s response: %v", API.METHOD_PUSH, err)
 	}
 }
 
@@ -399,11 +408,11 @@ func pullHandler(w http.ResponseWriter, r *http.Request) {
 
 	appendHeader(w)
 
-	if !checkAuthHeader(w, r) {
+	if !checkAuthHeader(w, r, API.METHOD_PULL) {
 		return
 	}
 
-	if !checkRequestMethod(w, r, "POST") {
+	if !checkRequestMethod(w, r, "POST", API.METHOD_PULL) {
 		return
 	}
 
@@ -415,20 +424,13 @@ func pullHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := clients[pullRequest.CID]
-
-	if client == nil {
-		encodeAndWrite(w, &API.DefaultResponse{
-			Status: API.ResponseStatus{
-				Code: API.STATUS_UNKNOWN_CLIENT,
-				Desc: fmt.Sprintf("Client with ID %s is not found", pullRequest.CID),
-			},
-		})
-
+	if !checkClient(w, r, pullRequest.CID, API.METHOD_PULL) {
 		return
 	}
 
-	if !checkRequestHost(w, r, client.IP) {
+	client := clients[pullRequest.CID]
+
+	if !checkRequestHost(w, r, client.IP, API.METHOD_PULL) {
 		return
 	}
 
@@ -442,7 +444,8 @@ func pullHandler(w http.ResponseWriter, r *http.Request) {
 	err = encodeAndWrite(w, pullResponse)
 
 	if err != nil {
-		log.Error("Can't encode response: %v", err)
+		log.Error("Can't encode %s response: %v", API.METHOD_PULL, err)
+		return
 	}
 
 	if client.Syncing {
@@ -459,11 +462,11 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 
 	appendHeader(w)
 
-	if !checkAuthHeader(w, r) {
+	if !checkAuthHeader(w, r, API.METHOD_FETCH) {
 		return
 	}
 
-	if !checkRequestMethod(w, r, "POST") {
+	if !checkRequestMethod(w, r, "POST", API.METHOD_FETCH) {
 		return
 	}
 
@@ -475,20 +478,13 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := clients[fetchRequest.CID]
-
-	if client == nil {
-		encodeAndWrite(w, &API.DefaultResponse{
-			Status: API.ResponseStatus{
-				Code: API.STATUS_UNKNOWN_CLIENT,
-				Desc: fmt.Sprintf("Client with ID %s is not found", fetchRequest.CID),
-			},
-		})
-
+	if !checkClient(w, r, fetchRequest.CID, API.METHOD_FETCH) {
 		return
 	}
 
-	if !checkRequestHost(w, r, client.IP) {
+	client := clients[fetchRequest.CID]
+
+	if !checkRequestHost(w, r, client.IP, API.METHOD_FETCH) {
 		return
 	}
 
@@ -503,7 +499,9 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 	err = encodeAndWrite(w, fetchResponse)
 
 	if err != nil {
-		log.Error("Can't encode response: %v", err)
+		log.Error("Can't encode %s response: %v", API.METHOD_FETCH, err)
+		client.Syncing = false
+		return
 	}
 
 	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, knf.Second)
@@ -522,11 +520,11 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 func replicationHandler(w http.ResponseWriter, r *http.Request) {
 	appendHeader(w)
 
-	if !checkAuthHeader(w, r) {
+	if !checkAuthHeader(w, r, API.METHOD_REPLICATION) {
 		return
 	}
 
-	if !checkRequestMethod(w, r, "GET") {
+	if !checkRequestMethod(w, r, "GET", API.METHOD_REPLICATION) {
 		return
 	}
 
@@ -545,7 +543,8 @@ func replicationHandler(w http.ResponseWriter, r *http.Request) {
 	err := encodeAndWrite(w, replicationResponse)
 
 	if err != nil {
-		log.Error("Can't encode response: %v", err)
+		log.Error("Can't encode %s response: %v", API.METHOD_REPLICATION, err)
+		return
 	}
 }
 
@@ -553,7 +552,7 @@ func replicationHandler(w http.ResponseWriter, r *http.Request) {
 func statsHandler(w http.ResponseWriter, r *http.Request) {
 	appendHeader(w)
 
-	if !checkRequestMethod(w, r, "GET") {
+	if !checkRequestMethod(w, r, "GET", API.METHOD_STATS) {
 		return
 	}
 
@@ -590,7 +589,8 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	err := encodeAndWrite(w, &API.StatsResponse{statusOK, statsInfo})
 
 	if err != nil {
-		log.Error("Can't encode response: %v", err)
+		log.Error("Can't encode %s response: %v", API.METHOD_STATS, err)
+		return
 	}
 }
 
@@ -598,11 +598,11 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 func byeHandler(w http.ResponseWriter, r *http.Request) {
 	appendHeader(w)
 
-	if !checkAuthHeader(w, r) {
+	if !checkAuthHeader(w, r, API.METHOD_BYE) {
 		return
 	}
 
-	if !checkRequestMethod(w, r, "POST") {
+	if !checkRequestMethod(w, r, "POST", API.METHOD_BYE) {
 		return
 	}
 
@@ -661,39 +661,77 @@ func byeHandler(w http.ResponseWriter, r *http.Request) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// checkRequestMethod check http method and write error to writer if method is not
+// checkRequestMethod checks http method and writes error to writer if method is not
 // supported
-func checkRequestMethod(w http.ResponseWriter, r *http.Request, method string) bool {
-	if r.Method != method {
-		encodeAndWrite(w, &API.DefaultResponse{
-			Status: API.ResponseStatus{
-				Code: API.STATUS_WRONG_METHOD,
-				Desc: fmt.Sprintf("Method %s is not supported", r.Method),
-			},
-		})
-
-		return false
+func checkRequestMethod(w http.ResponseWriter, r *http.Request, method string, apiMethod API.Method) bool {
+	if r.Method == method {
+		return true
 	}
 
-	return true
+	ip := httputil.GetRemoteHost(r)
+
+	log.Error(
+		"{%s:%s:%s} Got request with unsupported HTTP method (%s ≠ %s)",
+		r.Method, ip, apiMethod, r.Method, method,
+	)
+
+	encodeAndWrite(w, &API.DefaultResponse{
+		Status: API.ResponseStatus{
+			Code: API.STATUS_WRONG_METHOD,
+			Desc: fmt.Sprintf("Method %s is not supported", r.Method),
+		},
+	})
+
+	return false
 }
 
-// checkRequestHost check request host and write error to writer if request come from
-// unknown ip
-func checkRequestHost(w http.ResponseWriter, r *http.Request, clientIP string) bool {
+// checkRequestHost checks request host and writes error to writer if request come from
+// unknown IP
+func checkRequestHost(w http.ResponseWriter, r *http.Request, clientIP string, apiMethod API.Method) bool {
 	rIP := httputil.GetRemoteHost(r)
 
-	if rIP != clientIP {
-		encodeAndWrite(w, &API.DefaultResponse{Status: statusClientError})
-		return false
+	if rIP == clientIP {
+		return true
 	}
 
-	return true
+	ip := httputil.GetRemoteHost(r)
+
+	log.Error(
+		"{%s:%s:%s} Got request from unknown IP (%s ≠ %s)",
+		r.Method, ip, apiMethod, ip, clientIP,
+	)
+
+	encodeAndWrite(w, &API.DefaultResponse{Status: statusClientError})
+
+	return false
 }
 
-// checkAuthHeader check request headers for token and write error to writer if
+// checkClient checks clien ID and writes error to writer if request come from unknown client
+func checkClient(w http.ResponseWriter, r *http.Request, cid string, apiMethod API.Method) bool {
+	if clients[cid] != nil {
+		return true
+	}
+
+	ip := httputil.GetRemoteHost(r)
+
+	log.Error(
+		"{%s:%s:%s} Got request from unknown client (%s)",
+		r.Method, ip, apiMethod, cid,
+	)
+
+	encodeAndWrite(w, &API.DefaultResponse{
+		Status: API.ResponseStatus{
+			Code: API.STATUS_UNKNOWN_CLIENT,
+			Desc: fmt.Sprintf("Client with ID %s is not found", cid),
+		},
+	})
+
+	return false
+}
+
+// checkAuthHeader checks request headers for token and writes error to writer if
 // token is invalid
-func checkAuthHeader(w http.ResponseWriter, r *http.Request) bool {
+func checkAuthHeader(w http.ResponseWriter, r *http.Request, apiMethod API.Method) bool {
 	token := CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)
 
 	for headerName, header := range r.Header {
@@ -705,6 +743,10 @@ func checkAuthHeader(w http.ResponseWriter, r *http.Request) bool {
 			return true
 		}
 	}
+
+	ip := httputil.GetRemoteHost(r)
+
+	log.Error("{%s:%s:%s} Got request with unknown auth token", r.Method, ip, apiMethod)
 
 	encodeAndWrite(w, &API.DefaultResponse{Status: statusTokenError})
 

@@ -190,6 +190,8 @@ systemctl daemon-reload &>/dev/null || :
 - [cli] Improved "replication" command output
 - [sync] Added "bye" API command to unregister minion and sentinel nodes on stop
 - [sync] Added info about lag to client info
+- [sync] Better request validation
+- [sync] Improved error logging
 - [cli] [sync] Code refactoring
 
 * Mon Nov 06 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.1-0
