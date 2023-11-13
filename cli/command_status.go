@@ -24,21 +24,21 @@ func StatusCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	state, err := CORE.GetInstanceState(id, true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

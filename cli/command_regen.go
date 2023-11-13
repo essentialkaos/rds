@@ -38,7 +38,7 @@ func RegenCommand(args CommandArgs) int {
 	id, _, err := CORE.ParseIDDBPair(instanceID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -57,14 +57,14 @@ func regenerateInstanceConfig(id int) int {
 	state, err := CORE.GetInstanceState(id, true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	err = showInstanceBasicInfoCard(id, state)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -92,7 +92,7 @@ func regenerateInstanceConfig(id int) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		logger.Error(id, "Configuration file regeneration error: %v", err)
 		return EC_ERROR
 	}
@@ -127,7 +127,7 @@ func regenerateAllConfigs() int {
 
 		if err != nil {
 			fmtc.NewLine()
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			logger.Error(id, "Configuration file regeneration (batch) error: %v", err)
 			return EC_ERROR
 		} else {

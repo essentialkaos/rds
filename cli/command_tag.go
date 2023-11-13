@@ -23,7 +23,7 @@ func TagAddCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -35,7 +35,7 @@ func TagAddCommand(args CommandArgs) int {
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -43,21 +43,21 @@ func TagAddCommand(args CommandArgs) int {
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	err = CORE.AddTag(id, tag)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -74,7 +74,7 @@ func TagRemoveCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -86,7 +86,7 @@ func TagRemoveCommand(args CommandArgs) int {
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -94,7 +94,7 @@ func TagRemoveCommand(args CommandArgs) int {
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -103,14 +103,14 @@ func TagRemoveCommand(args CommandArgs) int {
 	err = CORE.RemoveTag(id, tagName)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

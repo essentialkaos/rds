@@ -51,7 +51,7 @@ func BatchCreateCommand(args CommandArgs) int {
 	infoList, err := readInstanceList(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

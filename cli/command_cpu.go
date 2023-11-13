@@ -26,14 +26,14 @@ func CPUCommand(args CommandArgs) int {
 	err := args.Check(true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -67,7 +67,7 @@ func getInstanceCPUUsage(id, period int) int {
 	i1, err := CORE.GetInstanceInfo(id, 3*time.Second, false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -76,7 +76,7 @@ func getInstanceCPUUsage(id, period int) int {
 	i2, err := CORE.GetInstanceInfo(id, 3*time.Second, false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

@@ -24,21 +24,21 @@ func RestartCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	state, err := CORE.GetInstanceState(id, false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -53,7 +53,7 @@ func RestartCommand(args CommandArgs) int {
 			force, err = getForceArg(args.Get(1))
 
 			if err != nil {
-				terminal.Error(err.Error())
+				terminal.Error(err)
 				return EC_ERROR
 			}
 		}
@@ -65,11 +65,11 @@ func RestartCommand(args CommandArgs) int {
 		if err != nil {
 			fmtc.NewLine()
 
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			err = CORE.SaveStates(CORE.GetStatesFilePath())
 
 			if err != nil {
-				terminal.Error(err.Error())
+				terminal.Error(err)
 			}
 
 			return EC_ERROR
@@ -85,11 +85,11 @@ func RestartCommand(args CommandArgs) int {
 	if err != nil {
 		fmtc.NewLine()
 
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		err = CORE.SaveStates(CORE.GetStatesFilePath())
 
 		if err != nil {
-			terminal.Error(err.Error())
+			terminal.Error(err)
 		}
 
 		return EC_ERROR
@@ -105,21 +105,21 @@ func RestartPropCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -132,7 +132,7 @@ func RestartPropCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_RESTART, id, meta.UUID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

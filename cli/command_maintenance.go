@@ -46,7 +46,7 @@ func MaintenanceCommand(args CommandArgs) int {
 	}
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

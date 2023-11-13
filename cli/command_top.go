@@ -66,7 +66,7 @@ func TopCommand(args CommandArgs) int {
 	items, err := collectTopData(field)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -114,7 +114,7 @@ func TopDumpCommand(args CommandArgs) int {
 	err := writeTopDump(output, dump)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -154,7 +154,7 @@ func TopDiffCommand(args CommandArgs) int {
 	topDump, err := readTopDump(dumpFile)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -162,7 +162,7 @@ func TopDiffCommand(args CommandArgs) int {
 	items, err := collectTopData(field)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -365,7 +365,7 @@ func printTopDiff(curTop topItems, dumpData []*topDumpItem, field string, result
 	diff, err := diffTopData(field, curTop, dumpData)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

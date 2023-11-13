@@ -35,7 +35,7 @@ func StopAllCommand(args CommandArgs) int {
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS | CORE.INSTANCE_STATE_DEAD)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -90,7 +90,7 @@ func StopAllPropCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_STOP_ALL, -1, "")
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -135,7 +135,7 @@ func stopAllInstances(idList []int) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

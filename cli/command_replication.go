@@ -47,7 +47,7 @@ func ReplicationCommand(args CommandArgs) int {
 		case FORMAT_TEXT, FORMAT_JSON, FORMAT_XML:
 			fmt.Print(formatReplicationErrorMessage(format))
 		default:
-			terminal.Error(err.Error())
+			terminal.Error(err)
 		}
 
 		return EC_ERROR

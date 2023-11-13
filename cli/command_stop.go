@@ -24,7 +24,7 @@ func StopCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -35,14 +35,14 @@ func StopCommand(args CommandArgs) int {
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	state, err := CORE.GetInstanceState(id, true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -52,7 +52,7 @@ func StopCommand(args CommandArgs) int {
 		force, err = getForceArg(args.Get(1))
 
 		if err != nil {
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			return EC_ERROR
 		}
 	}
@@ -76,7 +76,7 @@ func StopCommand(args CommandArgs) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -86,7 +86,7 @@ func StopCommand(args CommandArgs) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 	}
 
 	return EC_OK
@@ -97,21 +97,21 @@ func StopPropCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -124,7 +124,7 @@ func StopPropCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_STOP, id, meta.UUID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

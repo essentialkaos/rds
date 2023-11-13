@@ -27,14 +27,14 @@ func CliCommand(args CommandArgs) int {
 	err := args.Check(true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, db, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -60,7 +60,7 @@ func CliCommand(args CommandArgs) int {
 		ops, err := getCurrentInstanceTraffic(id)
 
 		if err != nil {
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			return EC_ERROR
 		}
 
@@ -70,7 +70,7 @@ func CliCommand(args CommandArgs) int {
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -89,7 +89,7 @@ func CliCommand(args CommandArgs) int {
 	}
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

@@ -163,7 +163,7 @@ func stopAllInstancesForRoleSet() int {
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -175,7 +175,7 @@ func disableSyncingForAllInstances() int {
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -199,7 +199,7 @@ func disableSyncingForAllInstances() int {
 		spinner.Done(err == nil)
 
 		if err != nil {
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			fmtc.NewLine()
 			return EC_ERROR
 		}

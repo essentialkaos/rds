@@ -46,7 +46,7 @@ func SaveStateCommand(args CommandArgs) int {
 	if err != nil {
 		spinner.Done(false)
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -93,7 +93,7 @@ func RestoreStateCommand(args CommandArgs) int {
 	statesInfo, err := CORE.ReadStates(statesFile)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -147,7 +147,7 @@ func RestoreStateCommand(args CommandArgs) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -165,7 +165,7 @@ func checkForRestoreState(args CommandArgs) int {
 	isRebooted, err := isSystemWasRebooted()
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

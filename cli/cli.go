@@ -404,7 +404,7 @@ func setupLogger() {
 	err := CORE.SetLogOutput(LOG_FILE, CORE.Config.GetS(CORE.LOG_LEVEL), false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		os.Exit(EC_ERROR)
 	}
 
@@ -655,7 +655,7 @@ func executeCommandRoutine(cr *CommandRoutine, args []string) {
 		}
 
 		if err != nil {
-			terminal.Error(err.Error())
+			terminal.Error(err)
 
 			if cr.PrettyOutput {
 				fmtc.NewLine()

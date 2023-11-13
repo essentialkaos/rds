@@ -36,7 +36,7 @@ func BatchEditCommand(args CommandArgs) int {
 	idList, err := parseIDList(args)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -60,7 +60,7 @@ func BatchEditCommand(args CommandArgs) int {
 			return EC_OK
 		}
 
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -77,7 +77,7 @@ func BatchEditCommand(args CommandArgs) int {
 
 		if err != nil {
 			spinner.Done(false)
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			fmtc.NewLine()
 			hasErrors = true
 			continue
@@ -90,7 +90,7 @@ func BatchEditCommand(args CommandArgs) int {
 
 			if err != nil {
 				spinner.Done(false)
-				terminal.Error(err.Error())
+				terminal.Error(err)
 				fmtc.NewLine()
 				hasErrors = true
 				continue
@@ -116,7 +116,7 @@ func BatchEditCommand(args CommandArgs) int {
 
 		if err != nil {
 			spinner.Done(false)
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			fmtc.NewLine()
 			hasErrors = true
 			continue
@@ -130,7 +130,7 @@ func BatchEditCommand(args CommandArgs) int {
 
 		if err != nil {
 			spinner.Done(false)
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			fmtc.NewLine()
 			hasErrors = true
 			continue
