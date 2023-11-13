@@ -1043,14 +1043,14 @@ func syncingWaitLoop(id int) {
 
 		state := getInstanceSyncState(id)
 
-		if state.IsLoading && !loadingFlag {
-			log.Info("(%3d) Instance is loading data in memory…", id)
-			loadingFlag = true
-		}
-
 		if !disklessFlag && state.IsDisklessSync {
 			log.Info("(%3d) Diskless sync is used. It means that we can't know how much data will be transferred to the replica.", id)
 			disklessFlag = true
+		}
+
+		if state.IsLoading && !loadingFlag {
+			log.Info("(%3d) Instance is loading data in memory…", id)
+			loadingFlag = true
 		}
 
 		if !state.IsConnected && state.IsWaiting && syncLeftBytesPrev > 0 {
