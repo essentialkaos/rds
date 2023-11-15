@@ -835,6 +835,19 @@ func checkCommand(cmd string) bool {
 		terminal.Error("\nUnknown command %q. Maybe you meant %q?\n", cmd, cmdCrt)
 	}
 
+	switch {
+	case CORE.IsMinion():
+		fmtc.NewLine()
+		panel.Warn("NODE ROLE WARNING",
+			`Note that you are running the command on the {*}minion{!*} node, and some destructive
+commands aren't available on it (see 'rds --help').`)
+	case CORE.IsSentinel():
+		fmtc.NewLine()
+		panel.Warn("NODE ROLE WARNING",
+			`Note that you are running the command on the {*}sentinel{!*} node, and some destructive
+commands aren't available on it (see 'rds --help').`)
+	}
+
 	return false
 }
 
