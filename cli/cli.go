@@ -842,15 +842,15 @@ func checkCommand(cmd string) bool {
 
 	switch {
 	case CORE.IsMinion():
+		panel.Warn("Available commands on Minion node",
+			`Note that you are running the command on the {c*}minion{!} node, and some destructive
+commands aren't available on it (see '{*}rds{!} {g}--help{!}').`)
 		fmtc.NewLine()
-		panel.Warn("NODE ROLE WARNING",
-			`Note that you are running the command on the {*}minion{!*} node, and some destructive
-commands aren't available on it (see 'rds --help').`)
 	case CORE.IsSentinel():
+		panel.Warn("Available commands on Sentinel node",
+			`Note that you are running the command on the {m*}sentinel{!} node, and some destructive
+commands aren't available on it (see '{*}rds{!} {g}--help{!}').`)
 		fmtc.NewLine()
-		panel.Warn("NODE ROLE WARNING",
-			`Note that you are running the command on the {*}sentinel{!*} node, and some destructive
-commands aren't available on it (see 'rds --help').`)
 	}
 
 	return false
