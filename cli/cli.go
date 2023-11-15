@@ -65,6 +65,7 @@ const EMPTY_RESULT = "-none-"
 // Command line options list
 const (
 	OPT_PRIVATE         = "p:private"
+	OPT_EXTRA           = "x:extra"
 	OPT_TAGS            = "t:tags"
 	OPT_FORMAT          = "f:format"
 	OPT_SECURE          = "s:secure"
@@ -189,6 +190,7 @@ type CommandRoutine struct {
 // optMap is map with options data
 var optMap = options.Map{
 	OPT_PRIVATE:         {Type: options.BOOL},
+	OPT_EXTRA:           {Type: options.BOOL},
 	OPT_TAGS:            {},
 	OPT_FORMAT:          {},
 	OPT_SECURE:          {Type: options.BOOL},
@@ -1087,6 +1089,7 @@ func showSmartUsage() {
 	}
 
 	info.AddOption(OPT_PRIVATE, "Force access to private data ({y}conf{!}/{y}cli{!}/{y}settings{!})")
+	info.AddOption(OPT_EXTRA, "Print extra info ({y}list{!})")
 	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag")
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
@@ -1096,6 +1099,15 @@ func showSmartUsage() {
 	info.AddOption(OPT_HELP, "Show this help message")
 	info.AddOption(OPT_VERSION, "Show information about version")
 	info.AddOption(OPT_VERBOSE_VERSION, "Show verbose information about version")
+
+	info.BoundOptions(COMMAND_CREATE, OPT_SECURE, OPT_DISABLE_SAVES, OPT_TAGS)
+	info.BoundOptions(COMMAND_CLI, OPT_TAGS)
+	info.BoundOptions(COMMAND_CONF, OPT_TAGS)
+	info.BoundOptions(COMMAND_INFO, OPT_FORMAT)
+	info.BoundOptions(COMMAND_LIST, OPT_EXTRA)
+	info.BoundOptions(COMMAND_REPLICATION, OPT_FORMAT)
+	info.BoundOptions(COMMAND_SETTINGS, OPT_TAGS)
+	info.BoundOptions(COMMAND_STATS, OPT_FORMAT)
 
 	info.Print()
 
@@ -1183,10 +1195,11 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
 	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Redis and Sentinel templates")
 
-	info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support")
-	info.AddOption(OPT_DISABLE_SAVES, "Disable saves for created instance")
-	info.AddOption(OPT_PRIVATE, "Force access to private data")
-	info.AddOption(OPT_TAGS, "List of tags", "tag")
+	info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support ({y}create{!})")
+	info.AddOption(OPT_DISABLE_SAVES, "Disable saves for created instance ({y}create{!})")
+	info.AddOption(OPT_PRIVATE, "Force access to private data ({y}conf{!}/{y}cli{!}/{y}settings{!})")
+	info.AddOption(OPT_EXTRA, "Print extra info ({y}list{!})")
+	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag")
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
@@ -1197,12 +1210,13 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_VERBOSE_VERSION, "Show verbose information about version")
 
 	info.BoundOptions(COMMAND_CREATE, OPT_SECURE, OPT_DISABLE_SAVES, OPT_TAGS)
-	info.BoundOptions(COMMAND_CONF, OPT_TAGS)
 	info.BoundOptions(COMMAND_CLI, OPT_TAGS)
-	info.BoundOptions(COMMAND_SETTINGS, OPT_TAGS)
+	info.BoundOptions(COMMAND_CONF, OPT_TAGS)
 	info.BoundOptions(COMMAND_INFO, OPT_FORMAT)
-	info.BoundOptions(COMMAND_STATS, OPT_FORMAT)
+	info.BoundOptions(COMMAND_LIST, OPT_EXTRA)
 	info.BoundOptions(COMMAND_REPLICATION, OPT_FORMAT)
+	info.BoundOptions(COMMAND_SETTINGS, OPT_TAGS)
+	info.BoundOptions(COMMAND_STATS, OPT_FORMAT)
 
 	return info
 }

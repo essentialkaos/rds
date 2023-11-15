@@ -187,8 +187,9 @@ systemctl daemon-reload &>/dev/null || :
 
 %changelog
 * Tue Nov 07 2023 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
-- [cli] Improved "replication" command output
+- [cli] Print extra info using 'list' command with -x/--extra option
 - [cli] Added warning about unknown commands on minion/sentinel nodes
+- [cli] Improved "replication" command output
 - [sync] Added "bye" API command to unregister minion and sentinel nodes on stop
 - [sync] Added info about lag to client info
 - [sync] Better request validation

@@ -11,11 +11,13 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/mathutil"
+	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/system/process"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -32,16 +34,30 @@ func ListCommand(args CommandArgs) int {
 		return EC_WARN
 	}
 
+	var t *table.Table
+
 	filter := args
 	idList := CORE.GetInstanceIDList()
-
-	t := table.NewTable("ID", "MEMORY", "OWNER", "DESCRIPTION")
-
 	lastID := strconv.Itoa(idList[len(idList)-1])
 	idColumnSize := mathutil.Between(len(lastID), 2, 4)
 
-	t.SetSizes(idColumnSize, 10, 18)
-	t.SetAlignments(table.ALIGN_RIGHT, table.ALIGN_RIGHT, table.ALIGN_RIGHT, table.ALIGN_LEFT)
+	if options.GetB(OPT_EXTRA) {
+		t = table.NewTable(
+			"ID", "MEMORY", "OPS", "INPUT", "OUTPUT", "CLIENTS", "OWNER", "DESCRIPTION",
+		).SetSizes(
+			idColumnSize, 10, 6, 12, 12, 7, 18,
+		).SetAlignments(
+			table.AR, table.AR, table.AR, table.AR, table.AR, table.AR, table.AR, table.AL,
+		)
+	} else {
+		t = table.NewTable(
+			"ID", "MEMORY", "OWNER", "DESCRIPTION",
+		).SetSizes(
+			idColumnSize, 10, 18,
+		).SetAlignments(
+			table.AR, table.AR, table.AR, table.AL,
+		)
+	}
 
 	dataShown := listInstanceSearch(t, idList, filter, false)
 
@@ -67,10 +83,10 @@ func ListCommand(args CommandArgs) int {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // listInstanceSearch prints list of instances
-func listInstanceSearch(t *table.Table, idList []int, filter []string, fullText bool) bool {
+func listInstanceSearch(t *table.Table, idList []int, filter []string, fullTextSearch bool) bool {
 	dataShown := false
 
-	for _, id := range idList {
+	for index, id := range idList {
 		state, err := CORE.GetInstanceState(id, true)
 
 		if err != nil {
@@ -83,7 +99,7 @@ func listInstanceSearch(t *table.Table, idList []int, filter []string, fullText 
 			state = CORE.INSTANCE_STATE_UNKNOWN
 		}
 
-		switch fullText {
+		switch fullTextSearch {
 		case true:
 			if !isDescFit(filter, meta.Desc) {
 				continue
@@ -100,26 +116,54 @@ func listInstanceSearch(t *table.Table, idList []int, filter []string, fullText 
 			continue
 		}
 
-		if fullText {
-			t.Print(
-				getInstanceIDWithColor(id, state),
-				getInstanceMemoryUsageWithColor(id, state),
-				getInstanceOwnerWithColor(meta, true),
-				getInstanceDescWithTags(meta, filter),
-			)
-		} else {
-			t.Print(
-				getInstanceIDWithColor(id, state),
-				getInstanceMemoryUsageWithColor(id, state),
-				getInstanceOwnerWithColor(meta, true),
-				getInstanceDescWithTags(meta, nil),
-			)
+		if index > 0 && index%32 == 0 && index+8 < len(idList) && options.GetB(OPT_EXTRA) {
+			t.Separator()
 		}
+
+		showListInstanceInfo(t, id, meta, state, fullTextSearch, filter)
 
 		dataShown = true
 	}
 
 	return dataShown
+}
+
+// showListInstanceInfo prints table row with instance info
+func showListInstanceInfo(t *table.Table, id int, meta *CORE.InstanceMeta, state CORE.State, fullTextSearch bool, filter []string) {
+	var instanceDesc string
+	var instanceOPS, instanceInput, instanceOutput, instanceClients string
+
+	instanceID := getInstanceIDWithColor(id, state)
+	instanceMem := getInstanceMemoryUsageWithColor(id, state)
+	instanceOwner := getInstanceOwnerWithColor(meta, true)
+
+	if fullTextSearch {
+		instanceDesc = getInstanceDescWithTags(meta, filter)
+	} else {
+		instanceDesc = getInstanceDescWithTags(meta, nil)
+	}
+
+	if options.GetB(OPT_EXTRA) {
+		instanceOPS, instanceInput, instanceOutput, instanceClients = "{s-}—{!}", "{s-}—{!}", "{s-}—{!}", "{s-}—{!}"
+
+		if state.IsWorks() {
+			info, err := CORE.GetInstanceInfo(id, time.Second, false)
+
+			if err == nil {
+				instanceOPS = fmtutil.PrettyNum(info.GetI("stats", "instantaneous_ops_per_sec"))
+				instanceInput = fmtutil.PrettySize(info.GetF("stats", "instantaneous_input_kbps")*1024.0) + "/s"
+				instanceOutput = fmtutil.PrettySize(info.GetF("stats", "instantaneous_output_kbps")*1024.0) + "/s"
+				instanceClients = fmtutil.PrettyNum(info.GetI("clients", "connected_clients") - 1)
+			}
+		}
+
+		t.Print(
+			instanceID, instanceMem, instanceOPS, instanceInput,
+			instanceOutput, instanceClients, instanceOwner, instanceDesc,
+		)
+	} else {
+		t.Print(instanceID, instanceMem, instanceOwner, instanceDesc)
+	}
 }
 
 // isFilterFit return true if instance fit for filter

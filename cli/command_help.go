@@ -475,8 +475,12 @@ func helpCommandList() {
 		arguments: []helpInfoArgument{
 			{"filter…", "Listing filters", true},
 		},
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_EXTRA), "Print extra info", false},
+		},
 		examples: []helpInfoExample{
 			{"", "", "Show list of all instances"},
+			{"", "--extra", "Show list of all instances with extra info"},
 			{"", "my", "Show list of your instances"},
 			{"", "bob active", "Show list of active instances owned by user bob"},
 			{"", "bob active @staging", `Show list of active instances with tag "staging" owned by user bob`},
