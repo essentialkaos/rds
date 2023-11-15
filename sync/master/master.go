@@ -706,7 +706,7 @@ func checkRequestHost(w http.ResponseWriter, r *http.Request, clientIP string, a
 	return false
 }
 
-// checkClient checks clien ID and writes error to writer if request come from unknown client
+// checkClient checks client ID and writes error to writer if request come from unknown client
 func checkClient(w http.ResponseWriter, r *http.Request, cid string, apiMethod API.Method) bool {
 	if clients[cid] != nil {
 		return true
