@@ -172,14 +172,14 @@ func startAPIServer(addr string) {
 
 // registerAPIHandlers register all handlers
 func registerAPIHandlers(mux *http.ServeMux) {
-	mux.HandleFunc("/"+API.METHOD_HELLO.String(), helloHandler)
-	mux.HandleFunc("/"+API.METHOD_FETCH.String(), fetchHandler)
-	mux.HandleFunc("/"+API.METHOD_INFO.String(), infoHandler)
-	mux.HandleFunc("/"+API.METHOD_PUSH.String(), pushHandler)
-	mux.HandleFunc("/"+API.METHOD_PULL.String(), pullHandler)
-	mux.HandleFunc("/"+API.METHOD_STATS.String(), statsHandler)
-	mux.HandleFunc("/"+API.METHOD_REPLICATION.String(), replicationHandler)
-	mux.HandleFunc("/"+API.METHOD_BYE.String(), byeHandler)
+	mux.HandleFunc(API.METHOD_HELLO.Pattern(), helloHandler)
+	mux.HandleFunc(API.METHOD_FETCH.Pattern(), fetchHandler)
+	mux.HandleFunc(API.METHOD_INFO.Pattern(), infoHandler)
+	mux.HandleFunc(API.METHOD_PUSH.Pattern(), pushHandler)
+	mux.HandleFunc(API.METHOD_PULL.Pattern(), pullHandler)
+	mux.HandleFunc(API.METHOD_STATS.Pattern(), statsHandler)
+	mux.HandleFunc(API.METHOD_REPLICATION.Pattern(), replicationHandler)
+	mux.HandleFunc(API.METHOD_BYE.Pattern(), byeHandler)
 	mux.HandleFunc("/", anyHandler)
 }
 

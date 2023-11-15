@@ -233,3 +233,8 @@ func (s ClientState) String() string {
 func (m Method) String() string {
 	return string(m)
 }
+
+// Pattern returns mux pattern for method
+func (m Method) Pattern() string {
+	return "/" + string(m)
+}
