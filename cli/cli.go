@@ -271,6 +271,11 @@ func Init(gitRev string, gomod []byte) {
 		os.Exit(EC_OK)
 	}
 
+	if !isUserRoot() {
+		terminal.Error("This CLI requires superuser (root) privileges")
+		os.Exit(EC_ERROR)
+	}
+
 	initRDSCore()
 
 	if options.GetB(OPT_VERBOSE_VERSION) {
@@ -901,19 +906,16 @@ func getMaintenanceLockPath() string {
 	return lockFile + "/" + MAINTENANCE_LOCK_FILE
 }
 
-// isSmartUsageAvailable returns true if we can show smart usage info
-func isSmartUsageAvailable() bool {
+// isUserRoot returns true if current user is root
+func isUserRoot() bool {
 	curUser, err := system.CurrentUser()
 
-	if err != nil || !curUser.IsRoot() {
-		return false
-	}
+	return err == nil && curUser.IsRoot()
+}
 
-	if !fsutil.IsExist(CONFIG_FILE) {
-		return false
-	}
-
-	return true
+// isSmartUsageAvailable returns true if we can show smart usage info
+func isSmartUsageAvailable() bool {
+	return isUserRoot() && fsutil.IsExist(CONFIG_FILE)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
