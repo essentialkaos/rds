@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.6.0
+Version:        1.6.1
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -37,7 +37,7 @@ Tool for Redis orchestration.
 %package sync
 Summary:   RDS Sync daemon
 Version:   1.2.0
-Release:   0%{?dist}
+Release:   1%{?dist}
 Group:     Applications/System
 
 Requires:  %{name}
@@ -186,6 +186,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Nov 17 2023 Anton Novojilov <andy@essentialkaos.com> - 1.6.1-0
+- [cli] [sync] Minor UI improvements
+
 * Tue Nov 07 2023 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
 - [cli] Print extra info using 'list' command with -x/--extra option
 - [cli] Added warning about unknown commands on minion/sentinel nodes

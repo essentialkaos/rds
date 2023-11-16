@@ -32,6 +32,7 @@ import (
 	"github.com/essentialkaos/ek/v12/usage/completion/fish"
 	"github.com/essentialkaos/ek/v12/usage/completion/zsh"
 	"github.com/essentialkaos/ek/v12/usage/man"
+	"github.com/essentialkaos/ek/v12/usage/update"
 
 	"github.com/essentialkaos/rds/support"
 
@@ -43,7 +44,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.6.0"
+	VER  = "1.6.1"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -237,8 +238,8 @@ var commands map[string]*CommandRoutine
 // prefs contains user-specific preferences
 var prefs Preferences
 
-// colors of app and version
-var colorTagApp, colorTagVer string
+// colors for usage info
+var colorTagApp, colorTagVer, colorTagRel string
 
 // useRawOutput is raw output flag (for cli command)
 var useRawOutput = false
@@ -343,11 +344,11 @@ func preConfigureUI() {
 
 	switch {
 	case fmtc.IsTrueColorSupported():
-		colorTagApp, colorTagVer = "{*}{#DC382C}", "{#A32422}"
+		colorTagApp, colorTagVer, colorTagRel = "{*}{#DC382C}", "{#A32422}", "{#777777}"
 	case fmtc.Is256ColorsSupported():
-		colorTagApp, colorTagVer = "{*}{#160}", "{#124}"
+		colorTagApp, colorTagVer, colorTagRel = "{*}{#160}", "{#124}", "{#244}"
 	default:
-		colorTagApp, colorTagVer = "{r*}", "{r}"
+		colorTagApp, colorTagVer, colorTagRel = "{r*}", "{r}", "{s}"
 	}
 }
 
@@ -974,7 +975,7 @@ func showSmartUsage() {
 
 	if isMaster {
 		info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
-		info.AddCommand(COMMAND_DESTROY, "Destroy (delete) Redis instance", "id")
+		info.AddCommand(COMMAND_DESTROY, "Destroy {s}(delete){!} Redis instance", "id")
 		info.AddCommand(COMMAND_EDIT, "Edit metadata for instance", "id")
 	}
 
@@ -1090,7 +1091,7 @@ func showSmartUsage() {
 
 	info.AddOption(OPT_PRIVATE, "Force access to private data ({y}conf{!}/{y}cli{!}/{y}settings{!})")
 	info.AddOption(OPT_EXTRA, "Print extra info ({y}list{!})")
-	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag")
+	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag…")
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
@@ -1123,7 +1124,7 @@ func genUsage() *usage.Info {
 	info.AddGroup("Basic commands")
 
 	info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
-	info.AddCommand(COMMAND_DESTROY, "Destroy (delete) Redis instance", "id")
+	info.AddCommand(COMMAND_DESTROY, "Destroy {s}(delete){!} Redis instance", "id")
 	info.AddCommand(COMMAND_EDIT, "Edit metadata for instance", "id")
 	info.AddCommand(COMMAND_START, "Start Redis instance", "id")
 	info.AddCommand(COMMAND_STOP, "Stop Redis instance", "id", "?force")
@@ -1199,7 +1200,7 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_DISABLE_SAVES, "Disable saves for created instance ({y}create{!})")
 	info.AddOption(OPT_PRIVATE, "Force access to private data ({y}conf{!}/{y}cli{!}/{y}settings{!})")
 	info.AddOption(OPT_EXTRA, "Print extra info ({y}list{!})")
-	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag")
+	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag…")
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
@@ -1248,16 +1249,22 @@ func genManPage() {
 func genAbout(gitRev string) *usage.About {
 	about := &usage.About{
 		App:     APP,
-		Version: VER + "/" + CORE.VERSION,
+		Version: VER,
+		Release: CORE.VERSION,
 		Desc:    DESC,
 		Year:    2009,
 
 		AppNameColorTag: colorTagApp,
 		VersionColorTag: colorTagVer,
+		ReleaseColorTag: colorTagRel,
 
-		License:    "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
-		Owner:      "ESSENTIAL KAOS",
-		BugTracker: "https://kaos.sh/rds",
+		ReleaseSeparator: "/",
+		DescSeparator:    "—",
+
+		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
+		Owner:   "ESSENTIAL KAOS",
+
+		UpdateChecker: usage.UpdateChecker{"essentialkaos/rds", update.GitHubChecker},
 	}
 
 	if gitRev != "" {

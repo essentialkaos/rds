@@ -77,8 +77,8 @@ var optMap = options.Map{
 	OPT_GENERATE_MAN: {Type: options.BOOL},
 }
 
-// colors of app and version
-var colorTagApp, colorTagVer string
+// colors for usage info
+var colorTagApp, colorTagVer, colorTagRel string
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -160,11 +160,11 @@ func preConfigureUI() {
 
 	switch {
 	case fmtc.IsTrueColorSupported():
-		colorTagApp, colorTagVer = "{*}{#DC382C}", "{#A32422}"
+		colorTagApp, colorTagVer, colorTagRel = "{*}{#DC382C}", "{#A32422}", "{#777777}"
 	case fmtc.Is256ColorsSupported():
-		colorTagApp, colorTagVer = "{*}{#160}", "{#124}"
+		colorTagApp, colorTagVer, colorTagRel = "{*}{#160}", "{#124}", "{#244}"
 	default:
-		colorTagApp, colorTagVer = "{r*}", "{r}"
+		colorTagApp, colorTagVer, colorTagRel = "{r*}", "{r}", "{s}"
 	}
 }
 
@@ -413,16 +413,20 @@ func genUsage() *usage.Info {
 func genAbout(gitRev string) *usage.About {
 	about := &usage.About{
 		App:     APP,
-		Version: VER + "/" + CORE.VERSION,
+		Version: VER,
+		Release: CORE.VERSION,
 		Desc:    DESC,
 		Year:    2009,
 
 		AppNameColorTag: colorTagApp,
 		VersionColorTag: colorTagVer,
+		ReleaseColorTag: colorTagRel,
 
-		License:    "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
-		Owner:      "ESSENTIAL KAOS",
-		BugTracker: "https://kaos.sh/rds",
+		ReleaseSeparator: "/",
+		DescSeparator:    "—",
+
+		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
+		Owner:   "ESSENTIAL KAOS",
 	}
 
 	if gitRev != "" {
