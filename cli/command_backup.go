@@ -43,14 +43,14 @@ func BackupCreateCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -93,7 +93,7 @@ func BackupCreateCommand(args CommandArgs) int {
 		err := cleanOldBackups(id, 1)
 
 		if err != nil {
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			return EC_ERROR
 		}
 	}
@@ -131,14 +131,14 @@ func BackupRestoreCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -219,14 +219,14 @@ func BackupCleanCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -272,14 +272,14 @@ func BackupListCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

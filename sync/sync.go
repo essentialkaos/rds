@@ -37,7 +37,7 @@ import (
 
 const (
 	APP  = "RDS Sync"
-	VER  = "1.1.2"
+	VER  = "1.2.0"
 	DESC = "Syncing daemon for RDS"
 )
 
@@ -160,11 +160,11 @@ func preConfigureUI() {
 
 	switch {
 	case fmtc.IsTrueColorSupported():
-		colorTagApp, colorTagVer = "{#DC382C}", "{#A32422}"
+		colorTagApp, colorTagVer = "{*}{#DC382C}", "{#A32422}"
 	case fmtc.Is256ColorsSupported():
-		colorTagApp, colorTagVer = "{#160}", "{#124}"
+		colorTagApp, colorTagVer = "{*}{#160}", "{#124}"
 	default:
-		colorTagApp, colorTagVer = "{r}", "{r}"
+		colorTagApp, colorTagVer = "{r*}", "{r}"
 	}
 }
 
@@ -400,7 +400,7 @@ func genManPage() {
 func genUsage() *usage.Info {
 	info := usage.NewInfo()
 
-	info.AppNameColorTag = "{*}" + colorTagApp
+	info.AppNameColorTag = colorTagApp
 
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
 	info.AddOption(OPT_HELP, "Show this help message")
@@ -417,7 +417,7 @@ func genAbout(gitRev string) *usage.About {
 		Desc:    DESC,
 		Year:    2009,
 
-		AppNameColorTag: "{*}" + colorTagApp,
+		AppNameColorTag: colorTagApp,
 		VersionColorTag: colorTagVer,
 
 		License:    "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",

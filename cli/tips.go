@@ -278,6 +278,15 @@ Or view specific settings section:
 
 {?more}More information: sudo rds help settings{!}`,
 		},
+		&protip.Tip{
+			Title: `Print extra info about instances with list command`,
+			Message: `You can view extra information about instances by using {?cmd}list{!} command
+with {?opt}-x{!}/{?opt}--extra{!} option:
+
+{?exec}sudo rds list --extra{!}
+
+{?more}More information: sudo rds help list{!}`,
+		},
 	)
 
 	return protip.Show(false)

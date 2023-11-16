@@ -27,28 +27,28 @@ func EditCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	state, err := CORE.GetInstanceState(id, true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	err = showInstanceBasicInfoCard(id, state)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -57,13 +57,13 @@ func EditCommand(args CommandArgs) int {
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -76,7 +76,7 @@ func EditCommand(args CommandArgs) int {
 			return EC_OK
 		}
 
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -88,7 +88,7 @@ func EditCommand(args CommandArgs) int {
 		auth, err := CORE.NewInstanceAuth(info.InstancePassword)
 
 		if err != nil {
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			return EC_ERROR
 		}
 
@@ -120,7 +120,7 @@ func EditCommand(args CommandArgs) int {
 	err = CORE.UpdateInstance(meta)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -133,7 +133,7 @@ func EditCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

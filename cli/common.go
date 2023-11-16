@@ -414,14 +414,14 @@ func warnAboutUnsafeAction(id int, message string) bool {
 	state, err := CORE.GetInstanceState(id, true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return false
 	}
 
 	err = showInstanceBasicInfoCard(id, state)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return false
 	}
 

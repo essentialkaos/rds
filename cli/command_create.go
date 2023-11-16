@@ -58,7 +58,7 @@ func CreateCommand(args CommandArgs) int {
 	tags, err := parseTagsOption(options.GetS(OPT_TAGS))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -69,7 +69,7 @@ func CreateCommand(args CommandArgs) int {
 			return EC_OK
 		}
 
-		terminal.Error(err.Error())
+		terminal.Error(err)
 
 		return EC_ERROR
 	}
@@ -88,7 +88,7 @@ func CreateCommand(args CommandArgs) int {
 	)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -100,7 +100,7 @@ func CreateCommand(args CommandArgs) int {
 	err = CORE.CreateInstance(meta)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -117,13 +117,13 @@ func CreateCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_CREATE, meta.ID, meta.UUID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 	}
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 	}
 
 	return EC_OK

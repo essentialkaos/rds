@@ -238,14 +238,14 @@ func generateSUAuthData() {
 	password, auth, err := CORE.NewSUAuth()
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return
 	}
 
 	err = CORE.SaveSUAuth(auth, false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return
 	}
 

@@ -23,35 +23,35 @@ func DestroyCommand(args CommandArgs) int {
 	err := args.Check(false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	state, err := CORE.GetInstanceState(id, true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	err = showInstanceBasicInfoCard(id, state)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -60,7 +60,7 @@ func DestroyCommand(args CommandArgs) int {
 	ok, err := terminal.ReadAnswer("Do you want to destroy this instance?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
@@ -68,7 +68,7 @@ func DestroyCommand(args CommandArgs) int {
 	err = CORE.DestroyInstance(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -78,13 +78,13 @@ func DestroyCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_DESTROY, id, meta.UUID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 	}
 
 	err = CORE.SaveStates(CORE.GetStatesFilePath())
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 	}
 
 	return EC_OK

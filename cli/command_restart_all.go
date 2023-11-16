@@ -32,7 +32,7 @@ func RestartAllCommand(args CommandArgs) int {
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS | CORE.INSTANCE_STATE_DEAD)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -88,7 +88,7 @@ func RestartAllCommand(args CommandArgs) int {
 
 		if err != nil {
 			spinner.Done(false)
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			fmtc.NewLine()
 			hasErrors = true
 			continue
@@ -100,7 +100,7 @@ func RestartAllCommand(args CommandArgs) int {
 
 				if err != nil {
 					spinner.Done(false)
-					terminal.Error(err.Error())
+					terminal.Error(err)
 					fmtc.NewLine()
 					hasErrors = true
 					continue
@@ -114,7 +114,7 @@ func RestartAllCommand(args CommandArgs) int {
 
 		if err != nil {
 			spinner.Done(false)
-			terminal.Error(err.Error())
+			terminal.Error(err)
 			fmtc.NewLine()
 			hasErrors = true
 			continue
@@ -129,7 +129,7 @@ func RestartAllCommand(args CommandArgs) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -153,7 +153,7 @@ func RestartAllPropCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_RESTART_ALL, -1, "")
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

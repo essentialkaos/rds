@@ -99,6 +99,8 @@ func Stop() {
 	if sentinelWorks {
 		syncSentinelState(false)
 	}
+
+	sendByeCommand()
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -289,6 +291,28 @@ func sendInfoCommand(id int, uuid string) (*CORE.InstanceInfo, bool) {
 	}
 
 	return infoResponse.Info, true
+}
+
+// sendByeCommand sends bye command to the master node
+func sendByeCommand() {
+	byeRequest := &API.ByeRequest{CID: cid}
+	byeResponse := &API.DefaultResponse{}
+
+	err := sendRequest(API.METHOD_BYE, byeRequest, byeResponse)
+
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	if byeResponse.Status.Code != API.STATUS_OK {
+		log.Error(
+			"Master response for bye command contains error: %s",
+			byeResponse.Status.Desc,
+		)
+	}
+
+	log.Info("This client successfully unregistered on the master")
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -1019,14 +1043,14 @@ func syncingWaitLoop(id int) {
 
 		state := getInstanceSyncState(id)
 
-		if state.IsLoading && !loadingFlag {
-			log.Info("(%3d) Instance is loading data in memory…", id)
-			loadingFlag = true
-		}
-
 		if !disklessFlag && state.IsDisklessSync {
 			log.Info("(%3d) Diskless sync is used. It means that we can't know how much data will be transferred to the replica.", id)
 			disklessFlag = true
+		}
+
+		if state.IsLoading && !loadingFlag {
+			log.Info("(%3d) Instance is loading data in memory…", id)
+			loadingFlag = true
 		}
 
 		if !state.IsConnected && state.IsWaiting && syncLeftBytesPrev > 0 {

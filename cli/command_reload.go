@@ -43,7 +43,7 @@ func ReloadCommand(args CommandArgs) int {
 	id, _, err := CORE.ParseIDDBPair(instanceID)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -55,7 +55,7 @@ func ReloadCommand(args CommandArgs) int {
 	state, err := CORE.GetInstanceState(id, false)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -74,14 +74,14 @@ func reloadInstanceConfig(id int) int {
 	state, err := CORE.GetInstanceState(id, true)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
 	err = showInstanceBasicInfoCard(id, state)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -92,13 +92,13 @@ func reloadInstanceConfig(id int) int {
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	diff, err := CORE.GetInstanceConfigChanges(id)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -128,7 +128,7 @@ Use {*}REPLICAOF{!} or {*}SLAVEOF{!} commands for changing replication settings.
 	)
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
@@ -142,7 +142,7 @@ Use {*}REPLICAOF{!} or {*}SLAVEOF{!} commands for changing replication settings.
 	}
 
 	for _, err = range errs {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 	}
 
 	logger.Error(id, "Instance configuration reloaded with errors (%d)", len(errs))
@@ -157,7 +157,7 @@ func reloadAllConfigs() int {
 	ok, err := terminal.ReadAnswer("Do you want to reload configurations for all instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
@@ -165,7 +165,7 @@ func reloadAllConfigs() int {
 	instances, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -183,7 +183,7 @@ func reloadAllConfigs() int {
 
 		if len(errs) != 0 {
 			for _, err := range errs {
-				terminal.Error(err.Error())
+				terminal.Error(err)
 			}
 			fmtc.NewLine()
 			hasErrors = true

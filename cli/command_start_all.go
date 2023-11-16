@@ -32,7 +32,7 @@ func StartAllCommand(args CommandArgs) int {
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_STOPPED | CORE.INSTANCE_STATE_DEAD)
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -80,7 +80,7 @@ func StartAllCommand(args CommandArgs) int {
 
 	if err != nil {
 		fmtc.NewLine()
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -104,7 +104,7 @@ func StartAllPropCommand(args CommandArgs) int {
 	err = SC.PropagateCommand(API.COMMAND_START_ALL, -1, "")
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -127,7 +127,7 @@ func checkForStartAll() int {
 	isRebooted, err := isSystemWasRebooted()
 
 	if err != nil {
-		terminal.Error(err.Error())
+		terminal.Error(err)
 		return EC_ERROR
 	}
 
@@ -142,7 +142,7 @@ func checkForStartAll() int {
 	ok, err := terminal.ReadAnswer("Do you really want to start ALL instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
@@ -156,7 +156,7 @@ func checkForStartAll() int {
 	ok, err = terminal.ReadAnswer("Do you want to start all instances?", "N")
 
 	if !ok || err != nil {
-		return EC_ERROR
+		return EC_CANCEL
 	}
 
 	fmtc.NewLine()
