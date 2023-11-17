@@ -189,6 +189,7 @@ systemctl daemon-reload &>/dev/null || :
 * Fri Nov 17 2023 Anton Novojilov <andy@essentialkaos.com> - 1.6.1-0
 - [cli] [sync] Minor UI improvements
 - [cli] Added check for newer versions
+- [cli] Fixed minor bug with coloring Redis commands in tips
 
 * Tue Nov 07 2023 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
 - [cli] Print extra info using 'list' command with -x/--extra option
