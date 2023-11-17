@@ -57,60 +57,60 @@ Usage: rds {options} {command}
 
 Basic commands
 
-  create                       Create new Redis instance
-  destroy id                   Destroy (delete) Redis instance
-  edit id                      Edit metadata for instance
-  start id                     Start Redis instance
-  stop id force                Stop Redis instance
-  restart id                   Restart Redis instance
-  kill id                      Kill Redis instance
-  status id                    Show current status of Redis instance
-  cli id:db command            Run CLI connected to Redis instance
-  cpu id period                Calculate instance CPU usage
-  memory id                    Show instance memory usage
-  info id section…             Show system info about Redis instance
-  stats-command id             Show statistics based on the command type
-  stats-latency id             Show latency statistics based on the command type
-  stats-error id               Show error statistics
-  clients id filter            Show list of connected clients
-  track id interval            Show interactive info about Redis instance
-  conf id filter…              Show configuration of Redis instance
-  list filter…                 Show list of all Redis instances
-  stats                        Show overall statistics
-  top field num                Show instances top
-  top-diff file field num      Compare current and dumped top data
-  top-dump file                Dump top data to file
-  slowlog-get id num           Show last entries from slow log
-  slowlog-reset id             Clear slow log
-  tag-add id tag               Add tag to instance
-  tag-remove id tag            Remove tag from instance
-  check                        Check for dead instances
+  create                     Create new Redis instance
+  destroy id                 Destroy (delete) Redis instance
+  edit id                    Edit metadata for instance
+  start id                   Start Redis instance
+  stop id force              Stop Redis instance
+  restart id                 Restart Redis instance
+  kill id                    Kill Redis instance
+  status id                  Show current status of Redis instance
+  cli id:db command          Run CLI connected to Redis instance
+  cpu id period              Calculate instance CPU usage
+  memory id                  Show instance memory usage
+  info id section…           Show system info about Redis instance
+  stats-command id           Show statistics based on the command type
+  stats-latency id           Show latency statistics based on the command type
+  stats-error id             Show error statistics
+  clients id filter          Show list of connected clients
+  track id interval          Show interactive info about Redis instance
+  conf id filter…            Show configuration of Redis instance
+  list filter…               Show list of all Redis instances
+  stats                      Show overall statistics
+  top field num              Show instances top
+  top-diff file field num    Compare current and dumped top data
+  top-dump file              Dump top data to file
+  slowlog-get id num         Show last entries from slow log
+  slowlog-reset id           Clear slow log
+  tag-add id tag             Add tag to instance
+  tag-remove id tag          Remove tag from instance
+  check                      Check for dead instances
 
 Backup commands
 
-  backup-create id             Create snapshot of RDB file
-  backup-restore id            Restore instance data from snapshot
-  backup-clean id              Remove all backup snapshots
-  backup-list id               List backup snapshots
+  backup-create id     Create snapshot of RDB file
+  backup-restore id    Restore instance data from snapshot
+  backup-clean id      Remove all backup snapshots
+  backup-list id       List backup snapshots
 
 Superuser commands
 
-  go                           Generate superuser access credentials
-  batch-create csv-file        Create many instances at once
-  batch-edit id                Edit many instances at once
-  stop-all                     Stop all instances
-  start-all                    Start all instances
-  restart-all                  Restart all instances
-  reload id                    Reload configuration for one or all instances
-  regen id                     Regenerate configuration file for one or all instances
-  state-save file              Save state of all instances
-  state-restore file           Restore state of all instances
-  maintenance flag             Enable or disable maintenance mode
+  go                       Generate superuser access credentials
+  batch-create csv-file    Create many instances at once
+  batch-edit id            Edit many instances at once
+  stop-all                 Stop all instances
+  start-all                Start all instances
+  restart-all              Restart all instances
+  reload id                Reload configuration for one or all instances
+  regen id                 Regenerate configuration file for one or all instances
+  state-save file          Save state of all instances
+  state-restore file       Restore state of all instances
+  maintenance flag         Enable or disable maintenance mode
 
 Replication commands
 
-  replication                  Show replication info
-  replication-role-set         Reconfigure node after changing the role
+  replication                         Show replication info
+  replication-role-set target-role    Change node role
 
 Sentinel commands
 
@@ -125,17 +125,18 @@ Sentinel commands
 
 Common commands
 
-  help command                 Show command usage info
-  settings section…            Show settings from global configuration file
-  gen-token                    Generate authentication token for sync daemon
-  validate-templates           Validate Redis and Sentinel templates
+  help command          Show command usage info
+  settings section…     Show settings from global configuration file
+  gen-token             Generate authentication token for sync daemon
+  validate-templates    Validate Redis and Sentinel templates
 
 Options
 
-  --secure, -s              Create secure Redis instance with auth support
-  --disable-saves, -ds      Disable saves for created instance
-  --private, -p             Force access to private data
-  --tags, -t tag            List of tags
+  --secure, -s              Create secure Redis instance with auth support (create)
+  --disable-saves, -ds      Disable saves for created instance (create)
+  --private, -p             Force access to private data (conf/cli/settings)
+  --extra, -x               Print extra info (list)
+  --tags, -t tag…           List of tags (create)
   --format, -f format       Output format (text/json/xml)
   --yes, -y                 Automatically answer yes for all questions
   --simple, -S              Simplify output (useful for copy-paste)
