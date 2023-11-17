@@ -23,6 +23,7 @@ func showTip() bool {
 	fmtc.NameColor("exec", "{#110}")
 	fmtc.NameColor("more", "{s-}")
 	fmtc.NameColor("cmd", "{y}")
+	fmtc.NameColor("rcmd", "{#160}")
 	fmtc.NameColor("opt", "{g}")
 
 	protip.Add(
