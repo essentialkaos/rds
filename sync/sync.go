@@ -425,8 +425,9 @@ func genAbout(gitRev string) *usage.About {
 		ReleaseSeparator: "/",
 		DescSeparator:    "—",
 
-		License: "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
-		Owner:   "ESSENTIAL KAOS",
+		License:    "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
+		Owner:      "ESSENTIAL KAOS",
+		BugTracker: "https://kaos.sh/rds",
 	}
 
 	if gitRev != "" {
