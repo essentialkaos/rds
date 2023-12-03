@@ -19,6 +19,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/passwd"
 	"github.com/essentialkaos/ek/v12/req"
 	"github.com/essentialkaos/ek/v12/sliceutil"
@@ -274,7 +275,7 @@ func Init(gitRev string, gomod []byte) {
 	validateOptions()
 
 	if options.GetB(OPT_HELP) && !isSmartUsageAvailable() {
-		genUsage().Print()
+		showBasicUsage()
 		os.Exit(EC_OK)
 	}
 
@@ -955,6 +956,17 @@ func isSmartUsageAvailable() bool {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// showBasicUsage prints basic usage info
+func showBasicUsage() {
+	if options.GetB(OPT_PAGER) {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
+	}
+
+	genUsage().Print()
+}
+
 // showSmartUsage prints usage info based on current settings
 func showSmartUsage() {
 	info := usage.NewInfo()
@@ -965,6 +977,12 @@ func showSmartUsage() {
 	isSentinel := role == CORE.ROLE_SENTINEL
 	isSentinelFailover := CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_SENTINEL)
 	allowCommands := CORE.Config.GetB(CORE.REPLICATION_ALLOW_COMMANDS)
+
+	if options.GetB(OPT_PAGER) {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
+	}
 
 	if isMaster {
 		if !CORE.Config.GetB(CORE.REPLICATION_ALWAYS_PROPAGATE) && CORE.IsSyncDaemonActive() {
