@@ -24,6 +24,7 @@ import (
 	"github.com/essentialkaos/ek/v12/pluralize"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/spellcheck"
+	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/timeutil"
 
@@ -217,7 +218,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	t.Print("Description", getInstanceDescWithTags(meta, nil))
 	t.Print("State", getInstanceStateWithColor(state))
 	t.Print("Created", timeutil.Format(created, "%Y/%m/%d %H:%M:%S"))
-	t.Print("Replication type", meta.Preferencies.ReplicationType)
+	t.Print("Replication type", strutil.Q(string(meta.Preferencies.ReplicationType), "—"))
 	t.Print("URI", uri)
 	t.Print("Compatibility", compatible+" {s-}"+redisVersionInfo+"{!}")
 
