@@ -1165,7 +1165,7 @@ func (i helpInfo) renderExamples() {
 			fmtc.Printf("  rds %s\n", strings.Join([]string{example.command, example.arguments}, " "))
 		}
 
-		fmtc.Printf("  {s-}%s{!}\n", example.desc)
+		fmtc.Printf("  {&}{s-}%s{!}\n", example.desc)
 
 		if index+1 != len(i.examples) {
 			fmtc.NewLine()
