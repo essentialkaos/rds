@@ -10,6 +10,8 @@ package cli
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
+	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -203,9 +205,13 @@ func SentinelInfoCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	t := table.NewTable()
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
+	}
 
-	t.SetSizes(23, 96)
+	t := table.NewTable().SetSizes(23, 96)
 
 	t.Separator()
 	fmtc.Printf("{*} %s{!}\n", "Master")

@@ -20,6 +20,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/netutil"
 	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/pluralize"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/spellcheck"
@@ -72,6 +73,12 @@ func InfoCommand(args CommandArgs) int {
 
 	if args.Has(1) {
 		sections = getCorrectedSections(args[1:])
+	}
+
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	t := table.NewTable().SetSizes(33, 96)

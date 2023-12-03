@@ -20,6 +20,8 @@ import (
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/jsonutil"
 	"github.com/essentialkaos/ek/v12/mathutil"
+	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/timeutil"
@@ -79,6 +81,12 @@ func TopCommand(args CommandArgs) int {
 		sort.Sort(sort.Reverse(items))
 	} else {
 		sort.Sort(items)
+	}
+
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	printTopInfo(items, resultNum, false)
@@ -164,6 +172,12 @@ func TopDiffCommand(args CommandArgs) int {
 	if err != nil {
 		terminal.Error(err)
 		return EC_ERROR
+	}
+
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	return printTopDiff(items, topDump.Data, field, resultNum, reverse)

@@ -15,6 +15,8 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
+	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -52,6 +54,12 @@ func MemoryCommand(args CommandArgs) int {
 	if err != nil {
 		terminal.Error(err)
 		return EC_ERROR
+	}
+
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	if useRawOutput {

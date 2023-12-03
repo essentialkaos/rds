@@ -18,6 +18,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/mathutil"
 	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/system/process"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -57,6 +58,12 @@ func ListCommand(args CommandArgs) int {
 		).SetAlignments(
 			table.AR, table.AR, table.AR, table.AL,
 		)
+	}
+
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	dataShown := listInstanceSearch(t, idList, filter, false)

@@ -44,7 +44,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.6.1"
+	VER  = "1.7.0"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -72,6 +72,7 @@ const (
 	OPT_SECURE          = "s:secure"
 	OPT_DISABLE_SAVES   = "ds:disable-saves"
 	OPT_YES             = "y:yes"
+	OPT_PAGER           = "P:pager"
 	OPT_SIMPLE          = "S:simple"
 	OPT_RAW             = "R:raw"
 	OPT_NO_COLOR        = "nc:no-color"
@@ -196,10 +197,11 @@ var optMap = options.Map{
 	OPT_FORMAT:          {},
 	OPT_SECURE:          {Type: options.BOOL},
 	OPT_DISABLE_SAVES:   {Type: options.BOOL},
-	OPT_NO_COLOR:        {Type: options.BOOL},
+	OPT_PAGER:           {Type: options.BOOL},
 	OPT_SIMPLE:          {Type: options.BOOL},
 	OPT_RAW:             {Type: options.BOOL},
 	OPT_YES:             {Type: options.BOOL},
+	OPT_NO_COLOR:        {Type: options.BOOL},
 	OPT_HELP:            {Type: options.BOOL},
 	OPT_VERSION:         {Type: options.MIXED},
 	OPT_VERBOSE_VERSION: {Type: options.BOOL},
@@ -1094,6 +1096,7 @@ func showSmartUsage() {
 	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag…")
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
+	info.AddOption(OPT_PAGER, "Enable pager for long output")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
 	info.AddOption(OPT_RAW, "Force raw output {s-}(useful for scripts){!}")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
@@ -1101,14 +1104,24 @@ func showSmartUsage() {
 	info.AddOption(OPT_VERSION, "Show information about version")
 	info.AddOption(OPT_VERBOSE_VERSION, "Show verbose information about version")
 
-	info.BoundOptions(COMMAND_CREATE, OPT_SECURE, OPT_DISABLE_SAVES, OPT_TAGS)
 	info.BoundOptions(COMMAND_CLI, OPT_TAGS)
-	info.BoundOptions(COMMAND_CONF, OPT_TAGS)
-	info.BoundOptions(COMMAND_INFO, OPT_FORMAT)
-	info.BoundOptions(COMMAND_LIST, OPT_EXTRA)
+	info.BoundOptions(COMMAND_CLIENTS, OPT_PAGER)
+	info.BoundOptions(COMMAND_CONF, OPT_TAGS, OPT_PAGER)
+	info.BoundOptions(COMMAND_CREATE, OPT_SECURE, OPT_DISABLE_SAVES, OPT_TAGS)
+	info.BoundOptions(COMMAND_HELP, OPT_PAGER)
+	info.BoundOptions(COMMAND_INFO, OPT_FORMAT, OPT_PAGER)
+	info.BoundOptions(COMMAND_LIST, OPT_EXTRA, OPT_PAGER)
+	info.BoundOptions(COMMAND_MEMORY, OPT_FORMAT)
 	info.BoundOptions(COMMAND_REPLICATION, OPT_FORMAT)
-	info.BoundOptions(COMMAND_SETTINGS, OPT_TAGS)
+	info.BoundOptions(COMMAND_SENTINEL_INFO, OPT_PAGER)
+	info.BoundOptions(COMMAND_SETTINGS, OPT_TAGS, OPT_PAGER)
+	info.BoundOptions(COMMAND_SLOWLOG_GET, OPT_PAGER)
 	info.BoundOptions(COMMAND_STATS, OPT_FORMAT)
+	info.BoundOptions(COMMAND_STATS_COMMAND, OPT_PAGER)
+	info.BoundOptions(COMMAND_STATS_ERROR, OPT_PAGER)
+	info.BoundOptions(COMMAND_STATS_LATENCY, OPT_PAGER)
+	info.BoundOptions(COMMAND_TOP, OPT_PAGER)
+	info.BoundOptions(COMMAND_TOP_DIFF, OPT_PAGER)
 
 	info.Print()
 
@@ -1210,14 +1223,24 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_VERSION, "Show information about version")
 	info.AddOption(OPT_VERBOSE_VERSION, "Show verbose information about version")
 
-	info.BoundOptions(COMMAND_CREATE, OPT_SECURE, OPT_DISABLE_SAVES, OPT_TAGS)
 	info.BoundOptions(COMMAND_CLI, OPT_TAGS)
-	info.BoundOptions(COMMAND_CONF, OPT_TAGS)
-	info.BoundOptions(COMMAND_INFO, OPT_FORMAT)
-	info.BoundOptions(COMMAND_LIST, OPT_EXTRA)
+	info.BoundOptions(COMMAND_CLIENTS, OPT_PAGER)
+	info.BoundOptions(COMMAND_CONF, OPT_TAGS, OPT_PAGER)
+	info.BoundOptions(COMMAND_CREATE, OPT_SECURE, OPT_DISABLE_SAVES, OPT_TAGS)
+	info.BoundOptions(COMMAND_HELP, OPT_PAGER)
+	info.BoundOptions(COMMAND_INFO, OPT_FORMAT, OPT_PAGER)
+	info.BoundOptions(COMMAND_LIST, OPT_EXTRA, OPT_PAGER)
+	info.BoundOptions(COMMAND_MEMORY, OPT_FORMAT)
 	info.BoundOptions(COMMAND_REPLICATION, OPT_FORMAT)
-	info.BoundOptions(COMMAND_SETTINGS, OPT_TAGS)
+	info.BoundOptions(COMMAND_SENTINEL_INFO, OPT_PAGER)
+	info.BoundOptions(COMMAND_SETTINGS, OPT_TAGS, OPT_PAGER)
+	info.BoundOptions(COMMAND_SLOWLOG_GET, OPT_PAGER)
 	info.BoundOptions(COMMAND_STATS, OPT_FORMAT)
+	info.BoundOptions(COMMAND_STATS_COMMAND, OPT_PAGER)
+	info.BoundOptions(COMMAND_STATS_ERROR, OPT_PAGER)
+	info.BoundOptions(COMMAND_STATS_LATENCY, OPT_PAGER)
+	info.BoundOptions(COMMAND_TOP, OPT_PAGER)
+	info.BoundOptions(COMMAND_TOP_DIFF, OPT_PAGER)
 
 	return info
 }
