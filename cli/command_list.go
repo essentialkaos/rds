@@ -92,8 +92,9 @@ func ListCommand(args CommandArgs) int {
 // listInstanceSearch prints list of instances
 func listInstanceSearch(t *table.Table, idList []int, filter []string, fullTextSearch bool) bool {
 	dataShown := false
+	shown := 0
 
-	for index, id := range idList {
+	for _, id := range idList {
 		state, err := CORE.GetInstanceState(id, true)
 
 		if err != nil {
@@ -123,10 +124,11 @@ func listInstanceSearch(t *table.Table, idList []int, filter []string, fullTextS
 			continue
 		}
 
-		if index > 0 && index%32 == 0 && index+8 < len(idList) && options.GetB(OPT_EXTRA) {
+		if shown > 0 && shown%32 == 0 && shown+8 < len(idList) && options.GetB(OPT_EXTRA) {
 			t.Separator()
 		}
 
+		shown++
 		showListInstanceInfo(t, id, meta, state, fullTextSearch, filter)
 
 		dataShown = true

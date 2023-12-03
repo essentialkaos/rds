@@ -188,6 +188,8 @@ systemctl daemon-reload &>/dev/null || :
 %changelog
 * Sat Dec 02 2023 Anton Novojilov <andy@essentialkaos.com> - 1.7.0-0
 - [cli] Added '-P'/'--pager' option to use pager for long output
+- [cli] Improved 'help' command output
+- [cli] Fixed bug with separator in 'list' command output
 
 * Fri Nov 17 2023 Anton Novojilov <andy@essentialkaos.com> - 1.6.1-0
 - [cli] [sync] Minor UI improvements
