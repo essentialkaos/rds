@@ -1234,6 +1234,7 @@ func genUsage() *usage.Info {
 	info.AddOption(OPT_TAGS, "List of tags ({y}create{!})", "tag…")
 	info.AddOption(OPT_FORMAT, "Output format {s-}(text/json/xml){!}", "format")
 	info.AddOption(OPT_YES, "Automatically answer yes for all questions")
+	info.AddOption(OPT_PAGER, "Enable pager for long output")
 	info.AddOption(OPT_SIMPLE, "Simplify output {s-}(useful for copy-paste){!}")
 	info.AddOption(OPT_RAW, "Force raw output {s-}(useful for scripts){!}")
 	info.AddOption(OPT_NO_COLOR, "Disable colors in output")
