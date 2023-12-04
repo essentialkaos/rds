@@ -14,6 +14,7 @@ import (
 
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -76,6 +77,12 @@ func ConfCommand(args CommandArgs) int {
 		}
 
 		diff = REDIS.GetConfigsDiff(fileConfig, memConfig)
+	}
+
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	if len(args) > 1 {

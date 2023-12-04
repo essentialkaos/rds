@@ -14,6 +14,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
 	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/terminal"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -120,6 +121,12 @@ func HelpCommand(args CommandArgs) int {
 	if !hasInfo {
 		terminal.Warn("Unknown command %s", commandName)
 		return EC_ERROR
+	}
+
+	if options.GetB(OPT_PAGER) {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	helpFunc()
@@ -326,6 +333,9 @@ func helpCommandClients() {
 			{"id", "Instance unique ID", false},
 			{"filter", "Clients filter", true},
 		},
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
+		},
 		examples: []helpInfoExample{
 			{"", "1", "Show all clients connected to instance with ID 1"},
 			{"", "1 test1", `Show all clients with name "test1" connected to instance with ID 1`},
@@ -443,6 +453,7 @@ func helpCommandConf() {
 			{"filter…", "Property name filters", true},
 		},
 		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
 			{getNiceOptions(OPT_PRIVATE), "Show private info", false},
 		},
 		examples: []helpInfoExample{
@@ -477,6 +488,7 @@ func helpCommandList() {
 		},
 		options: []helpInfoArgument{
 			{getNiceOptions(OPT_EXTRA), "Print extra info", false},
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
 		},
 		examples: []helpInfoExample{
 			{"", "", "Show list of all instances"},
@@ -547,6 +559,9 @@ func helpCommandMemory() {
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
+		},
 		examples: []helpInfoExample{
 			{"", "1", "Show memory usage of instance with ID 1"},
 		},
@@ -572,6 +587,9 @@ func helpCommandStatsCommand() {
 	helpInfo{
 		command: COMMAND_STATS_COMMAND,
 		desc:    "Show statistics based on the command type.",
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
+		},
 		examples: []helpInfoExample{
 			{"", "1", "Show statistics of instance with ID 1"},
 		},
@@ -583,6 +601,9 @@ func helpCommandStatsLatency() {
 	helpInfo{
 		command: COMMAND_STATS_LATENCY,
 		desc:    "Show latency statistics based on the command type.",
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
+		},
 		examples: []helpInfoExample{
 			{"", "1", "Show statistics of instance with ID 1"},
 		},
@@ -594,6 +615,9 @@ func helpCommandStatsError() {
 	helpInfo{
 		command: COMMAND_STATS_ERROR,
 		desc:    "Show error statistics.",
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
+		},
 		examples: []helpInfoExample{
 			{"", "1", "Show statistics of instance with ID 1"},
 		},
@@ -608,6 +632,9 @@ func helpCommandTop() {
 		arguments: []helpInfoArgument{
 			{"field", "Field  name", true},
 			{"num", "Number of results", true},
+		},
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
 		},
 		examples: []helpInfoExample{
 			{"", "", "Show top 10 by memory usage"},
@@ -644,6 +671,9 @@ func helpCommandTopDiff() {
 			{"field", "Field  name", true},
 			{"num", "Number of results", true},
 		},
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
+		},
 		examples: []helpInfoExample{
 			{"", "rds-top.gz", "Compare data and show top 10 by increased memory usage"},
 			{"", "rds-top.gz - 5", "Compare data and show top 5 by increased memory usage"},
@@ -658,6 +688,7 @@ func helpCommandSettings() {
 		command: COMMAND_SETTINGS,
 		desc:    "Show settings from global configuration file.",
 		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
 			{getNiceOptions(OPT_PRIVATE), "Show private info", false},
 		},
 		arguments: []helpInfoArgument{
@@ -679,6 +710,9 @@ func helpCommandSlowlogGet() {
 			{"id", "Instance unique ID", false},
 			{"num", "Number of results", true},
 		},
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
+		},
 		examples: []helpInfoExample{
 			{"", "1", "Show last 10 entries from instance 1 slow log"},
 			{"", "1 30", "Show last 30 entries from instance 1 slow log"},
@@ -686,7 +720,7 @@ func helpCommandSlowlogGet() {
 	}.render()
 }
 
-// helpCommandSlowlogGet prints info about "slowlog-reset" command usage
+// helpCommandSlowlogReset prints info about "slowlog-reset" command usage
 func helpCommandSlowlogReset() {
 	helpInfo{
 		command: COMMAND_SLOWLOG_RESET,
@@ -870,6 +904,9 @@ func helpCommandSentinelInfo() {
 		desc:    "Show info from Sentinel for some instance.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
+		},
+		options: []helpInfoArgument{
+			{getNiceOptions(OPT_PAGER), "Enable pager for long output", false},
 		},
 		examples: []helpInfoExample{
 			{"", "1", "Show info from Sentinel for instance with ID 1"},
@@ -1128,7 +1165,7 @@ func (i helpInfo) renderExamples() {
 			fmtc.Printf("  rds %s\n", strings.Join([]string{example.command, example.arguments}, " "))
 		}
 
-		fmtc.Printf("  {s-}%s{!}\n", example.desc)
+		fmtc.Printf("  {&}{s-}%s{!}\n", example.desc)
 
 		if index+1 != len(i.examples) {
 			fmtc.NewLine()

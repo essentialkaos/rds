@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
+	"github.com/essentialkaos/ek/v12/options"
+	"github.com/essentialkaos/ek/v12/pager"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -43,6 +45,12 @@ func StatsLatencyCommand(args CommandArgs) int {
 	if err != nil {
 		terminal.Error(err)
 		return EC_ERROR
+	}
+
+	if options.GetB(OPT_PAGER) && !useRawOutput {
+		if pager.Setup() == nil {
+			defer pager.Complete()
+		}
 	}
 
 	printLatencyStatsInfo(info)
