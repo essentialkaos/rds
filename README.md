@@ -139,6 +139,7 @@ Options
   --tags, -t tag…           List of tags (create)
   --format, -f format       Output format (text/json/xml)
   --yes, -y                 Automatically answer yes for all questions
+  --pager, -P               Enable pager for long output
   --simple, -S              Simplify output (useful for copy-paste)
   --raw, -R                 Force raw output (useful for scripts)
   --no-color, -nc           Disable colors in output
