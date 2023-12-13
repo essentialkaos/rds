@@ -1064,8 +1064,11 @@ func RegenerateInstanceConfig(id int) error {
 
 	errs.Add(os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID))
 	errs.Add(os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
 	errs.Add(os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID))
+
+	if fsutil.IsExist(GetInstanceLogFilePath(id)) {
+		errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
+	}
 
 	if errs.HasErrors() {
 		return errs.Last()
