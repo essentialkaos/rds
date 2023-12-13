@@ -29,6 +29,10 @@ func RestartAllCommand(args CommandArgs) int {
 		return EC_WARN
 	}
 
+	if !checkVirtualIP() {
+		return EC_WARN
+	}
+
 	idList, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS | CORE.INSTANCE_STATE_DEAD)
 
 	if err != nil {

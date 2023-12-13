@@ -27,6 +27,10 @@ func DestroyCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
+	if !checkVirtualIP() {
+		return EC_WARN
+	}
+
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {

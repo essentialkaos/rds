@@ -47,6 +47,10 @@ func CreateCommand(args CommandArgs) int {
 		return EC_WARN
 	}
 
+	if !checkVirtualIP() {
+		return EC_WARN
+	}
+
 	if !isSystemConfigured() {
 		return EC_WARN
 	}

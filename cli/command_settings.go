@@ -18,6 +18,8 @@ import (
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
 
+	"github.com/essentialkaos/go-keepalived"
+
 	CORE "github.com/essentialkaos/rds/core"
 )
 
@@ -115,6 +117,22 @@ func printSettingsProperty(name, value string, hidden bool) {
 			fmtc.Printf("%s {g}✔ {!}\n", value)
 		} else {
 			fmtc.Printf("%s {r}✖ {!}\n", value)
+		}
+
+	case name == "virtual-ip":
+		if value == "" {
+			fmtc.Println(value)
+		}
+
+		virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
+		isMaster, err := keepalived.IsMaster(virtualIP)
+
+		if err != nil {
+			fmtc.Println(value)
+		} else if isMaster {
+			fmtc.Printf("%s {g}(master){!}\n", value)
+		} else if !isMaster {
+			fmtc.Printf("%s {y}(standby){!}\n", value)
 		}
 
 	default:

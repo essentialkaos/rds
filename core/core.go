@@ -149,6 +149,8 @@ const (
 	SENTINEL_PARALLEL_SYNCS   = "sentinel:parallel-syncs"
 	SENTINEL_FAILOVER_TIMEOUT = "sentinel:failover-timeout"
 
+	KEEPALIVED_VIRTUAL_IP = "keepalived:virtual-ip"
+
 	TEMPLATES_REDIS    = "templates:redis"
 	TEMPLATES_SENTINEL = "templates:sentinel"
 
@@ -2577,6 +2579,10 @@ func validateConfig(c *knf.Config) []error {
 		{SENTINEL_PARALLEL_SYNCS, knfv.Empty, nil},
 		{SENTINEL_PORT, knfv.Less, MIN_PORT},
 		{SENTINEL_PORT, knfv.Greater, MAX_PORT},
+
+		// KEEPALIVED
+
+		{KEEPALIVED_VIRTUAL_IP, knfn.IP, nil},
 
 		// TEMPLATES //
 

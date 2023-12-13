@@ -15,6 +15,8 @@ import (
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
 
+	"github.com/essentialkaos/go-keepalived"
+
 	CORE "github.com/essentialkaos/rds/core"
 	REDIS "github.com/essentialkaos/rds/redis"
 )
@@ -60,6 +62,21 @@ func ReplicationRoleSetCommand(args CommandArgs) int {
 			targetRole, CORE.Config.GetS(CORE.REPLICATION_ROLE),
 		)
 		return EC_ERROR
+	}
+
+	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
+
+	if virtualIP != "" && targetRole != CORE.ROLE_MASTER {
+		isMaster, err := keepalived.IsMaster(virtualIP)
+
+		if err != nil {
+			terminal.Error("Can't check keepalived status: %v", err)
+			return EC_ERROR
+		} else if !isMaster {
+			terminal.Error("This server doesn't have keepalived virtual IP (%s).", virtualIP)
+			terminal.Error("You must assign a virtual IP to this machine before changing the role to master.")
+			return EC_ERROR
+		}
 	}
 
 	switch targetRole {

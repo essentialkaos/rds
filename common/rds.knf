@@ -89,6 +89,11 @@
   # Property failover-timeout which will be set for each instance
   failover-timeout: 60000
 
+[keepalived]
+
+  # Keepalived virtual IP
+  virtual-ip:
+
 [templates]
 
   # Path to directory with Redis configuration files templates
