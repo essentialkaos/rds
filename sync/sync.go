@@ -25,6 +25,8 @@ import (
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/man"
 
+	"github.com/essentialkaos/go-keepalived"
+
 	"github.com/essentialkaos/rds/support"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -119,10 +121,11 @@ func Init(gitRev string, gomod []byte) {
 	log.Aux(strings.Repeat("-", 88))
 
 	validateConfig()
+	checkVirtualIP()
+	checkSystemConfiguration()
+
 	addSignalHandlers()
 	disableProxy()
-
-	checkSystemConfiguration()
 	renameProcess()
 
 	ec := startSyncDaemon(gitRev)
@@ -235,6 +238,29 @@ func disableProxy() {
 	os.Setenv("HTTPS_PROXY", "")
 }
 
+// checkVirtualIP checks keepalived virtual IP on master node with standby failover
+func checkVirtualIP() {
+	if !CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_STANDBY) ||
+		!CORE.IsMaster() || CORE.Config.Is(CORE.KEEPALIVED_VIRTUAL_IP, "") {
+		return
+	}
+
+	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
+	isMaster, err := keepalived.IsMaster(virtualIP)
+
+	if err == nil && isMaster {
+		return
+	}
+
+	if err != nil {
+		log.Crit("Can't check keepalived status: %v", err)
+	} else {
+		log.Crit("This server doesn't have keepalived virtual IP (%s).")
+	}
+
+	CORE.Shutdown(EC_ERROR)
+}
+
 // checkSystemConfiguration check system configuration
 func checkSystemConfiguration() {
 	status, err := CORE.GetSystemConfigurationStatus(false)
@@ -269,7 +295,6 @@ func checkSystemConfiguration() {
 
 // validateConfig validate sync specific configuration values
 func validateConfig() {
-
 	if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
 		ips := netutil.GetAllIP()
 		ips = append(ips, netutil.GetAllIP6()...)
