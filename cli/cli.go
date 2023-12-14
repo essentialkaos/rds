@@ -52,9 +52,6 @@ const (
 // CONFIG_FILE is path to configuration file
 const CONFIG_FILE = "/etc/rds.knf"
 
-// LOG_FILE is main RDS log file name
-const LOG_FILE = "rds.log"
-
 // MAINTENANCE_LOCK_FILE is name of lock file from maintenance mode
 const MAINTENANCE_LOCK_FILE = ".maintenance"
 
@@ -109,6 +106,7 @@ const (
 	COMMAND_INIT                 = "init"
 	COMMAND_KILL                 = "kill"
 	COMMAND_LIST                 = "list"
+	COMMAND_LOG                  = "log"
 	COMMAND_MAINTENANCE          = "maintenance"
 	COMMAND_MEMORY               = "memory"
 	COMMAND_REGEN                = "regen"
@@ -402,7 +400,7 @@ func parseOptions() options.Arguments {
 
 // setupLogger setup logger
 func setupLogger() {
-	err := CORE.SetLogOutput(LOG_FILE, CORE.Config.GetS(CORE.LOG_LEVEL), false)
+	err := CORE.SetLogOutput(CORE.LOG_FILE_CLI, CORE.Config.GetS(CORE.LOG_LEVEL), false)
 
 	if err != nil {
 		terminal.Error(err)
@@ -552,6 +550,7 @@ func initCommands() {
 		commands[COMMAND_STATUS] = &CommandRoutine{StatusCommand, AUTH_NO, true}
 		commands[COMMAND_CHECK] = &CommandRoutine{CheckCommand, AUTH_NO, true}
 		commands[COMMAND_TRACK] = &CommandRoutine{TrackCommand, AUTH_NO, true}
+		commands[COMMAND_LOG] = &CommandRoutine{LogCommand, AUTH_NO, true}
 	}
 
 	if isSentinelFailover {
@@ -999,6 +998,7 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_TRACK, "Show interactive info about Redis instance", "id", "?interval")
 		info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?filter…")
 		info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter…")
+		info.AddCommand(COMMAND_LOG, "Show RDS or Redis instance logs", "source")
 		info.AddCommand(COMMAND_STATS, "Show overall statistics")
 		info.AddCommand(COMMAND_STATS_COMMAND, "Show statistics based on the command type", "id")
 		info.AddCommand(COMMAND_STATS_LATENCY, "Show latency statistics based on the command type", "id")
@@ -1156,6 +1156,7 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_TRACK, "Show interactive info about Redis instance", "id", "?interval")
 	info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?filter…")
 	info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter…")
+	info.AddCommand(COMMAND_LOG, "Show RDS or Redis instance logs", "source")
 	info.AddCommand(COMMAND_STATS, "Show overall statistics")
 	info.AddCommand(COMMAND_TOP, "Show instances top", "?field", "?num")
 	info.AddCommand(COMMAND_TOP_DIFF, "Compare current and dumped top data", "file", "?field", "?num")

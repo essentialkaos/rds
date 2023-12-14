@@ -116,6 +116,11 @@ const (
 )
 
 const (
+	LOG_FILE_CLI  = "rds.log"
+	LOG_FILE_SYNC = "rds-sync.log"
+)
+
+const (
 	PID_SENTINEL = "sentinel.pid"
 )
 

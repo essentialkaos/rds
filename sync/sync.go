@@ -48,9 +48,6 @@ const (
 // Path to conf file
 const CONFIG_FILE = "/etc/rds.knf"
 
-// Log file name
-const LOG_FILE = "rds-sync.log"
-
 // Command line options
 const (
 	OPT_NO_COLOR        = "nc:no-color"
@@ -213,7 +210,7 @@ func initRDSCore() {
 
 // setupLogger setup logger
 func setupLogger() {
-	err := CORE.SetLogOutput(LOG_FILE, CORE.Config.GetS(CORE.LOG_LEVEL), true)
+	err := CORE.SetLogOutput(CORE.LOG_FILE_SYNC, CORE.Config.GetS(CORE.LOG_LEVEL), true)
 
 	if err != nil {
 		printError("Can't setup logger: %v", err)
