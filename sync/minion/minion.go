@@ -355,12 +355,12 @@ func processCommands(items []*API.CommandQueueItem) {
 
 // createCommandHandler is handler for "create" command
 func createCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Creating instance…", item.InstanceID, item.Initiator)
+
 	if CORE.IsInstanceExist(item.InstanceID) {
 		log.Error("(%3d) Can't execute command %s - instance already exist", item.InstanceID, item.Command)
 		return
 	}
-
-	log.Info("(%3d) Creating instance…", item.InstanceID)
 
 	info, ok := sendInfoCommand(item.InstanceID, item.InstanceUUID)
 
@@ -377,7 +377,7 @@ func destroyCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	log.Info("(%3d) Destroying instance…", item.InstanceID)
+	log.Info("(%3d|%s) Destroying instance…", item.InstanceID, item.Initiator)
 
 	destroyInstance(item.InstanceID)
 }
@@ -388,7 +388,7 @@ func editCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	log.Info("(%3d) Updating instance meta…", item.InstanceID)
+	log.Info("(%3d|%s) Updating instance meta…", item.InstanceID, item.Initiator)
 
 	info, ok := sendInfoCommand(item.InstanceID, item.InstanceUUID)
 
@@ -405,7 +405,7 @@ func startCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	log.Info("(%3d) Starting instance…", item.InstanceID)
+	log.Info("(%3d|%s) Starting instance…", item.InstanceID, item.Initiator)
 
 	startInstance(item.InstanceID)
 }
@@ -416,7 +416,7 @@ func stopCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	log.Info("(%3d) Stopping instance…", item.InstanceID)
+	log.Info("(%3d|%s) Stopping instance…", item.InstanceID, item.Initiator)
 
 	stopInstance(item.InstanceID)
 }
@@ -427,67 +427,67 @@ func restartCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	log.Info("(%3d) Restarting instance…", item.InstanceID)
+	log.Info("(%3d|%s) Restarting instance…", item.InstanceID, item.Initiator)
 
 	restartInstance(item.InstanceID)
 }
 
 // startAllCommandHandler is handler for "start-all" command
 func startAllCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Starting all instances…", item.Initiator)
+
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
-
-	log.Info("Starting all instances…")
 
 	startAllInstances()
 }
 
 // stopAllCommandHandler is handler for "stop-all" command
 func stopAllCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Stopping all instances…", item.Initiator)
+
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
-
-	log.Info("Stopping all instances…")
 
 	stopAllInstances()
 }
 
 // restartAllCommandHandler is handler for "restart-all" command
 func restartAllCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Restarting all instances…", item.Initiator)
+
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
-
-	log.Info("Restarting all instances…")
 
 	restartAllInstances()
 }
 
 // sentinelStartCommandHandler is handler for "sentinel-start" command
 func sentinelStartCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Starting sentinel…", item.Initiator)
+
 	if CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already works", item.Command)
 		return
 	}
-
-	log.Info("Starting sentinel…")
 
 	startSentinel()
 }
 
 // sentinelStopCommandHandler is handler for "sentinel-stop" command
 func sentinelStopCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Stopping sentinel…", item.Initiator)
+
 	if !CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already stopped", item.Command)
 		return
 	}
-
-	log.Info("Stopping sentinel…")
 
 	stopSentinel()
 }

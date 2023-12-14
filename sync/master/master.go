@@ -364,8 +364,8 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pushRequest := &API.MasterCommandInfo{}
-	err = readAndDecode(r, pushRequest)
+	req := &API.PushRequest{}
+	err = readAndDecode(r, req)
 
 	if err != nil {
 		encodeAndWrite(w, &API.DefaultResponse{Status: statusArgError})
@@ -383,17 +383,19 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		Status: statusOK,
 	}
 
-	if pushRequest.ID == -1 {
-		log.Info("Received push command (command: %s)", pushRequest.Command)
+	if req.ID == -1 {
+		log.Info(
+			"Received push command (command: %s | initiator: %s)",
+			req.Command, req.Initiator,
+		)
 	} else {
-		log.Info("Received push command (command: %s | ID: %d | UUID: %s)",
-			pushRequest.Command,
-			pushRequest.ID,
-			pushRequest.UUID,
+		log.Info(
+			"Received push command (command: %s | initiator: %s | ID: %d | UUID: %s)",
+			req.Command, req.Initiator, req.ID, req.UUID,
 		)
 	}
 
-	processPushCommand(pushRequest.Command, pushRequest.ID, pushRequest.UUID)
+	processPushCommand(req.Command, req.Initiator, req.ID, req.UUID)
 
 	err = encodeAndWrite(w, pushResponse)
 
@@ -1021,7 +1023,7 @@ func getItemsFromQueue(lastSync int64) []*API.CommandQueueItem {
 }
 
 // processPushCommand process push command
-func processPushCommand(command API.MasterCommand, id int, uuid string) {
+func processPushCommand(command API.MasterCommand, initiator string, id int, uuid string) {
 	ts := time.Now().UnixNano()
 
 	item := &API.CommandQueueItem{
@@ -1029,6 +1031,7 @@ func processPushCommand(command API.MasterCommand, id int, uuid string) {
 		InstanceID:   id,
 		InstanceUUID: uuid,
 		Timestamp:    ts,
+		Initiator:    initiator,
 	}
 
 	queue.Items = append(queue.Items, item)
