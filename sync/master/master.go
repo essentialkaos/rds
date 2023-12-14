@@ -384,9 +384,9 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if pushRequest.ID == -1 {
-		log.Info("Received push command (Command: %s)", pushRequest.Command)
+		log.Info("Received push command (command: %s)", pushRequest.Command)
 	} else {
-		log.Info("Received push command (Command: %s | ID: %d | UUID: %s)",
+		log.Info("Received push command (command: %s | ID: %d | UUID: %s)",
 			pushRequest.Command,
 			pushRequest.ID,
 			pushRequest.UUID,
@@ -576,8 +576,8 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 			statsInfo.Sentinels++
 		}
 
-		seenLag := float64(now-client.LastSeen) / 1000000000.0
-		syncLag := float64(now-client.LastSync) / 1000000000.0
+		seenLag := float64(now-client.LastSeen) / 1_000_000_000.0
+		syncLag := float64(now-client.LastSync) / 1_000_000_000.0
 
 		seenLag = mathutil.Round(seenLag, 3)
 		syncLag = mathutil.Round(syncLag, 3)
@@ -948,8 +948,8 @@ func getClientsInfo() []*API.ClientInfo {
 	now := time.Now().UnixNano()
 
 	for _, client := range clients {
-		seenLag := mathutil.Round(float64(now-client.LastSeen)/1000000000.0, 3)
-		syncLag := mathutil.Round(float64(now-client.LastSync)/1000000000.0, 3)
+		seenLag := mathutil.Round(float64(now-client.LastSeen)/1_000_000_000.0, 3)
+		syncLag := mathutil.Round(float64(now-client.LastSync)/1_000_000_000.0, 3)
 
 		result = append(result, &API.ClientInfo{
 			CID:            client.CID,
@@ -989,13 +989,13 @@ func getClientState(now int64, client *ClientInfo) API.ClientState {
 	}
 
 	switch {
-	case timeDiff <= DELAY_POSSIBLE_DOWN*1000000000:
+	case timeDiff <= DELAY_POSSIBLE_DOWN*1_000_000_000:
 		return API.STATE_ONLINE
 
-	case timeDiff <= DELAY_DOWN*1000000000:
+	case timeDiff <= DELAY_DOWN*1_000_000_000:
 		return API.STATE_POSSIBLE_DOWN
 
-	case timeDiff <= DELAY_DEAD*1000000000:
+	case timeDiff <= DELAY_DEAD*1_000_000_000:
 		return API.STATE_DOWN
 
 	default:
@@ -1052,7 +1052,7 @@ func cleanupQueue() {
 	items := queue.Items
 
 	now := time.Now().UnixNano()
-	mts := now - (DELAY_DEAD * 1000000000)
+	mts := now - (DELAY_DEAD * 1_000_000_000)
 
 	for {
 		if len(items) == 0 {

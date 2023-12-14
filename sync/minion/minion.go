@@ -360,6 +360,8 @@ func createCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d) Creating instance…", item.InstanceID)
+
 	info, ok := sendInfoCommand(item.InstanceID, item.InstanceUUID)
 
 	if !ok {
@@ -375,6 +377,8 @@ func destroyCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d) Destroying instance…", item.InstanceID)
+
 	destroyInstance(item.InstanceID)
 }
 
@@ -383,6 +387,8 @@ func editCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
 	}
+
+	log.Info("(%3d) Updating instance meta…", item.InstanceID)
 
 	info, ok := sendInfoCommand(item.InstanceID, item.InstanceUUID)
 
@@ -399,6 +405,8 @@ func startCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d) Starting instance…", item.InstanceID)
+
 	startInstance(item.InstanceID)
 }
 
@@ -408,6 +416,8 @@ func stopCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d) Stopping instance…", item.InstanceID)
+
 	stopInstance(item.InstanceID)
 }
 
@@ -416,6 +426,8 @@ func restartCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
 	}
+
+	log.Info("(%3d) Restarting instance…", item.InstanceID)
 
 	restartInstance(item.InstanceID)
 }
@@ -427,6 +439,8 @@ func startAllCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("Starting all instances…")
+
 	startAllInstances()
 }
 
@@ -436,6 +450,8 @@ func stopAllCommandHandler(item *API.CommandQueueItem) {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
 	}
+
+	log.Info("Stopping all instances…")
 
 	stopAllInstances()
 }
@@ -447,6 +463,8 @@ func restartAllCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("Restarting all instances…")
+
 	restartAllInstances()
 }
 
@@ -457,6 +475,8 @@ func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("Starting sentinel…")
+
 	startSentinel()
 }
 
@@ -466,6 +486,8 @@ func sentinelStopCommandHandler(item *API.CommandQueueItem) {
 		log.Warn("Command %s ignored - Sentinel already stopped", item.Command)
 		return
 	}
+
+	log.Info("Stopping sentinel…")
 
 	stopSentinel()
 }
