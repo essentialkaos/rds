@@ -46,8 +46,8 @@ func (l *Logger) Error(id int, f string, a ...any) error {
 // getPrefix returns log message prefix
 func (l *Logger) getPrefix(id int) string {
 	if id <= 0 {
-		return fmt.Sprintf("(—|%s) ", CORE.User.RealName)
+		return fmt.Sprintf("(---|%s) ", CORE.User.RealName)
 	}
 
-	return fmt.Sprintf("(%d|%s) ", id, CORE.User.RealName)
+	return fmt.Sprintf("(%3d|%s) ", id, CORE.User.RealName)
 }
