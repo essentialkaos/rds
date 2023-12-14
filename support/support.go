@@ -22,6 +22,7 @@ import (
 	"github.com/essentialkaos/ek/v12/system/container"
 
 	"github.com/essentialkaos/depsy"
+	"github.com/essentialkaos/go-keepalived"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -51,6 +52,7 @@ func Print(app, ver, gitRev string, gomod []byte) {
 	showOSInfo()
 	showConfigurationInfo()
 	showRedisVersionInfo()
+	showKeepalivedInfo()
 	showDepsInfo(gomod)
 
 	fmtutil.Separator(false)
@@ -195,6 +197,31 @@ func showDepsInfo(gomod []byte) {
 		} else {
 			fmtc.Printf(" {s}%8s{!}  %s {s-}(%s){!}\n", dep.Version, dep.Path, dep.Extra)
 		}
+	}
+}
+
+// showKeepalivedInfo shows info about keepalived virtual IP
+func showKeepalivedInfo() {
+	fmtutil.Separator(false, "KEEPALIVED INFO")
+
+	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
+
+	if virtualIP == "" {
+		printInfo(10, "Virtual IP", "")
+		return
+	}
+
+	isMaster, err := keepalived.IsMaster(virtualIP)
+
+	if err != nil {
+		printInfo(10, "Virtual IP", fmtc.Sprint("{r}check error{!}"))
+		return
+	}
+
+	if isMaster {
+		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {g}(master){!}", virtualIP))
+	} else {
+		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {y}(standby){!}", virtualIP))
 	}
 }
 
