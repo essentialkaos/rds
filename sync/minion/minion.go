@@ -69,9 +69,6 @@ var daemonVersion string
 // sentinelWorks is true if Sentinel is works
 var sentinelWorks bool
 
-// connectedToMaster is true if minion currently connected to the master node
-var connectedToMaster bool
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Start starts sync daemon in minion mode
@@ -114,8 +111,6 @@ func runSyncLoop() {
 
 // sendHelloCommand sends hello command to master
 func sendHelloCommand() bool {
-	connectedToMaster = false
-
 	log.Info("Sending hello to master on %s…", CORE.Config.GetS(CORE.REPLICATION_MASTER_IP))
 
 	hostname, _ := os.Hostname()
@@ -153,7 +148,6 @@ func sendHelloCommand() bool {
 		return false
 	}
 
-	connectedToMaster = true
 	cid = helloResponse.CID
 
 	log.Info("Master (%s) return CID %s for this client", helloResponse.Version, cid)
@@ -1057,7 +1051,10 @@ func syncingWaitLoop(id int) {
 	var syncingFlag, loadingFlag, disklessFlag bool
 	var syncLeftBytesPrev int
 
-	for now := range time.Tick(time.Second) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for now := range ticker.C {
 		if now.After(deadline) {
 			log.Warn("(%3d) Max wait time is reached (%g sec) but instance is still syncing. Continue anyway…", id, maxWait.Seconds())
 			break
@@ -1103,7 +1100,6 @@ func syncingWaitLoop(id int) {
 
 			syncLeftBytesPrev = mathutil.Abs(state.SyncLeftBytes)
 
-			loadingFlag = false
 			syncingFlag = true
 		}
 
