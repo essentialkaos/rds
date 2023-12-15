@@ -127,11 +127,12 @@ func printSettingsProperty(name, value string, hidden bool) {
 		virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
 		isMaster, err := keepalived.IsMaster(virtualIP)
 
-		if err != nil {
+		switch {
+		case err != nil:
 			fmtc.Println(value)
-		} else if isMaster {
+		case isMaster:
 			fmtc.Printf("%s {g}(master){!}\n", value)
-		} else if !isMaster {
+		case !isMaster:
 			fmtc.Printf("%s {y}(standby){!}\n", value)
 		}
 
