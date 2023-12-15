@@ -988,7 +988,7 @@ func NewInstanceMeta(instancePassword, servicePassword string) (*InstanceMeta, e
 	return &InstanceMeta{
 		ID:           id,
 		MetaVersion:  META_VERSION,
-		UUID:         uuid.GenUUID4(),
+		UUID:         uuid.UUID4().String(),
 		Preferencies: preferencies,
 		Auth:         auth,
 		Config:       &InstanceConfigInfo{},
