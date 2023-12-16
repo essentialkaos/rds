@@ -550,7 +550,7 @@ func initCommands() {
 		commands[COMMAND_STATUS] = &CommandRoutine{StatusCommand, AUTH_NO, true}
 		commands[COMMAND_CHECK] = &CommandRoutine{CheckCommand, AUTH_NO, true}
 		commands[COMMAND_TRACK] = &CommandRoutine{TrackCommand, AUTH_NO, true}
-		commands[COMMAND_LOG] = &CommandRoutine{LogCommand, AUTH_NO, true}
+		commands[COMMAND_LOG] = &CommandRoutine{LogCommand, AUTH_NO, !useRawOutput}
 	}
 
 	if isSentinelFailover {
