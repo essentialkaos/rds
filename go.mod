@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/essentialkaos/depsy v1.1.0
 	github.com/essentialkaos/ek/v12 v12.92.0
-	github.com/essentialkaos/go-keepalived v1.0.5
 	github.com/essentialkaos/go-linenoise/v3 v3.4.0
 	github.com/essentialkaos/redy/v4 v4.4.0
 )

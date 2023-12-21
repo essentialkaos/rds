@@ -22,7 +22,6 @@ import (
 	"github.com/essentialkaos/ek/v12/system/container"
 
 	"github.com/essentialkaos/depsy"
-	"github.com/essentialkaos/go-keepalived"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -209,17 +208,13 @@ func showKeepalivedInfo() {
 		return
 	}
 
-	isMaster, err := keepalived.IsMaster(virtualIP)
-
-	if err != nil {
-		printInfo(10, "Virtual IP", fmtc.Sprint("{r}check error{!}"))
-		return
-	}
-
-	if isMaster {
+	switch CORE.GetKeepalivedState() {
+	case CORE.KEEPALIVED_STATE_MASTER:
 		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {g}(master){!}", virtualIP))
-	} else {
-		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {y}(standby){!}", virtualIP))
+	case CORE.KEEPALIVED_STATE_BACKUP:
+		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {s}(backup){!}", virtualIP))
+	default:
+		printInfo(10, "Virtual IP", fmtc.Sprint("{r}check error{!}"))
 	}
 }
 

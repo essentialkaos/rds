@@ -26,8 +26,6 @@ import (
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/version"
 
-	"github.com/essentialkaos/go-keepalived"
-
 	CORE "github.com/essentialkaos/rds/core"
 )
 
@@ -590,17 +588,16 @@ func checkVirtualIP() bool {
 		return true
 	}
 
-	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
-	isMaster, err := keepalived.IsMaster(virtualIP)
-
-	if err == nil && isMaster {
+	switch CORE.GetKeepalivedState() {
+	case CORE.KEEPALIVED_STATE_MASTER:
 		return true
-	}
-
-	if err != nil {
-		terminal.Error("Can't check keepalived status: %v", err)
-	} else {
-		terminal.Warn("This server doesn't have keepalived virtual IP (%s). No longer a master?", virtualIP)
+	case CORE.KEEPALIVED_STATE_UNKNOWN:
+		terminal.Error("Can't check keepalived virtual IP status")
+	case CORE.KEEPALIVED_STATE_BACKUP:
+		terminal.Error(
+			"This server has no keepalived virtual IP (%s). No longer a master?",
+			CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP),
+		)
 	}
 
 	fmtc.NewLine()

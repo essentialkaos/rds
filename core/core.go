@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"regexp"
@@ -199,6 +200,14 @@ type FailoverMethod string
 const (
 	FAILOVER_METHOD_STANDBY  FailoverMethod = "standby"
 	FAILOVER_METHOD_SENTINEL FailoverMethod = "sentinel"
+)
+
+type KeepalivedState uint8
+
+const (
+	KEEPALIVED_STATE_UNKNOWN KeepalivedState = 0
+	KEEPALIVED_STATE_MASTER  KeepalivedState = 1
+	KEEPALIVED_STATE_BACKUP  KeepalivedState = 2
 )
 
 type State uint16
@@ -2303,6 +2312,29 @@ func GetStats() *Stats {
 	}
 
 	return stats
+}
+
+// GetKeepalivedState returns state of keepalived virtual IP
+func GetKeepalivedState() KeepalivedState {
+	virtualIP := Config.GetS(KEEPALIVED_VIRTUAL_IP)
+
+	if virtualIP == "" {
+		return KEEPALIVED_STATE_UNKNOWN
+	}
+
+	addrs, err := net.InterfaceAddrs()
+
+	if err != nil {
+		return KEEPALIVED_STATE_UNKNOWN
+	}
+
+	for _, addr := range addrs {
+		if addr.String() == virtualIP+"/32" {
+			return KEEPALIVED_STATE_MASTER
+		}
+	}
+
+	return KEEPALIVED_STATE_BACKUP
 }
 
 // GenPassword generates secure password with random length (16-28)

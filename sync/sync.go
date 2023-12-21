@@ -25,8 +25,6 @@ import (
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/man"
 
-	"github.com/essentialkaos/go-keepalived"
-
 	"github.com/essentialkaos/rds/support"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -242,17 +240,18 @@ func checkVirtualIP() {
 		return
 	}
 
-	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
-	isMaster, err := keepalived.IsMaster(virtualIP)
-
-	if err == nil && isMaster {
+	switch CORE.GetKeepalivedState() {
+	case CORE.KEEPALIVED_STATE_MASTER:
 		return
-	}
 
-	if err != nil {
-		log.Crit("Can't check keepalived status: %v", err)
-	} else {
-		log.Crit("This server doesn't have keepalived virtual IP (%s).")
+	case CORE.KEEPALIVED_STATE_BACKUP:
+		log.Crit(
+			"This server has no keepalived virtual IP (%s)",
+			CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP),
+		)
+
+	default:
+		log.Crit("Can't check keepalived virtual IP status")
 	}
 
 	CORE.Shutdown(EC_ERROR)
