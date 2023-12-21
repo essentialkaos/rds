@@ -322,10 +322,6 @@ func preConfigureUI() {
 		fmtc.DisableColors = true
 	}
 
-	if os.Getenv("NO_COLOR") != "" {
-		fmtc.DisableColors = true
-	}
-
 	switch {
 	case fmtc.IsTrueColorSupported():
 		colorTagApp, colorTagVer, colorTagRel = "{*}{#DC382C}", "{#A32422}", "{#777777}"

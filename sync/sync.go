@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/netutil"
 	"github.com/essentialkaos/ek/v12/options"
@@ -22,6 +21,7 @@ import (
 	"github.com/essentialkaos/ek/v12/signal"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system/procname"
+	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/man"
 
@@ -132,27 +132,7 @@ func Init(gitRev string, gomod []byte) {
 
 // preConfigureUI configure user interface
 func preConfigureUI() {
-	term := os.Getenv("TERM")
-
-	fmtc.DisableColors = true
-
-	if term != "" {
-		switch {
-		case strings.Contains(term, "xterm"),
-			strings.Contains(term, "color"),
-			term == "screen":
-			fmtc.DisableColors = false
-		}
-	}
-
-	// Check for output redirect using pipes
-	if fsutil.IsCharacterDevice("/dev/stdin") &&
-		!fsutil.IsCharacterDevice("/dev/stdout") &&
-		os.Getenv("FAKETTY") == "" {
-		fmtc.DisableColors = true
-	}
-
-	if os.Getenv("NO_COLOR") != "" {
+	if !tty.IsTTY() {
 		fmtc.DisableColors = true
 	}
 
