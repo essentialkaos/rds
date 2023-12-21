@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/netutil"
 	"github.com/essentialkaos/ek/v12/options"
@@ -22,6 +21,7 @@ import (
 	"github.com/essentialkaos/ek/v12/signal"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system/procname"
+	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/man"
 
@@ -37,7 +37,7 @@ import (
 
 const (
 	APP  = "RDS Sync"
-	VER  = "1.2.1"
+	VER  = "1.3.0"
 	DESC = "Syncing daemon for RDS"
 )
 
@@ -45,9 +45,6 @@ const (
 
 // Path to conf file
 const CONFIG_FILE = "/etc/rds.knf"
-
-// Log file name
-const LOG_FILE = "rds-sync.log"
 
 // Command line options
 const (
@@ -119,10 +116,11 @@ func Init(gitRev string, gomod []byte) {
 	log.Aux(strings.Repeat("-", 88))
 
 	validateConfig()
+	checkVirtualIP()
+	checkSystemConfiguration()
+
 	addSignalHandlers()
 	disableProxy()
-
-	checkSystemConfiguration()
 	renameProcess()
 
 	ec := startSyncDaemon(gitRev)
@@ -134,27 +132,7 @@ func Init(gitRev string, gomod []byte) {
 
 // preConfigureUI configure user interface
 func preConfigureUI() {
-	term := os.Getenv("TERM")
-
-	fmtc.DisableColors = true
-
-	if term != "" {
-		switch {
-		case strings.Contains(term, "xterm"),
-			strings.Contains(term, "color"),
-			term == "screen":
-			fmtc.DisableColors = false
-		}
-	}
-
-	// Check for output redirect using pipes
-	if fsutil.IsCharacterDevice("/dev/stdin") &&
-		!fsutil.IsCharacterDevice("/dev/stdout") &&
-		os.Getenv("FAKETTY") == "" {
-		fmtc.DisableColors = true
-	}
-
-	if os.Getenv("NO_COLOR") != "" {
+	if !tty.IsTTY() {
 		fmtc.DisableColors = true
 	}
 
@@ -210,7 +188,7 @@ func initRDSCore() {
 
 // setupLogger setup logger
 func setupLogger() {
-	err := CORE.SetLogOutput(LOG_FILE, CORE.Config.GetS(CORE.LOG_LEVEL), true)
+	err := CORE.SetLogOutput(CORE.LOG_FILE_SYNC, CORE.Config.GetS(CORE.LOG_LEVEL), true)
 
 	if err != nil {
 		printError("Can't setup logger: %v", err)
@@ -233,6 +211,30 @@ func disableProxy() {
 	os.Setenv("https_proxy", "")
 	os.Setenv("HTTP_PROXY", "")
 	os.Setenv("HTTPS_PROXY", "")
+}
+
+// checkVirtualIP checks keepalived virtual IP on master node with standby failover
+func checkVirtualIP() {
+	if !CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_STANDBY) ||
+		!CORE.IsMaster() || CORE.Config.Is(CORE.KEEPALIVED_VIRTUAL_IP, "") {
+		return
+	}
+
+	switch CORE.GetKeepalivedState() {
+	case CORE.KEEPALIVED_STATE_MASTER:
+		return
+
+	case CORE.KEEPALIVED_STATE_BACKUP:
+		log.Crit(
+			"This server has no keepalived virtual IP (%s)",
+			CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP),
+		)
+
+	default:
+		log.Crit("Can't check keepalived virtual IP status")
+	}
+
+	CORE.Shutdown(EC_ERROR)
 }
 
 // checkSystemConfiguration check system configuration
@@ -269,7 +271,6 @@ func checkSystemConfiguration() {
 
 // validateConfig validate sync specific configuration values
 func validateConfig() {
-
 	if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
 		ips := netutil.GetAllIP()
 		ips = append(ips, netutil.GetAllIP6()...)

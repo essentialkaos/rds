@@ -124,6 +124,10 @@ func checkForStartAll() int {
 		return EC_WARN
 	}
 
+	if !checkVirtualIP() {
+		return EC_WARN
+	}
+
 	isRebooted, err := isSystemWasRebooted()
 
 	if err != nil {

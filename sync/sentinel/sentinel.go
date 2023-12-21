@@ -48,9 +48,6 @@ var daemonVersion string
 // sentinelWorks is true if Sentinel is works
 var sentinelWorks bool
 
-// connectedToMaster is true if minion currently connected to the master node
-var connectedToMaster bool
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Start starts sync daemon in Sentinel mode
@@ -97,8 +94,6 @@ func runSyncLoop() {
 
 // sendHelloCommand sends hello command to master
 func sendHelloCommand() bool {
-	connectedToMaster = false
-
 	log.Info("Sending hello to master on %s…", CORE.Config.GetS(CORE.REPLICATION_MASTER_IP))
 
 	hostname, _ := os.Hostname()
@@ -136,7 +131,6 @@ func sendHelloCommand() bool {
 		return false
 	}
 
-	connectedToMaster = true
 	cid = helloResponse.CID
 
 	log.Info("Master (%s) return CID %s for this client", helloResponse.Version, cid)
@@ -333,6 +327,8 @@ func processCommands(items []*API.CommandQueueItem) {
 
 // createCommandHandler is handler for "create" command
 func createCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Instance creation command", item.InstanceID, item.Initiator)
+
 	if !sentinelWorks {
 		log.Warn("Command %s ignored - Sentinel not working", item.Command)
 		return
@@ -354,6 +350,8 @@ func createCommandHandler(item *API.CommandQueueItem) {
 
 // destroyCommandHandler is handler for "destroy" command
 func destroyCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Instance destroying command", item.InstanceID, item.Initiator)
+
 	if !sentinelWorks {
 		log.Warn("Command %s ignored - Sentinel not working", item.Command)
 		return
@@ -368,6 +366,8 @@ func destroyCommandHandler(item *API.CommandQueueItem) {
 
 // startCommandHandler is handler for "start" command
 func startCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Instance starting command", item.InstanceID, item.Initiator)
+
 	if !sentinelWorks {
 		log.Warn("Command %s ignored - Sentinel not working", item.Command)
 		return
@@ -377,18 +377,13 @@ func startCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	err := CORE.SentinelStartMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't start Sentinel monitoring: %v", item.InstanceID, err)
-		return
-	}
-
-	log.Info("(%3d) Sentinel monitoring enabled for started instance", item.InstanceID)
+	enableMonitoring(item.InstanceID)
 }
 
 // stopCommandHandler is handler for "stop" command
 func stopCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Instance stopping command", item.InstanceID, item.Initiator)
+
 	if !sentinelWorks {
 		log.Warn("Command %s ignored - Sentinel not working", item.Command)
 		return
@@ -398,18 +393,13 @@ func stopCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
-	err := CORE.SentinelStopMonitoring(item.InstanceID)
-
-	if err != nil {
-		log.Error("(%3d) Can't stop Sentinel monitoring: %v", item.InstanceID, err)
-		return
-	}
-
-	log.Info("(%3d) Sentinel monitoring disabled for stopped instance", item.InstanceID)
+	disableMonitoring(item.InstanceID)
 }
 
 // startAllCommandHandler is handler for "start-all" command
 func startAllCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Starting all instances command", item.InstanceID, item.Initiator)
+
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
@@ -437,6 +427,8 @@ func stopAllCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d|%s) Stopping all instances command", item.InstanceID, item.Initiator)
+
 	for _, id := range CORE.GetInstanceIDList() {
 		if !CORE.IsSentinelMonitors(id) {
 			continue
@@ -454,6 +446,8 @@ func stopAllCommandHandler(item *API.CommandQueueItem) {
 
 // sentinelStartCommandHandler is handler for "sentinel-start" command
 func sentinelStartCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Sentinel starting command", item.InstanceID, item.Initiator)
+
 	if CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already works", item.Command)
 		return
@@ -479,6 +473,8 @@ func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 
 // sentinelStopCommandHandler is handler for "sentinel-stop" command
 func sentinelStopCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Sentinel stopping command", item.InstanceID, item.Initiator)
+
 	if !CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already stopped", item.Command)
 		return

@@ -69,6 +69,7 @@ func HelpCommand(args CommandArgs) int {
 		COMMAND_INIT:                 helpCommandCreate,
 		COMMAND_KILL:                 helpCommandKill,
 		COMMAND_LIST:                 helpCommandList,
+		COMMAND_LOG:                  helpCommandLog,
 		COMMAND_MAINTENANCE:          helpCommandMaintenance,
 		COMMAND_MEMORY:               helpCommandMemory,
 		COMMAND_REGEN:                helpCommandRegen,
@@ -533,6 +534,27 @@ func helpCommandList() {
 	fmtc.NewLine()
 
 	info.renderOptions()
+	info.renderExamples()
+}
+
+// helpCommandLog prints info about "log" command usage
+func helpCommandLog() {
+	info := helpInfo{
+		command: COMMAND_LOG,
+		desc:    "Show RDS CLI, RDS Sync Daemon or Redis instance logs.",
+		arguments: []helpInfoArgument{
+			{"source", "Log source (cli/sync/instance-id)", false},
+		},
+		examples: []helpInfoExample{
+			{"", "cli", "View RDS cli log"},
+			{"", "sync", "View RDS Sync Daemon log"},
+			{"", "42", "View log of instance with ID 42"},
+		},
+	}
+
+	info.renderUsage()
+	info.renderDescription()
+	info.renderArguments()
 	info.renderExamples()
 }
 

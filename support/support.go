@@ -51,6 +51,7 @@ func Print(app, ver, gitRev string, gomod []byte) {
 	showOSInfo()
 	showConfigurationInfo()
 	showRedisVersionInfo()
+	showKeepalivedInfo()
 	showDepsInfo(gomod)
 
 	fmtutil.Separator(false)
@@ -80,11 +81,9 @@ func showOSInfo() {
 
 	if err != nil {
 		return
-	} else {
-		if osInfo == nil {
-			fmtutil.Separator(false, "SYSTEM INFO")
-			printInfo(12, "Name", systemInfo.OS)
-		}
+	} else if osInfo == nil {
+		fmtutil.Separator(false, "SYSTEM INFO")
+		printInfo(12, "Name", systemInfo.OS)
 	}
 
 	printInfo(12, "Arch", systemInfo.Arch)
@@ -198,6 +197,27 @@ func showDepsInfo(gomod []byte) {
 	}
 }
 
+// showKeepalivedInfo shows info about keepalived virtual IP
+func showKeepalivedInfo() {
+	fmtutil.Separator(false, "KEEPALIVED INFO")
+
+	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
+
+	if virtualIP == "" {
+		printInfo(10, "Virtual IP", "")
+		return
+	}
+
+	switch CORE.GetKeepalivedState() {
+	case CORE.KEEPALIVED_STATE_MASTER:
+		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {g}(master){!}", virtualIP))
+	case CORE.KEEPALIVED_STATE_BACKUP:
+		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {s}(backup){!}", virtualIP))
+	default:
+		printInfo(10, "Virtual IP", fmtc.Sprint("{r}check error{!}"))
+	}
+}
+
 // extractGitRevFromBuildInfo extracts git SHA from embedded build info
 func extractGitRevFromBuildInfo() string {
 	info, ok := debug.ReadBuildInfo()
@@ -226,7 +246,7 @@ func getHashColorBullet(v string) string {
 
 // printInfo formats and prints info record
 func printInfo(size int, name, value string) {
-	name = name + ":"
+	name += ":"
 	size++
 
 	if value == "" {

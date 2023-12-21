@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"regexp"
@@ -116,6 +117,11 @@ const (
 )
 
 const (
+	LOG_FILE_CLI  = "rds.log"
+	LOG_FILE_SYNC = "rds-sync.log"
+)
+
+const (
 	PID_SENTINEL = "sentinel.pid"
 )
 
@@ -148,6 +154,8 @@ const (
 	SENTINEL_DOWN_AFTER       = "sentinel:down-after-milliseconds"
 	SENTINEL_PARALLEL_SYNCS   = "sentinel:parallel-syncs"
 	SENTINEL_FAILOVER_TIMEOUT = "sentinel:failover-timeout"
+
+	KEEPALIVED_VIRTUAL_IP = "keepalived:virtual-ip"
 
 	TEMPLATES_REDIS    = "templates:redis"
 	TEMPLATES_SENTINEL = "templates:sentinel"
@@ -192,6 +200,14 @@ type FailoverMethod string
 const (
 	FAILOVER_METHOD_STANDBY  FailoverMethod = "standby"
 	FAILOVER_METHOD_SENTINEL FailoverMethod = "sentinel"
+)
+
+type KeepalivedState uint8
+
+const (
+	KEEPALIVED_STATE_UNKNOWN KeepalivedState = 0
+	KEEPALIVED_STATE_MASTER  KeepalivedState = 1
+	KEEPALIVED_STATE_BACKUP  KeepalivedState = 2
 )
 
 type State uint16
@@ -981,7 +997,7 @@ func NewInstanceMeta(instancePassword, servicePassword string) (*InstanceMeta, e
 	return &InstanceMeta{
 		ID:           id,
 		MetaVersion:  META_VERSION,
-		UUID:         uuid.GenUUID4(),
+		UUID:         uuid.UUID4().String(),
 		Preferencies: preferencies,
 		Auth:         auth,
 		Config:       &InstanceConfigInfo{},
@@ -1064,8 +1080,11 @@ func RegenerateInstanceConfig(id int) error {
 
 	errs.Add(os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID))
 	errs.Add(os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
 	errs.Add(os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID))
+
+	if fsutil.IsExist(GetInstanceLogFilePath(id)) {
+		errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
+	}
 
 	if errs.HasErrors() {
 		return errs.Last()
@@ -2295,6 +2314,29 @@ func GetStats() *Stats {
 	return stats
 }
 
+// GetKeepalivedState returns state of keepalived virtual IP
+func GetKeepalivedState() KeepalivedState {
+	virtualIP := Config.GetS(KEEPALIVED_VIRTUAL_IP)
+
+	if virtualIP == "" {
+		return KEEPALIVED_STATE_UNKNOWN
+	}
+
+	addrs, err := net.InterfaceAddrs()
+
+	if err != nil {
+		return KEEPALIVED_STATE_UNKNOWN
+	}
+
+	for _, addr := range addrs {
+		if addr.String() == virtualIP+"/32" {
+			return KEEPALIVED_STATE_MASTER
+		}
+	}
+
+	return KEEPALIVED_STATE_BACKUP
+}
+
 // GenPassword generates secure password with random length (16-28)
 func GenPassword() string {
 	return passwd.GenPassword(16+rand.Int(6), passwd.STRENGTH_MEDIUM)
@@ -2574,6 +2616,10 @@ func validateConfig(c *knf.Config) []error {
 		{SENTINEL_PARALLEL_SYNCS, knfv.Empty, nil},
 		{SENTINEL_PORT, knfv.Less, MIN_PORT},
 		{SENTINEL_PORT, knfv.Greater, MAX_PORT},
+
+		// KEEPALIVED
+
+		{KEEPALIVED_VIRTUAL_IP, knfn.IP, nil},
 
 		// TEMPLATES //
 

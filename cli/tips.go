@@ -288,6 +288,14 @@ with {?opt}-x{!}/{?opt}--extra{!} option:
 
 {?more}More information: sudo rds help list{!}`,
 		},
+		&protip.Tip{
+			Title: `View logs`,
+			Message: `You can view RDS CLI, RDS Sync Daemon, or instance log by using {?cmd}log{!} command:
+
+{?exec}sudo rds log 42{!}
+
+{?more}More information: sudo rds help log{!}`,
+		},
 	)
 
 	return protip.Show(false)

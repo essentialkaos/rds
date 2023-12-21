@@ -1,24 +1,24 @@
-/opt/rds/log/*/redis.log {
-  weekly
+/var/log/rds/*/redis.log {
+  size 10M
   missingok
-  rotate 52
+  rotate 5
   compress
   delaycompress
   notifempty
   create 644 redis redis
 }
 
-/opt/rds/log/rds.log {
+/var/log/rds/rds.log {
   size 15M
   missingok
   rotate 5
   compress
   delaycompress
   notifempty
-  create 640 redis redis
+  create 640 root root
 }
 
-/opt/rds/log/rds-sync.log {
+/var/log/rds/rds-sync.log {
   size 15M
   missingok
   rotate 5

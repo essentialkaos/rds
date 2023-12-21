@@ -364,8 +364,8 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pushRequest := &API.MasterCommandInfo{}
-	err = readAndDecode(r, pushRequest)
+	req := &API.PushRequest{}
+	err = readAndDecode(r, req)
 
 	if err != nil {
 		encodeAndWrite(w, &API.DefaultResponse{Status: statusArgError})
@@ -383,17 +383,19 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		Status: statusOK,
 	}
 
-	if pushRequest.ID == -1 {
-		log.Info("Received push command (Command: %s)", pushRequest.Command)
+	if req.ID == -1 {
+		log.Info(
+			"Received push command (command: %s | initiator: %s)",
+			req.Command, req.Initiator,
+		)
 	} else {
-		log.Info("Received push command (Command: %s | ID: %d | UUID: %s)",
-			pushRequest.Command,
-			pushRequest.ID,
-			pushRequest.UUID,
+		log.Info(
+			"Received push command (command: %s | initiator: %s | ID: %d | UUID: %s)",
+			req.Command, req.Initiator, req.ID, req.UUID,
 		)
 	}
 
-	processPushCommand(pushRequest.Command, pushRequest.ID, pushRequest.UUID)
+	processPushCommand(req.Command, req.Initiator, req.ID, req.UUID)
 
 	err = encodeAndWrite(w, pushResponse)
 
@@ -576,8 +578,8 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 			statsInfo.Sentinels++
 		}
 
-		seenLag := float64(now-client.LastSeen) / 1000000000.0
-		syncLag := float64(now-client.LastSync) / 1000000000.0
+		seenLag := float64(now-client.LastSeen) / 1_000_000_000.0
+		syncLag := float64(now-client.LastSync) / 1_000_000_000.0
 
 		seenLag = mathutil.Round(seenLag, 3)
 		syncLag = mathutil.Round(syncLag, 3)
@@ -948,8 +950,8 @@ func getClientsInfo() []*API.ClientInfo {
 	now := time.Now().UnixNano()
 
 	for _, client := range clients {
-		seenLag := mathutil.Round(float64(now-client.LastSeen)/1000000000.0, 3)
-		syncLag := mathutil.Round(float64(now-client.LastSync)/1000000000.0, 3)
+		seenLag := mathutil.Round(float64(now-client.LastSeen)/1_000_000_000.0, 3)
+		syncLag := mathutil.Round(float64(now-client.LastSync)/1_000_000_000.0, 3)
 
 		result = append(result, &API.ClientInfo{
 			CID:            client.CID,
@@ -989,13 +991,13 @@ func getClientState(now int64, client *ClientInfo) API.ClientState {
 	}
 
 	switch {
-	case timeDiff <= DELAY_POSSIBLE_DOWN*1000000000:
+	case timeDiff <= DELAY_POSSIBLE_DOWN*1_000_000_000:
 		return API.STATE_ONLINE
 
-	case timeDiff <= DELAY_DOWN*1000000000:
+	case timeDiff <= DELAY_DOWN*1_000_000_000:
 		return API.STATE_POSSIBLE_DOWN
 
-	case timeDiff <= DELAY_DEAD*1000000000:
+	case timeDiff <= DELAY_DEAD*1_000_000_000:
 		return API.STATE_DOWN
 
 	default:
@@ -1021,7 +1023,7 @@ func getItemsFromQueue(lastSync int64) []*API.CommandQueueItem {
 }
 
 // processPushCommand process push command
-func processPushCommand(command API.MasterCommand, id int, uuid string) {
+func processPushCommand(command API.MasterCommand, initiator string, id int, uuid string) {
 	ts := time.Now().UnixNano()
 
 	item := &API.CommandQueueItem{
@@ -1029,6 +1031,7 @@ func processPushCommand(command API.MasterCommand, id int, uuid string) {
 		InstanceID:   id,
 		InstanceUUID: uuid,
 		Timestamp:    ts,
+		Initiator:    initiator,
 	}
 
 	queue.Items = append(queue.Items, item)
@@ -1052,7 +1055,7 @@ func cleanupQueue() {
 	items := queue.Items
 
 	now := time.Now().UnixNano()
-	mts := now - (DELAY_DEAD * 1000000000)
+	mts := now - (DELAY_DEAD * 1_000_000_000)
 
 	for {
 		if len(items) == 0 {

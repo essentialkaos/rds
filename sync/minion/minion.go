@@ -69,9 +69,6 @@ var daemonVersion string
 // sentinelWorks is true if Sentinel is works
 var sentinelWorks bool
 
-// connectedToMaster is true if minion currently connected to the master node
-var connectedToMaster bool
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Start starts sync daemon in minion mode
@@ -114,8 +111,6 @@ func runSyncLoop() {
 
 // sendHelloCommand sends hello command to master
 func sendHelloCommand() bool {
-	connectedToMaster = false
-
 	log.Info("Sending hello to master on %s…", CORE.Config.GetS(CORE.REPLICATION_MASTER_IP))
 
 	hostname, _ := os.Hostname()
@@ -153,7 +148,6 @@ func sendHelloCommand() bool {
 		return false
 	}
 
-	connectedToMaster = true
 	cid = helloResponse.CID
 
 	log.Info("Master (%s) return CID %s for this client", helloResponse.Version, cid)
@@ -355,6 +349,8 @@ func processCommands(items []*API.CommandQueueItem) {
 
 // createCommandHandler is handler for "create" command
 func createCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(%3d|%s) Creating instance…", item.InstanceID, item.Initiator)
+
 	if CORE.IsInstanceExist(item.InstanceID) {
 		log.Error("(%3d) Can't execute command %s - instance already exist", item.InstanceID, item.Command)
 		return
@@ -375,6 +371,8 @@ func destroyCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d|%s) Destroying instance…", item.InstanceID, item.Initiator)
+
 	destroyInstance(item.InstanceID)
 }
 
@@ -383,6 +381,8 @@ func editCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
 	}
+
+	log.Info("(%3d|%s) Updating instance meta…", item.InstanceID, item.Initiator)
 
 	info, ok := sendInfoCommand(item.InstanceID, item.InstanceUUID)
 
@@ -399,6 +399,8 @@ func startCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d|%s) Starting instance…", item.InstanceID, item.Initiator)
+
 	startInstance(item.InstanceID)
 }
 
@@ -407,6 +409,8 @@ func stopCommandHandler(item *API.CommandQueueItem) {
 	if !isValidCommandItem(item) {
 		return
 	}
+
+	log.Info("(%3d|%s) Stopping instance…", item.InstanceID, item.Initiator)
 
 	stopInstance(item.InstanceID)
 }
@@ -417,11 +421,15 @@ func restartCommandHandler(item *API.CommandQueueItem) {
 		return
 	}
 
+	log.Info("(%3d|%s) Restarting instance…", item.InstanceID, item.Initiator)
+
 	restartInstance(item.InstanceID)
 }
 
 // startAllCommandHandler is handler for "start-all" command
 func startAllCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Starting all instances…", item.Initiator)
+
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
@@ -432,6 +440,8 @@ func startAllCommandHandler(item *API.CommandQueueItem) {
 
 // stopAllCommandHandler is handler for "stop-all" command
 func stopAllCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Stopping all instances…", item.Initiator)
+
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
@@ -442,6 +452,8 @@ func stopAllCommandHandler(item *API.CommandQueueItem) {
 
 // restartAllCommandHandler is handler for "restart-all" command
 func restartAllCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Restarting all instances…", item.Initiator)
+
 	if !CORE.HasInstances() {
 		log.Warn("Command %s ignored - no instances are created", item.Command)
 		return
@@ -452,6 +464,8 @@ func restartAllCommandHandler(item *API.CommandQueueItem) {
 
 // sentinelStartCommandHandler is handler for "sentinel-start" command
 func sentinelStartCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Starting sentinel…", item.Initiator)
+
 	if CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already works", item.Command)
 		return
@@ -462,6 +476,8 @@ func sentinelStartCommandHandler(item *API.CommandQueueItem) {
 
 // sentinelStopCommandHandler is handler for "sentinel-stop" command
 func sentinelStopCommandHandler(item *API.CommandQueueItem) {
+	log.Info("(---|%s) Stopping sentinel…", item.Initiator)
+
 	if !CORE.IsSentinelActive() {
 		log.Warn("Command %s ignored - Sentinel already stopped", item.Command)
 		return
@@ -1035,7 +1051,10 @@ func syncingWaitLoop(id int) {
 	var syncingFlag, loadingFlag, disklessFlag bool
 	var syncLeftBytesPrev int
 
-	for now := range time.Tick(time.Second) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for now := range ticker.C {
 		if now.After(deadline) {
 			log.Warn("(%3d) Max wait time is reached (%g sec) but instance is still syncing. Continue anyway…", id, maxWait.Seconds())
 			break
@@ -1081,7 +1100,6 @@ func syncingWaitLoop(id int) {
 
 			syncLeftBytesPrev = mathutil.Abs(state.SyncLeftBytes)
 
-			loadingFlag = false
 			syncingFlag = true
 		}
 

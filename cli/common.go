@@ -430,52 +430,52 @@ func warnAboutUnsafeAction(id int, message string) bool {
 	for i := 0; i < 6; i++ {
 		switch i {
 		case 0:
-			if !isCompatible {
-				if compatibleVer.Major() > currentVer.Major() {
-					terminal.Warn(
-						"Redis was downgraded (%s → %s). Old versions of Redis can not read data saved",
-						compatibleVer.String(), currentVer.String(),
-					)
-					terminal.Warn("by the new ones. Also, instance configuration is not checked for compatibility with")
-					terminal.Warn("the newly installed version of Redis.")
-				} else {
-					terminal.Warn(
-						"Redis was updated (%s → %s). Instance is not checked for configuration file",
-						compatibleVer.String(), currentVer.String(),
-					)
-					terminal.Warn("compatibility with the newly installed version of Redis.")
-				}
-			} else {
+			if isCompatible {
 				continue
+			}
+
+			if compatibleVer.Major() > currentVer.Major() {
+				terminal.Warn(
+					"Redis was downgraded (%s → %s). Old versions of Redis can not read data saved",
+					compatibleVer.String(), currentVer.String(),
+				)
+				terminal.Warn("by the new ones. Also, instance configuration is not checked for compatibility with")
+				terminal.Warn("the newly installed version of Redis.")
+			} else {
+				terminal.Warn(
+					"Redis was updated (%s → %s). Instance is not checked for configuration file",
+					compatibleVer.String(), currentVer.String(),
+				)
+				terminal.Warn("compatibility with the newly installed version of Redis.")
 			}
 
 		case 1:
-			if isConfigUpdated(id) {
-				terminal.Warn("Instance configuration file was changed and can be incompatible.")
-			} else {
+			if !isConfigUpdated(id) {
 				continue
 			}
+
+			terminal.Warn("Instance configuration file was changed and can be incompatible.")
 
 		case 2:
-			if state.IsSyncing() {
-				terminal.Warn("Instance currently syncing with master or slave.")
-			} else {
+			if !state.IsSyncing() {
 				continue
 			}
+
+			terminal.Warn("Instance currently syncing with master or slave.")
 
 		case 3:
-			if state.IsSaving() {
-				terminal.Warn("Instance currently saving data to disk.")
-			} else {
+			if !state.IsSaving() {
 				continue
 			}
 
+			terminal.Warn("Instance currently saving data to disk.")
+
 		case 4:
-			if state.IsLoading() {
-				terminal.Warn("Instance currently loading data from disk.")
-			} else {
+			if !state.IsLoading() {
 				continue
 			}
+
+			terminal.Warn("Instance currently loading data from disk.")
 
 		case 5:
 			ops, err := getCurrentInstanceTraffic(id)
@@ -566,6 +566,38 @@ func isSystemConfigured() bool {
 			terminal.Warn("  partition should be at least twice bigger than the size of available")
 			terminal.Warn("  memory (physical + swap).")
 		}
+	}
+
+	fmtc.NewLine()
+
+	ok, err := terminal.ReadAnswer("Do you want to proceed (it highly unrecommended)?", "N")
+
+	if !ok || err != nil {
+		return false
+	}
+
+	fmtc.NewLine()
+
+	return true
+}
+
+// checkVirtualIP checks and warns the user about keepalived virtual IP
+func checkVirtualIP() bool {
+	if !CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_STANDBY) ||
+		!CORE.IsMaster() || CORE.Config.Is(CORE.KEEPALIVED_VIRTUAL_IP, "") {
+		return true
+	}
+
+	switch CORE.GetKeepalivedState() {
+	case CORE.KEEPALIVED_STATE_MASTER:
+		return true
+	case CORE.KEEPALIVED_STATE_UNKNOWN:
+		terminal.Error("Can't check keepalived virtual IP status")
+	case CORE.KEEPALIVED_STATE_BACKUP:
+		terminal.Error(
+			"This server has no keepalived virtual IP (%s). No longer a master?",
+			CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP),
+		)
 	}
 
 	fmtc.NewLine()

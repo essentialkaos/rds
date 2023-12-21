@@ -76,6 +76,7 @@ Basic commands
   track id interval          Show interactive info about Redis instance
   conf id filter…            Show configuration of Redis instance
   list filter…               Show list of all Redis instances
+  log source                 Show RDS or Redis instance logs
   stats                      Show overall statistics
   top field num              Show instances top
   top-diff file field num    Compare current and dumped top data

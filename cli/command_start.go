@@ -32,6 +32,10 @@ func StartCommand(args CommandArgs) int {
 		return EC_WARN
 	}
 
+	if !checkVirtualIP() {
+		return EC_WARN
+	}
+
 	id, _, err := CORE.ParseIDDBPair(args.Get(0))
 
 	if err != nil {

@@ -62,6 +62,20 @@ func ReplicationRoleSetCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
+	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
+
+	if virtualIP != "" && targetRole != CORE.ROLE_MASTER {
+		switch CORE.GetKeepalivedState() {
+		case CORE.KEEPALIVED_STATE_UNKNOWN:
+			terminal.Error("Can't check keepalived virtual IP status")
+
+		case CORE.KEEPALIVED_STATE_BACKUP:
+			terminal.Error("This server has no keepalived virtual IP (%s).", virtualIP)
+			terminal.Error("You must assign a virtual IP to this machine before changing the role to master.")
+			return EC_ERROR
+		}
+	}
+
 	switch targetRole {
 	case CORE.ROLE_MASTER:
 		fmtc.Println("This command will reconfigure this node from {*}MINION{!} to {*}MASTER{!} role.")

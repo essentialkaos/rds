@@ -60,13 +60,8 @@ type CommandQueueItem struct {
 	Command      MasterCommand `json:"command"`
 	InstanceID   int           `json:"instance_id"`
 	InstanceUUID string        `json:"instance_uuid"`
+	Initiator    string        `json:"initiator"`
 	Timestamp    int64         `json:"timestamp"`
-}
-
-type MasterCommandInfo struct {
-	Command MasterCommand `json:"command"`
-	ID      int           `json:"id"`
-	UUID    string        `json:"uuid"`
 }
 
 type ReplicationInfo struct {
@@ -186,9 +181,10 @@ type ReplicationResponse struct {
 }
 
 type PushRequest struct {
-	Command MasterCommand `json:"command"`
-	ID      int           `json:"id"`
-	UUID    string        `json:"uuid"`
+	Command   MasterCommand `json:"command"`
+	ID        int           `json:"id"`
+	UUID      string        `json:"uuid"`
+	Initiator string        `json:"initiator"`
 }
 
 type StatsResponse struct {
