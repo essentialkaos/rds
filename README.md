@@ -18,7 +18,8 @@
 
 ### Installation
 
-▲ We highly recommend you checkout [Requirements](https://github.com/essentialkaos/rds/wiki/Requirements) before RDS installation. It can save you from useless work.
+> [!IMPORTANT]
+> We highly recommend you checkout [Requirements](https://github.com/essentialkaos/rds/wiki/Requirements) before RDS installation. It can save you from useless work.
 
 #### From [ESSENTIAL KAOS YUM/DNF Repository](https://pkgs.kaos.st)
 
