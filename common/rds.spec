@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.8.1
+Version:        1.8.2
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -36,7 +36,7 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.3.1
+Version:   1.3.2
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -186,6 +186,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Jan 19 2024 Anton Novojilov <andy@essentialkaos.com> - 1.8.2-0
+- Dependencies update
+
 * Fri Jan 19 2024 Anton Novojilov <andy@essentialkaos.com> - 1.8.1-0
 - [cli] Fixed bug with using raw data output when output device is not TTY
 - [cli] [sync] Minor UI improvements
