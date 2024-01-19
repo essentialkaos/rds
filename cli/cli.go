@@ -350,16 +350,18 @@ func configureUI() {
 		RC.UseColoredPrompt = true
 
 		fmtutil.SeparatorSymbol = "–"
+		table.BorderSymbol = "–"
 		table.SeparatorSymbol = "–"
 	} else {
 		fmtutil.SeparatorSymbol = "-"
+		table.BorderSymbol = "-"
 		table.SeparatorSymbol = "-"
 		spinner.DisableAnimation = true
 	}
 
+	table.HeaderCapitalize = true
 	fmtutil.SeparatorFullscreen = true
 	fmtutil.SizeSeparator = " "
-	table.HeaderCapitalize = true
 	strutil.EllipsisSuffix = "…"
 
 	if options.GetB(OPT_YES) {

@@ -186,6 +186,11 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Jan 19 2024 Anton Novojilov <andy@essentialkaos.com> - 1.8.1-0
+- [cli] Fixed bug with using raw data output when output device is not TTY
+- [cli] [sync] Minor UI improvements
+- Dependencies update
+
 * Wed Dec 13 2023 Anton Novojilov <andy@essentialkaos.com> - 1.8.0-0
 - [cli] [sync] Added integration with keepalived
 - [sync] Better command processing logging
