@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.8.0"
+	VER  = "1.8.1"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -320,6 +320,7 @@ func Init(gitRev string, gomod []byte) {
 func preConfigureUI() {
 	if !tty.IsTTY() {
 		fmtc.DisableColors = true
+		useRawOutput = true
 	}
 
 	switch {
@@ -349,16 +350,18 @@ func configureUI() {
 		RC.UseColoredPrompt = true
 
 		fmtutil.SeparatorSymbol = "–"
+		table.BorderSymbol = "–"
 		table.SeparatorSymbol = "–"
 	} else {
 		fmtutil.SeparatorSymbol = "-"
+		table.BorderSymbol = "-"
 		table.SeparatorSymbol = "-"
 		spinner.DisableAnimation = true
 	}
 
+	table.HeaderCapitalize = true
 	fmtutil.SeparatorFullscreen = true
 	fmtutil.SizeSeparator = " "
-	table.HeaderCapitalize = true
 	strutil.EllipsisSuffix = "…"
 
 	if options.GetB(OPT_YES) {
