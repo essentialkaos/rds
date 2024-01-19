@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.8.0"
+	VER  = "1.8.1"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -320,6 +320,7 @@ func Init(gitRev string, gomod []byte) {
 func preConfigureUI() {
 	if !tty.IsTTY() {
 		fmtc.DisableColors = true
+		useRawOutput = true
 	}
 
 	switch {
