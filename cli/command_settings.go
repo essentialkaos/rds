@@ -8,10 +8,12 @@ package cli
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
+	"github.com/essentialkaos/ek/v12/fmtutil/barcode"
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/pager"
@@ -91,17 +93,17 @@ func printSettingsProperty(name, value string, hidden bool) {
 	fmtc.Printf(" %-28s {s}|{!} ", name)
 
 	switch {
-	case hidden:
-		fmtc.Println("{s-}[hidden]{!}")
-
 	case value == "true":
-		fmtc.Println("Yes")
+		fmt.Println("Yes")
 
 	case value == "false":
-		fmtc.Println("No")
+		fmt.Println("No")
 
 	case value == "":
 		fmtc.Println("{s-}[empty]{!}")
+
+	case name == "auth-token" && hidden:
+		fmt.Println(barcode.Dots([]byte(value)))
 
 	case strings.HasPrefix(value, "/"):
 		if fsutil.IsExist(value) {
@@ -117,11 +119,7 @@ func printSettingsProperty(name, value string, hidden bool) {
 			fmtc.Printf("%s {r}✖ {!}\n", value)
 		}
 
-	case name == "virtual-ip":
-		if value == "" {
-			fmtc.Println(value)
-		}
-
+	case name == "virtual-ip" && value != "":
 		switch CORE.GetKeepalivedState() {
 		case CORE.KEEPALIVED_STATE_UNKNOWN:
 			fmtc.Println(value)
@@ -131,8 +129,11 @@ func printSettingsProperty(name, value string, hidden bool) {
 			fmtc.Printf("%s {s}(backup){!}\n", value)
 		}
 
+	case hidden:
+		fmtc.Println("{s-}[hidden]{!}")
+
 	default:
-		fmtc.Println(value)
+		fmt.Println(value)
 	}
 }
 
