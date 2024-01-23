@@ -192,7 +192,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	redisVersionInfo := ""
 	currentRedisVer, err := CORE.GetRedisVersion()
 
-	if err != nil && currentRedisVer.String() != "" {
+	if err == nil && currentRedisVer.String() != "" {
 		redisVersionInfo = "(current: " + currentRedisVer.String() + ")"
 	}
 
