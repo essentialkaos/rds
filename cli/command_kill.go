@@ -68,7 +68,7 @@ func KillCommand(args CommandArgs) int {
 
 	fmtc.NewLine()
 
-	spinner.Show("Killing instance %d", id)
+	spinner.Show("Killing instance {*}%d{!}", id)
 	err = CORE.KillInstance(id)
 
 	spinner.Done(err == nil)

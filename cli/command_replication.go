@@ -107,7 +107,7 @@ func renderReplicationInfo(info *API.ReplicationInfo) {
 		}
 	}
 
-	t.Separator()
+	t.Border()
 }
 
 // printSyncMasterInfo print info about sync RDS Sync master
@@ -115,9 +115,9 @@ func printSyncMasterInfo(t *table.Table, master *API.MasterInfo, suppliantCID st
 	isSuppliant := suppliantCID == ""
 
 	t.Print(
-		"{s-}--------{!}", getSyncClientRole("master", isSuppliant), "{g}online{!}",
+		"{s-}∙∙∙∙∙∙∙∙{!}", getSyncClientRole("master", isSuppliant), "{g}online{!}",
 		getColoredVersion(master.Version), "{s-}—{!}", getSyncClientHost(master.Hostname, master.IP),
-	).Separator()
+	).Border()
 }
 
 // printSyncClientInfo print info about RDS Sync client

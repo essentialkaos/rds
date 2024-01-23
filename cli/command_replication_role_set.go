@@ -199,7 +199,7 @@ func disableSyncingForAllInstances() int {
 	}
 
 	for _, id := range idList {
-		spinner.Show("Disable syncing for instance %d", id)
+		spinner.Show("Disable syncing for instance {*}%d{!}", id)
 
 		resp, err := CORE.ExecCommand(id, &REDIS.Request{
 			Command: []string{"REPLICAOF", "NO", "ONE"},

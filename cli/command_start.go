@@ -62,7 +62,7 @@ func StartCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	spinner.Show("Starting instance %d {s}(%s){!}", id, meta.Desc)
+	spinner.Show("Starting instance {*}%d{!} {s}(%s){!}", id, meta.Desc)
 	err = CORE.StartInstance(id, false)
 	spinner.Done(err == nil)
 

@@ -71,7 +71,7 @@ func BatchEditCommand(args CommandArgs) int {
 			continue
 		}
 
-		spinner.Show("Updating meta for instance %d", id)
+		spinner.Show("Updating meta for instance {*}%d{!}", id)
 
 		meta, err := CORE.GetInstanceMeta(id)
 

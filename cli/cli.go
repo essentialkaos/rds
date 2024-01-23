@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.8.2"
+	VER  = "1.9.0"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -351,11 +351,9 @@ func configureUI() {
 
 		fmtutil.SeparatorSymbol = "–"
 		table.BorderSymbol = "–"
-		table.SeparatorSymbol = "–"
 	} else {
 		fmtutil.SeparatorSymbol = "-"
 		table.BorderSymbol = "-"
-		table.SeparatorSymbol = "-"
 		spinner.DisableAnimation = true
 	}
 
@@ -1177,7 +1175,7 @@ func genUsage() *usage.Info {
 
 	info.AddCommand(COMMAND_GO, "Generate superuser access credentials")
 	info.AddCommand(COMMAND_BATCH_CREATE, "Create many instances at once", "csv-file")
-	info.AddCommand(COMMAND_BATCH_EDIT, "Edit many instances at once", "id")
+	info.AddCommand(COMMAND_BATCH_EDIT, "Edit many instances at once", "id…")
 	info.AddCommand(COMMAND_STOP_ALL, "Stop all instances")
 	info.AddCommand(COMMAND_START_ALL, "Start all instances")
 	info.AddCommand(COMMAND_RESTART_ALL, "Restart all instances")

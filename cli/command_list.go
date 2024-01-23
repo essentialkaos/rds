@@ -74,7 +74,7 @@ func ListCommand(args CommandArgs) int {
 
 	if !useRawOutput {
 		if dataShown {
-			t.Separator()
+			t.Border()
 
 			if !fmtc.DisableColors {
 				fmtc.Println("\n Legend: {s-}stopped{!} {s}∙{!} {r}dead{!} {s}∙{!} {y}idle{!} {s}∙{!} {g}active{!} {s}∙{!} {g*}saving{!} {s}∙{!} {g_}syncing{!} {s}∙{!} {c}loading{!} {s}∙{!} {m}hang{!} {s}∙{!} unknown")
@@ -124,7 +124,7 @@ func listInstanceSearch(t *table.Table, idList []int, filter []string, fullTextS
 			continue
 		}
 
-		if shown > 0 && shown%32 == 0 && shown+8 < len(idList) && options.GetB(OPT_EXTRA) {
+		if shown > 0 && shown%32 == 0 && shown+8 < len(idList) {
 			t.Separator()
 		}
 
@@ -147,9 +147,9 @@ func showListInstanceInfo(t *table.Table, id int, meta *CORE.InstanceMeta, state
 	instanceOwner := getInstanceOwnerWithColor(meta, true)
 
 	if fullTextSearch {
-		instanceDesc = getInstanceDescWithTags(meta, filter)
+		instanceDesc = getInstanceDescWithTags(meta, state.IsWorks(), filter)
 	} else {
-		instanceDesc = getInstanceDescWithTags(meta, nil)
+		instanceDesc = getInstanceDescWithTags(meta, state.IsWorks(), nil)
 	}
 
 	if options.GetB(OPT_EXTRA) {

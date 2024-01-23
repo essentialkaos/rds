@@ -221,10 +221,10 @@ func helpCommandBatchEdit() {
 		command: COMMAND_BATCH_EDIT,
 		desc:    "This command allows you to change metadata for many instances at once.",
 		arguments: []helpInfoArgument{
-			{"id", "Instance ID list", false},
+			{"id…", "IDs of the instances", false},
 		},
 		examples: []helpInfoExample{
-			{"", "1 2 5-7 9", "Edit metadata for instance with IDs 1, 2, 5, 6, 7, 9"},
+			{"", "1 2 5-7 9", "Edit metadata for instances with IDs 1, 2, 5, 6, 7, 9"},
 		},
 	}.render()
 }

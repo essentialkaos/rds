@@ -81,9 +81,9 @@ func regenerateInstanceConfig(id int) int {
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err == nil {
-		spinner.Show("Regenerating configuration file for instance %d {s}(%s){!}", id, meta.Desc)
+		spinner.Show("Regenerating configuration file for instance {*}%d{!} {s}(%s){!}", id, meta.Desc)
 	} else {
-		spinner.Show("Regenerating configuration file for instance %d", id)
+		spinner.Show("Regenerating configuration file for instance {*}%d{!}", id)
 	}
 
 	err = CORE.RegenerateInstanceConfig(id)
@@ -116,9 +116,9 @@ func regenerateAllConfigs() int {
 		meta, err := CORE.GetInstanceMeta(id)
 
 		if err == nil {
-			spinner.Show("Regenerating configuration file for instance %d {s}(%s){!}", id, meta.Desc)
+			spinner.Show("Regenerating configuration file for instance {*}%d{!} {s}(%s){!}", id, meta.Desc)
 		} else {
-			spinner.Show("Regenerating configuration file for instance %d", id)
+			spinner.Show("Regenerating configuration file for instance {*}%d{!}", id)
 		}
 
 		err = CORE.RegenerateInstanceConfig(id)

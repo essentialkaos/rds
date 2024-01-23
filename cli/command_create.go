@@ -244,9 +244,9 @@ func showInstanceInfo(meta *CORE.InstanceMeta, info *instanceBasicInfo, tags []s
 
 	fmtc.NewLine()
 
-	t.Separator()
+	t.Border()
 	fmtc.Println(" ▾ {*}INSTANCE INFO{!}")
-	t.Separator()
+	t.Border()
 
 	t.Print("ID", meta.ID)
 	t.Print("Port", CORE.GetInstancePort(meta.ID))
@@ -270,7 +270,7 @@ func showInstanceInfo(meta *CORE.InstanceMeta, info *instanceBasicInfo, tags []s
 		)
 	}
 
-	t.Separator()
+	t.Border()
 	fmtc.NewLine()
 
 	fmtc.Println("{y}▲ Please save your passwords in a safe place!{!}")

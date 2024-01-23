@@ -70,7 +70,7 @@ func BatchCreateCommand(args CommandArgs) int {
 	for _, info := range infoList {
 		id := CORE.GetAvailableInstanceID()
 
-		spinner.Show("Creating instance (%s)", info.Desc)
+		spinner.Show("Creating instance {*}%s{!}", info.Desc)
 
 		if id == -1 {
 			spinner.Done(false)

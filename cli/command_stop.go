@@ -74,7 +74,7 @@ func StopCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	spinner.Show("Stopping instance %d", id)
+	spinner.Show("Stopping instance {*}%d{!}", id)
 	err = CORE.StopInstance(id, force)
 	spinner.Done(err == nil)
 

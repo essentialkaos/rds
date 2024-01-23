@@ -62,7 +62,7 @@ func RestartCommand(args CommandArgs) int {
 			}
 		}
 
-		spinner.Show("Stopping instance %d", id)
+		spinner.Show("Stopping instance {*}%d{!}", id)
 		err = CORE.StopInstance(id, force)
 		spinner.Done(err == nil)
 
@@ -80,7 +80,7 @@ func RestartCommand(args CommandArgs) int {
 		}
 	}
 
-	spinner.Show("Starting instance %d", id)
+	spinner.Show("Starting instance {*}%d{!}", id)
 
 	err = CORE.StartInstance(id, false)
 

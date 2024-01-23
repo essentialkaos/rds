@@ -108,7 +108,7 @@ func RestoreStateCommand(args CommandArgs) int {
 			continue
 		}
 
-		spinner.Show("Restoring instance %d state", id)
+		spinner.Show("Restoring instance {*}%d{!} state", id)
 		state, err := CORE.GetInstanceState(id, false)
 
 		if err != nil {
