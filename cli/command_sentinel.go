@@ -213,9 +213,9 @@ func SentinelInfoCommand(args CommandArgs) int {
 
 	t := table.NewTable().SetSizes(23, 96)
 
-	t.Separator()
+	t.Border()
 	fmtc.Printf("{*} %s{!}\n", "Master")
-	t.Separator()
+	t.Border()
 
 	for _, item := range info.Master {
 		t.Print(item.Name, item.Value)
@@ -224,9 +224,9 @@ func SentinelInfoCommand(args CommandArgs) int {
 	replicasCount := len(info.Replicas)
 
 	if replicasCount != 0 {
-		t.Separator()
+		t.Border()
 		fmtc.Printf("{*} %s{!} {s}(%d){!}\n", "Replicas", replicasCount)
-		t.Separator()
+		t.Border()
 
 		for index, replica := range info.Replicas {
 			for _, item := range replica {
@@ -242,9 +242,9 @@ func SentinelInfoCommand(args CommandArgs) int {
 	sentinelsCount := len(info.Sentinels)
 
 	if sentinelsCount != 0 {
-		t.Separator()
+		t.Border()
 		fmtc.Printf("{*} %s{!} {s}(%d){!}\n", "Sentinels", sentinelsCount)
-		t.Separator()
+		t.Border()
 
 		for index, sentinel := range info.Sentinels {
 			for _, item := range sentinel {
@@ -257,7 +257,7 @@ func SentinelInfoCommand(args CommandArgs) int {
 		}
 	}
 
-	t.Separator()
+	t.Border()
 
 	return EC_OK
 }

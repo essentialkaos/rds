@@ -188,6 +188,7 @@ systemctl daemon-reload &>/dev/null || :
 %changelog
 * Mon Jan 22 2024 Anton Novojilov <andy@essentialkaos.com> - 1.9.0-0
 - [cli] Improved settings info rendering
+- [cli] UI improvements
 - Dependencies update
 
 * Fri Jan 19 2024 Anton Novojilov <andy@essentialkaos.com> - 1.8.2-0

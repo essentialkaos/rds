@@ -99,7 +99,7 @@ Superuser commands
 
   go                       Generate superuser access credentials
   batch-create csv-file    Create many instances at once
-  batch-edit id            Edit many instances at once
+  batch-edit id…           Edit many instances at once
   stop-all                 Stop all instances
   start-all                Start all instances
   restart-all              Restart all instances

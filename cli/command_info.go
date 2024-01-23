@@ -89,7 +89,7 @@ func InfoCommand(args CommandArgs) int {
 		// Print basic instance info for stopped or dead instances
 		if isInfoSectionRequired(sections, "instance") {
 			showInstanceBasicInfo(t, id, nil, state)
-			fmtutil.Separator(true)
+			t.Border()
 			return EC_OK
 		}
 
@@ -122,7 +122,7 @@ func InfoCommand(args CommandArgs) int {
 	}
 
 	if format == "" {
-		t.Separator()
+		t.Border()
 	}
 
 	return EC_OK
@@ -209,13 +209,13 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 		host, CORE.GetInstancePort(id), db,
 	)
 
-	t.Separator()
+	t.Border()
 	fmtc.Println(" ▾ {*}INSTANCE{!}")
-	t.Separator()
+	t.Border()
 
 	t.Print("ID", id)
 	t.Print("Owner", getInstanceOwnerWithColor(meta, false))
-	t.Print("Description", getInstanceDescWithTags(meta, nil))
+	t.Print("Description", getInstanceDescWithTags(meta, true, nil))
 	t.Print("State", getInstanceStateWithColor(state))
 	t.Print("Created", timeutil.Format(created, "%Y/%m/%d %H:%M:%S"))
 	t.Print("Replication type", strutil.Q(string(meta.Preferencies.ReplicationType), "—"))
@@ -259,9 +259,9 @@ func renderInfoData(t *table.Table, info *REDIS.Info, sections []string) {
 			continue
 		}
 
-		t.Separator()
+		t.Border()
 		fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section.Header))
-		t.Separator()
+		t.Border()
 
 		for _, v := range section.Fields {
 			t.Print(v, section.Values[v])

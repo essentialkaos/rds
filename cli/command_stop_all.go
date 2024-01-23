@@ -116,9 +116,9 @@ func stopAllInstances(idList []int) int {
 		meta, err := CORE.GetInstanceMeta(id)
 
 		if err == nil {
-			spinner.Show("Stopping instance %d {s}(%s){!}", id, meta.Desc)
+			spinner.Show("Stopping instance {*}%d{!} {s}(%s){!}", id, meta.Desc)
 		} else {
-			spinner.Show("Stopping instance %d", id)
+			spinner.Show("Stopping instance {*}%d{!}", id)
 		}
 
 		err = CORE.StopInstance(id, false)

@@ -177,7 +177,7 @@ func reloadAllConfigs() int {
 	var hasErrors bool
 
 	for _, id := range instances {
-		spinner.Show("Reloading configuration for instance %d", id)
+		spinner.Show("Reloading configuration for instance {*}%d{!}", id)
 		errs := CORE.ReloadInstanceConfig(id)
 		spinner.Done(len(errs) == 0)
 

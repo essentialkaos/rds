@@ -336,7 +336,7 @@ func isInstanceOwnerExist(owner string) bool {
 }
 
 // getInstanceDescWithTags returns instance description with rendered tags
-func getInstanceDescWithTags(meta *CORE.InstanceMeta, highlights []string) string {
+func getInstanceDescWithTags(meta *CORE.InstanceMeta, isWorks bool, highlights []string) string {
 	if meta == nil {
 		return "{s-}UNKNOWN{!}"
 	}
@@ -345,6 +345,10 @@ func getInstanceDescWithTags(meta *CORE.InstanceMeta, highlights []string) strin
 
 	if len(highlights) != 0 {
 		desc = applyHighlights(desc, highlights)
+	}
+
+	if !isWorks {
+		desc = "{s-}" + desc + "{!}"
 	}
 
 	return desc + " " + renderTags(meta.Tags...)
@@ -392,9 +396,9 @@ func showInstanceBasicInfoCard(id int, state CORE.State) error {
 
 	t := table.NewTable().SetSizes(14, 96)
 
-	t.Separator()
+	t.Border()
 	fmtc.Println(" ▾ {*}INSTANCE INFO{!}")
-	t.Separator()
+	t.Border()
 
 	t.Print("ID", id)
 	t.Print("Owner", getInstanceOwnerWithColor(meta, false))
@@ -402,7 +406,7 @@ func showInstanceBasicInfoCard(id int, state CORE.State) error {
 	t.Print("State", getInstanceStateWithColor(state))
 	t.Print("Created", timeutil.Format(time.Unix(meta.Created, 0), "%Y/%m/%d %H:%M:%S"))
 
-	t.Separator()
+	t.Border()
 
 	fmtc.NewLine()
 
@@ -687,7 +691,7 @@ func applyHighlights(data string, highlights []string) string {
 	highlightRe := regexp.MustCompile(fmt.Sprintf("(?i)(%s)", strings.Join(highlights, "|")))
 
 	data = highlightRe.ReplaceAllStringFunc(data, func(s string) string {
-		return "{_}" + s + "{!}"
+		return "{_}" + s + "{!_}"
 	})
 
 	closeRe := regexp.MustCompile(`\{!\}([^\{]*)\{!\}`)
