@@ -60,7 +60,7 @@ func ListCommand(args CommandArgs) int {
 		)
 	}
 
-	if options.GetB(OPT_PAGER) && !useRawOutput {
+	if (options.GetB(OPT_PAGER) || prefs.AutoPaging) && !useRawOutput {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}

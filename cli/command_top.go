@@ -83,7 +83,7 @@ func TopCommand(args CommandArgs) int {
 		sort.Sort(items)
 	}
 
-	if options.GetB(OPT_PAGER) && !useRawOutput {
+	if (options.GetB(OPT_PAGER) || prefs.AutoPaging) && !useRawOutput {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}
@@ -174,7 +174,7 @@ func TopDiffCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	if options.GetB(OPT_PAGER) && !useRawOutput {
+	if (options.GetB(OPT_PAGER) || prefs.AutoPaging) && !useRawOutput {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}

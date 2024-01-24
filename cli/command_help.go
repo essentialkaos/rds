@@ -124,7 +124,7 @@ func HelpCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	if options.GetB(OPT_PAGER) {
+	if options.GetB(OPT_PAGER) || prefs.AutoPaging {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}

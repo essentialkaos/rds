@@ -21,6 +21,7 @@ type Preferences struct {
 	DisableTips     bool
 	EnablePowerline bool
 	SimpleUI        bool
+	AutoPaging      bool
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -56,5 +57,6 @@ func readUserPreferences(user string) Preferences {
 		DisableTips:     prefsCfg.GetB("cli:disable-tips", false),
 		EnablePowerline: prefsCfg.GetB("cli:enable-powerline", false),
 		SimpleUI:        prefsCfg.GetB("cli:simple-ui", false),
+		AutoPaging:      prefsCfg.GetB("cli:auto-paging", false),
 	}
 }

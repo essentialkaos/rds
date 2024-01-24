@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.9.1
+Version:        1.10.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -36,8 +36,8 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.3.3
-Release:   1%{?dist}
+Version:   1.3.4
+Release:   0%{?dist}
 Group:     Applications/System
 
 Requires:  %{name}
@@ -186,9 +186,10 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
-* Tue Jan 23 2024 Anton Novojilov <andy@essentialkaos.com> - 1.9.1-0
+* Tue Jan 23 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.0-0
 - [cli] Fixed bug with showing current Redis version in 'info' command output
 - [cli] Improved 'stats' command output
+- [cli] Added pager usage configuration to user preferences
 
 * Mon Jan 22 2024 Anton Novojilov <andy@essentialkaos.com> - 1.9.0-0
 - [cli] Improved settings info rendering
