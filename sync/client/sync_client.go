@@ -32,9 +32,10 @@ func PropagateCommand(command API.MasterCommand, id int, uuid string) error {
 		ContentType: req.CONTENT_TYPE_JSON,
 		AutoDiscard: true,
 		Body: &API.PushRequest{
-			Command: command,
-			ID:      id,
-			UUID:    uuid,
+			Command:   command,
+			ID:        id,
+			UUID:      uuid,
+			Initiator: CORE.User.RealName,
 		},
 	}.Post()
 

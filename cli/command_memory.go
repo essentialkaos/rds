@@ -56,7 +56,7 @@ func MemoryCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	if options.GetB(OPT_PAGER) && !useRawOutput {
+	if (options.GetB(OPT_PAGER) || prefs.AutoPaging) && !useRawOutput {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}
@@ -90,7 +90,7 @@ func printMemoryUsage(metrics []instanceMemoryMetric) {
 		case strutil.HasPrefixAny(m.Field, "allocator.", "clients.", "replication.", "aof.", "lua.", "cluster."),
 			strutil.HasSuffixAny(m.Field, ".bytes", ".allocated", ".bytes-per-key"):
 			t.Add(m.Field, fmtc.Sprintf("%s {s}(%s){!}",
-				fmtutil.PrettySize(m.Value), fmtutil.PrettyNum(m.Value),
+				fmtutil.PrettySize(m.Value.(int)), fmtutil.PrettyNum(m.Value),
 			))
 
 		default:

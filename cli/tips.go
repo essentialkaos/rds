@@ -296,6 +296,14 @@ with {?opt}-x{!}/{?opt}--extra{!} option:
 
 {?more}More information: sudo rds help log{!}`,
 		},
+		&protip.Tip{
+			Title: `User-specific preferences`,
+			Message: `RDS users can set their own preferences using a configuration file stored in their
+home directory. It can be used to disable ProTips, enable Powerline font support,
+enable a simplified user interface, or enable automatic paging for long output.
+
+{?more}More information: {_}https://kaos.sh/rds/w/User-preferences{!}`,
+		},
 	)
 
 	return protip.Show(false)

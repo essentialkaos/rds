@@ -42,7 +42,7 @@ func SettingsCommand(args CommandArgs) int {
 
 // printAllSettings prints all settings
 func printAllSettings() int {
-	if options.GetB(OPT_PAGER) && !useRawOutput {
+	if (options.GetB(OPT_PAGER) || prefs.AutoPaging) && !useRawOutput {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}

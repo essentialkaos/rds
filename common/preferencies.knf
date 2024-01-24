@@ -10,3 +10,6 @@
 
   # Simplify user interface by default
   simple-ui: false
+
+  # Enable pager for long output
+  auto-paging: false

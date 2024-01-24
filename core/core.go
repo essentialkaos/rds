@@ -56,7 +56,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION is current core version
-const VERSION = "A1"
+const VERSION = "A2"
 
 // META_VERSION is current meta version
 const META_VERSION = 1
@@ -336,13 +336,15 @@ type StatsClients struct {
 }
 
 type StatsMemory struct {
-	SystemMemory  uint64 `json:"system_memory"`
-	SystemSwap    uint64 `json:"system_swap"`
-	UsedMemory    uint64 `json:"used_memory"`
-	UsedMemoryRSS uint64 `json:"used_memory_rss"`
-	UsedMemoryLua uint64 `json:"used_memory_lua"`
-	UsedSwap      uint64 `json:"used_swap"`
-	IsSwapEnabled bool   `json:"is_swap_enabled"`
+	TotalSystemMemory uint64 `json:"total_system_memory"`
+	SystemMemory      uint64 `json:"system_memory"`
+	TotalSystemSwap   uint64 `json:"total_system_swap"`
+	SystemSwap        uint64 `json:"system_swap"`
+	UsedMemory        uint64 `json:"used_memory"`
+	UsedMemoryRSS     uint64 `json:"used_memory_rss"`
+	UsedMemoryLua     uint64 `json:"used_memory_lua"`
+	UsedSwap          uint64 `json:"used_swap"`
+	IsSwapEnabled     bool   `json:"is_swap_enabled"`
 }
 
 type StatsOverall struct {
@@ -412,7 +414,7 @@ type sentinelConfigData struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var (
-	ErrUnprivileged              = errors.New("RDS core requires root privileges")
+	ErrUnprivileged              = errors.New("RDS requires root privileges")
 	ErrSUAuthAlreadyExist        = errors.New("Superuser credentials already generated")
 	ErrSUAuthIsEmpty             = errors.New("Superuser auth data can't be empty")
 	ErrSUAuthNoData              = errors.New("Superuser auth data doesn't exist")
@@ -550,7 +552,11 @@ func (s State) WithErrors() bool {
 func Init(conf string) []error {
 	var err error
 
-	User, _ = system.CurrentUser()
+	User, err = system.CurrentUser()
+
+	if err != nil {
+		return []error{fmt.Errorf("Can't get current user info: %w", err)}
+	}
 
 	if User.UID != 0 {
 		return []error{ErrUnprivileged}
@@ -2213,8 +2219,6 @@ func GetStats() *Stats {
 	var mappings = map[string]*uint64{
 		"Clients:connected_clients":        &stats.Clients.Connected,
 		"Clients:blocked_clients":          &stats.Clients.Blocked,
-		"Memory:system_memory":             &stats.Memory.SystemMemory,
-		"Memory:system_swap":               &stats.Memory.SystemSwap,
 		"Memory:used_memory":               &stats.Memory.UsedMemory,
 		"Memory:used_memory_rss":           &stats.Memory.UsedMemoryRSS,
 		"Memory:used_memory_lua":           &stats.Memory.UsedMemoryLua,
@@ -2234,7 +2238,9 @@ func GetStats() *Stats {
 
 	memUsage, _ := system.GetMemUsage()
 
+	stats.Memory.TotalSystemMemory = memUsage.MemTotal
 	stats.Memory.SystemMemory = memUsage.MemUsed
+	stats.Memory.TotalSystemSwap = memUsage.SwapTotal
 	stats.Memory.SystemSwap = memUsage.SwapUsed
 	stats.Memory.IsSwapEnabled = memUsage.SwapTotal != 0
 

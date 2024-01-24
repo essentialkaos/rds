@@ -27,6 +27,7 @@ import (
 	"github.com/essentialkaos/ek/v12/mathutil"
 	"github.com/essentialkaos/ek/v12/netutil"
 	"github.com/essentialkaos/ek/v12/sortutil"
+	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/timeutil"
 
 	API "github.com/essentialkaos/rds/api"
@@ -386,12 +387,12 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	if req.ID == -1 {
 		log.Info(
 			"Received push command (command: %s | initiator: %s)",
-			req.Command, req.Initiator,
+			req.Command, strutil.Q(req.Initiator, "—"),
 		)
 	} else {
 		log.Info(
 			"Received push command (command: %s | initiator: %s | ID: %d | UUID: %s)",
-			req.Command, req.Initiator, req.ID, req.UUID,
+			req.Command, strutil.Q(req.Initiator, "—"), req.ID, req.UUID,
 		)
 	}
 

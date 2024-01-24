@@ -76,7 +76,7 @@ func InfoCommand(args CommandArgs) int {
 		sections = getCorrectedSections(args[1:])
 	}
 
-	if options.GetB(OPT_PAGER) && !useRawOutput {
+	if (options.GetB(OPT_PAGER) || prefs.AutoPaging) && !useRawOutput {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}
@@ -192,7 +192,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	redisVersionInfo := ""
 	currentRedisVer, err := CORE.GetRedisVersion()
 
-	if err != nil && currentRedisVer.String() != "" {
+	if err == nil && currentRedisVer.String() != "" {
 		redisVersionInfo = "(current: " + currentRedisVer.String() + ")"
 	}
 

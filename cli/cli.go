@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.9.0"
+	VER  = "1.10.0"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -937,7 +937,7 @@ func isSmartUsageAvailable() bool {
 
 // showBasicUsage prints basic usage info
 func showBasicUsage() {
-	if options.GetB(OPT_PAGER) {
+	if options.GetB(OPT_PAGER) || prefs.AutoPaging {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}
@@ -957,7 +957,7 @@ func showSmartUsage() {
 	isSentinelFailover := CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_SENTINEL)
 	allowCommands := CORE.Config.GetB(CORE.REPLICATION_ALLOW_COMMANDS)
 
-	if options.GetB(OPT_PAGER) {
+	if options.GetB(OPT_PAGER) || prefs.AutoPaging {
 		if pager.Setup() == nil {
 			defer pager.Complete()
 		}
