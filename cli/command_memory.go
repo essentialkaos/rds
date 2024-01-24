@@ -90,7 +90,7 @@ func printMemoryUsage(metrics []instanceMemoryMetric) {
 		case strutil.HasPrefixAny(m.Field, "allocator.", "clients.", "replication.", "aof.", "lua.", "cluster."),
 			strutil.HasSuffixAny(m.Field, ".bytes", ".allocated", ".bytes-per-key"):
 			t.Add(m.Field, fmtc.Sprintf("%s {s}(%s){!}",
-				fmtutil.PrettySize(m.Value), fmtutil.PrettyNum(m.Value),
+				fmtutil.PrettySize(m.Value.(int)), fmtutil.PrettyNum(m.Value),
 			))
 
 		default:

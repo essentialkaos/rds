@@ -13,6 +13,7 @@ import (
 
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/fmtutil"
+	"github.com/essentialkaos/ek/v12/mathutil"
 	"github.com/essentialkaos/ek/v12/options"
 	"github.com/essentialkaos/ek/v12/terminal"
 
@@ -89,12 +90,25 @@ func renderStats(stats *CORE.Stats) {
 	fmtc.Println(" ▾ {*}MEMORY{!}")
 	fmtutil.Separator(true)
 
-	renderStatsValue("System Memory", stats.Memory.SystemMemory, true)
+	renderStatsValue("Total System Memory", stats.Memory.TotalSystemMemory, true)
+	fmtc.Printf(
+		" %-26s {s}|{!} %s {s-}(%s ~ %s){!}\n", "System Memory",
+		fmtutil.PrettyNum(stats.Memory.SystemMemory),
+		fmtutil.PrettySize(stats.Memory.SystemMemory),
+		fmtutil.PrettyPerc(mathutil.Perc(stats.Memory.SystemMemory, stats.Memory.TotalSystemMemory)),
+	)
 
 	switch stats.Memory.IsSwapEnabled {
 	case true:
-		renderStatsValue("System Swap", stats.Memory.SystemSwap, true)
+		renderStatsValue("Total System Swap", stats.Memory.TotalSystemSwap, true)
+		fmtc.Printf(
+			" %-26s {s}|{!} %s {s-}(%s ~ %s){!}\n", "System Swap",
+			fmtutil.PrettyNum(stats.Memory.SystemSwap),
+			fmtutil.PrettySize(stats.Memory.SystemSwap),
+			fmtutil.PrettyPerc(mathutil.Perc(stats.Memory.SystemSwap, stats.Memory.TotalSystemSwap)),
+		)
 	default:
+		fmtc.Printf(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}\n", "Total System Swap")
 		fmtc.Printf(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}\n", "System Swap")
 	}
 
@@ -150,7 +164,9 @@ func renderStatsAsText(stats *CORE.Stats) {
 	fmt.Println("outdated_instances", stats.Instances.Outdated)
 	fmt.Println("connected_clients", stats.Clients.Connected)
 	fmt.Println("blocked_clients", stats.Clients.Blocked)
+	fmt.Println("total_system_memory", stats.Memory.TotalSystemMemory)
 	fmt.Println("system_memory", stats.Memory.SystemMemory)
+	fmt.Println("total_system_swap", stats.Memory.TotalSystemSwap)
 	fmt.Println("system_swap", stats.Memory.SystemSwap)
 	fmt.Println("used_memory", stats.Memory.UsedMemory)
 	fmt.Println("used_memory_rss", stats.Memory.UsedMemoryRSS)
@@ -196,7 +212,9 @@ func renderStatsAsXML(stats *CORE.Stats) {
 	fmt.Println("  </clients>")
 
 	fmt.Println("  <memory>")
+	renderStatsAsXMLValue("total_system_memory", stats.Memory.TotalSystemMemory)
 	renderStatsAsXMLValue("system_memory", stats.Memory.SystemMemory)
+	renderStatsAsXMLValue("total_system_swap", stats.Memory.TotalSystemSwap)
 	renderStatsAsXMLValue("system_swap", stats.Memory.SystemSwap)
 	renderStatsAsXMLValue("used_memory", stats.Memory.UsedMemory)
 	renderStatsAsXMLValue("used_memory_rss", stats.Memory.UsedMemoryRSS)
@@ -230,7 +248,6 @@ func renderStatsAsXML(stats *CORE.Stats) {
 // renderStatsAsJSON print stats data as json
 func renderStatsAsJSON(stats *CORE.Stats) {
 	jd, _ := json.MarshalIndent(stats, "", "  ")
-
 	fmt.Println(string(jd))
 }
 
@@ -242,7 +259,7 @@ func renderStatsAsXMLValue(name string, value uint64) {
 // renderStatsValue print stats property for pretty output
 func renderStatsValue(name string, value uint64, isSize bool) {
 	if isSize {
-		fmtc.Printf(" %-26s {s}|{!} %s\n", name, fmtc.Sprintf("%s {s-}(%s){!}", fmtutil.PrettyNum(value), fmtutil.PrettySize(int64(value))))
+		fmtc.Printf(" %-26s {s}|{!} %s {s-}(%s){!}\n", name, fmtutil.PrettyNum(value), fmtutil.PrettySize(value))
 	} else {
 		fmtc.Printf(" %-26s {s}|{!} %s\n", name, fmtutil.PrettyNum(value))
 	}
