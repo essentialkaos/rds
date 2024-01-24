@@ -188,6 +188,7 @@ systemctl daemon-reload &>/dev/null || :
 %changelog
 * Tue Jan 23 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.0-0
 - [cli] Fixed bug with showing current Redis version in 'info' command output
+- [cli] [sync] Send info about command initiator
 - [cli] Improved 'stats' command output
 - [cli] Added pager usage configuration to user preferences
 

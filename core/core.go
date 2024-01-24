@@ -414,7 +414,7 @@ type sentinelConfigData struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var (
-	ErrUnprivileged              = errors.New("RDS core requires root privileges")
+	ErrUnprivileged              = errors.New("RDS requires root privileges")
 	ErrSUAuthAlreadyExist        = errors.New("Superuser credentials already generated")
 	ErrSUAuthIsEmpty             = errors.New("Superuser auth data can't be empty")
 	ErrSUAuthNoData              = errors.New("Superuser auth data doesn't exist")
@@ -552,7 +552,11 @@ func (s State) WithErrors() bool {
 func Init(conf string) []error {
 	var err error
 
-	User, _ = system.CurrentUser()
+	User, err = system.CurrentUser()
+
+	if err != nil {
+		return []error{fmt.Errorf("Can't get current user info: %w", err)}
+	}
 
 	if User.UID != 0 {
 		return []error{ErrUnprivileged}
