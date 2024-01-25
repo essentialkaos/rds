@@ -100,24 +100,21 @@ func readLogFile(logFile string, isRedisLog bool) error {
 		fd.Seek(-1*mathutil.Min(fs, 4096), 2)
 	}
 
+	lastPrint := time.Now()
 	r := bufio.NewReader(fd)
-
-	var counter int
 
 	for {
 		line, err := r.ReadString('\n')
 
 		if err != nil {
 			time.Sleep(250 * time.Millisecond)
-			counter++
 			continue
 		}
 
 		line = strings.TrimRight(line, "\r\n")
 
-		if counter > 240 { // 250ms * 4 * 60 = 1 minute
+		if time.Since(lastPrint) > time.Minute {
 			fmtutil.Separator(true)
-			counter = 0
 		}
 
 		if isRedisLog {
@@ -125,6 +122,8 @@ func readLogFile(logFile string, isRedisLog bool) error {
 		} else {
 			printRDSLogLine(line)
 		}
+
+		lastPrint = time.Now()
 	}
 }
 
