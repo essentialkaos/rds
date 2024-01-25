@@ -456,8 +456,6 @@ func initCommands() {
 	isSentinelFailover := CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_SENTINEL)
 	allowCommands := CORE.Config.GetB(CORE.REPLICATION_ALLOW_COMMANDS)
 
-	commands[COMMAND_GO] = &CommandRoutine{GoCommand, AUTH_NO, true}
-
 	if isMaster {
 		commands[COMMAND_START] = &CommandRoutine{StartCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_STOP] = &CommandRoutine{StopCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
@@ -531,6 +529,7 @@ func initCommands() {
 	}
 
 	if !isSentinel {
+		commands[COMMAND_GO] = &CommandRoutine{GoCommand, AUTH_NO, true}
 		commands[COMMAND_INFO] = &CommandRoutine{InfoCommand, AUTH_NO, options.GetS(OPT_FORMAT) == "" && !useRawOutput}
 		commands[COMMAND_CLIENTS] = &CommandRoutine{ClientsCommand, AUTH_NO, true}
 		commands[COMMAND_STATS_COMMAND] = &CommandRoutine{StatsCommandCommand, AUTH_NO, true}
