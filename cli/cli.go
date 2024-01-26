@@ -489,7 +489,6 @@ func initCommands() {
 	}
 
 	if isMaster {
-		commands[COMMAND_GO] = &CommandRoutine{GoCommand, AUTH_NO, true}
 		commands[COMMAND_CREATE] = &CommandRoutine{CreateCommand, AUTH_NO, true}
 		commands[COMMAND_DESTROY] = &CommandRoutine{DestroyCommand, AUTH_INSTANCE | AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_EDIT] = &CommandRoutine{EditCommand, AUTH_INSTANCE | AUTH_SUPERUSER | AUTH_STRICT, true}
@@ -530,6 +529,7 @@ func initCommands() {
 	}
 
 	if !isSentinel {
+		commands[COMMAND_GO] = &CommandRoutine{GoCommand, AUTH_NO, true}
 		commands[COMMAND_INFO] = &CommandRoutine{InfoCommand, AUTH_NO, options.GetS(OPT_FORMAT) == "" && !useRawOutput}
 		commands[COMMAND_CLIENTS] = &CommandRoutine{ClientsCommand, AUTH_NO, true}
 		commands[COMMAND_STATS_COMMAND] = &CommandRoutine{StatsCommandCommand, AUTH_NO, true}
