@@ -657,7 +657,7 @@ func isSystemWasRebooted() (bool, error) {
 }
 
 // parseFieldsLine parses line with many fields
-func parseFieldsLine(line, separator string) map[string]string {
+func parseFieldsLine(line string, separator rune) map[string]string {
 	result := make(map[string]string)
 
 	for i := 0; i < 32; i++ {

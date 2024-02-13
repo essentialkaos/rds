@@ -1423,14 +1423,14 @@ func ParseIDDBPair(pair string) (int, int, error) {
 		return id, 0, nil
 	}
 
-	idStr := strutil.ReadField(pair, 0, false, ":", "/")
+	idStr := strutil.ReadField(pair, 0, false, ':', '/')
 	id, err := strconv.Atoi(idStr)
 
 	if err != nil {
 		return -1, -1, fmt.Errorf("Can't parse value \"%s\" as ID", idStr)
 	}
 
-	dbStr := strutil.ReadField(pair, 1, false, ":", "/")
+	dbStr := strutil.ReadField(pair, 1, false, ':', '/')
 	db, err := strconv.Atoi(dbStr)
 
 	if err != nil {
@@ -2081,8 +2081,8 @@ func IsValidTag(tag string) bool {
 // ParseTag parse tag and returns tag and color
 func ParseTag(tag string) (string, string) {
 	if strings.Contains(tag, ":") {
-		return strutil.ReadField(tag, 1, false, ":"),
-			strutil.ReadField(tag, 0, false, ":")
+		return strutil.ReadField(tag, 1, false, ':'),
+			strutil.ReadField(tag, 0, false, ':')
 	}
 
 	return tag, ""
@@ -2944,7 +2944,7 @@ func getRedisVersionFromBinary() (*RedisVersionInfo, error) {
 		return nil, err
 	}
 
-	verStr := strutil.ReadField(string(out), 2, false, " ")
+	verStr := strutil.ReadField(string(out), 2, false, ' ')
 
 	if verStr == "" || !strings.HasPrefix(verStr, "v=") {
 		return nil, ErrCantParseRedisVersion
@@ -3451,8 +3451,8 @@ func runSentinelFailoverSwitch(id int, priority string) error {
 
 // appendStatsData parse info property and append it to given value
 func appendStatsData(info *REDIS.Info, prop string, value *uint64) {
-	propCategory := strutil.ReadField(prop, 0, false, ":")
-	propName := strutil.ReadField(prop, 1, false, ":")
+	propCategory := strutil.ReadField(prop, 0, false, ':')
+	propName := strutil.ReadField(prop, 1, false, ':')
 
 	if propCategory == "" || propName == "" {
 		return

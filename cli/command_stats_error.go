@@ -74,7 +74,7 @@ func printErrorStatsInfo(info *REDIS.Info) {
 
 	for _, v := range section.Fields {
 		errName := strings.ToUpper(strutil.Exclude(v, "errorstat_"))
-		errInfo := parseFieldsLine(section.Values[v], ",")
+		errInfo := parseFieldsLine(section.Values[v], ',')
 		errCount, _ := strconv.Atoi(errInfo["count"])
 
 		t.Add(errName, fmtutil.PrettyNum(errCount))

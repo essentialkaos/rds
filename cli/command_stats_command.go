@@ -83,7 +83,7 @@ func printCommandStatsInfo(info *REDIS.Info) {
 	for _, v := range section.Fields {
 		cmdName := strings.ToUpper(strutil.Exclude(v, "cmdstat_"))
 		cmdName = strings.ReplaceAll(cmdName, "|", " ")
-		cmdStats := parseFieldsLine(section.Values[v], ",")
+		cmdStats := parseFieldsLine(section.Values[v], ',')
 		cmdUSec, _ := strconv.Atoi(cmdStats["usec"])
 		cmdTime := time.Microsecond * time.Duration(mathutil.Max(cmdUSec, 1))
 		cmdCalls, _ := strconv.Atoi(cmdStats["calls"])

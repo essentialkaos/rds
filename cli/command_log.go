@@ -169,13 +169,13 @@ func printRDSLogLine(line string) {
 
 // printRedisLogLine formats and prints line from Redis log
 func printRedisLogLine(line string) {
-	role := strutil.ReadField(line, 0, false, " ")
-	role = strutil.ReadField(role, 1, false, ":")
+	role := strutil.ReadField(line, 0, false, ' ')
+	role = strutil.ReadField(role, 1, false, ':')
 
-	day := strutil.ReadField(line, 1, false, " ")
-	month := strutil.ReadField(line, 2, false, " ")
-	year := strutil.ReadField(line, 3, false, " ")
-	hms := strutil.ReadField(line, 4, false, " ")
+	day := strutil.ReadField(line, 1, false, ' ')
+	month := strutil.ReadField(line, 2, false, ' ')
+	year := strutil.ReadField(line, 3, false, ' ')
+	hms := strutil.ReadField(line, 4, false, ' ')
 
 	switch strings.ToLower(month) {
 	case "jan":

@@ -77,7 +77,7 @@ func printLatencyStatsInfo(info *REDIS.Info) {
 
 	for _, v := range section.Fields {
 		cmdName := strings.ToUpper(strutil.Exclude(v, "latency_percentiles_usec_"))
-		cmdLat := parseFieldsLine(section.Values[v], ",")
+		cmdLat := parseFieldsLine(section.Values[v], ',')
 
 		cmdName = strings.ReplaceAll(cmdName, "|", " ")
 
