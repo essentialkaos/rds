@@ -187,6 +187,7 @@ systemctl daemon-reload &>/dev/null || :
 
 %changelog
 * Fri Mar 22 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.2-0
+- [cli] Fixed bug with checking keepalived status while changing node role
 - [cli] [sync] Improved support information gathering
 - Dependencies update
 
