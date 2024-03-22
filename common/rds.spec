@@ -179,8 +179,8 @@ systemctl daemon-reload &>/dev/null || :
 
 %files sync
 %defattr(-, root, root, -)
+%config(noreplace) %{_unitdir}/%{name}-sync.service
 %{_mandir}/man1/%{name}-sync.1.*
-%{_unitdir}/%{name}-sync.service
 %{_bindir}/%{name}-sync
 
 ################################################################################
