@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.10.1
+Version:        1.10.2
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -36,8 +36,8 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.3.4
-Release:   1%{?dist}
+Version:   1.3.5
+Release:   0%{?dist}
 Group:     Applications/System
 
 Requires:  %{name}
@@ -186,6 +186,10 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Mar 22 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.2-0
+- [cli] [sync] Improved support information gathering
+- Dependencies update
+
 * Fri Jan 26 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.1-0
 - [cli] Fixed bug with printing separator in 'log' output
 - [cli] Allow to run 'go' command on minions
