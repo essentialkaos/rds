@@ -25,7 +25,9 @@ func Print(app, ver, gitRev string, gomod []byte) {
 	support.Collect(app, ver).
 		WithRevision(gitRev).
 		WithDeps(deps.Extract(gomod)).
-		WithPackages(pkgs.Collect("redis", "redis-cli", "rds", "rds-sync")).
+		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72")).
+		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli")).
+		WithPackages(pkgs.Collect("rds", "rds-sync", "systemd", "tuned")).
 		WithChecks(checkSystem()...).
 		WithChecks(checkKeepalived()).
 		WithApps(getRedisVersion()).
@@ -44,11 +46,11 @@ func checkKeepalived() support.Check {
 
 	switch CORE.GetKeepalivedState() {
 	case CORE.KEEPALIVED_STATE_MASTER:
-		chk.Message = fmt.Sprintf("IP: %s (master)", virtualIP)
+		chk.Message = fmt.Sprintf("%s (master)", virtualIP)
 	case CORE.KEEPALIVED_STATE_BACKUP:
-		chk.Message = fmt.Sprintf("IP: %s (backup)", virtualIP)
+		chk.Message = fmt.Sprintf("%s (backup)", virtualIP)
 	default:
-		chk.Message = fmt.Sprintf("IP: %s (unknown status)", virtualIP)
+		chk.Message = fmt.Sprintf("%s (unknown status)", virtualIP)
 		chk.Status = support.CHECK_WARN
 	}
 
@@ -79,25 +81,25 @@ func checkSystem() []support.Check {
 	if status.HasTHPIssues {
 		chks = append(chks, support.Check{support.CHECK_ERROR, "THP", "Transparent hugepages are not disabled"})
 	} else {
-		chks = append(chks, support.Check{support.CHECK_OK, "THP", ""})
+		chks = append(chks, support.Check{support.CHECK_OK, "THP", "No issues"})
 	}
 
 	if status.HasKernelIssues {
 		chks = append(chks, support.Check{support.CHECK_ERROR, "Kernel", "Kernel is not properly configured for Redis"})
 	} else {
-		chks = append(chks, support.Check{support.CHECK_OK, "Kernel", ""})
+		chks = append(chks, support.Check{support.CHECK_OK, "Kernel", "No issues"})
 	}
 
 	if status.HasLimitsIssues {
 		chks = append(chks, support.Check{support.CHECK_OK, "Limits", "Limits are not set"})
 	} else {
-		chks = append(chks, support.Check{support.CHECK_OK, "Limits", ""})
+		chks = append(chks, support.Check{support.CHECK_OK, "Limits", "No issues"})
 	}
 
 	if status.HasFSIssues {
 		chks = append(chks, support.Check{support.CHECK_OK, "Filesystem", "Not enough free space on disk"})
 	} else {
-		chks = append(chks, support.Check{support.CHECK_OK, "Filesystem", ""})
+		chks = append(chks, support.Check{support.CHECK_OK, "Filesystem", "No issues"})
 	}
 
 	return chks
