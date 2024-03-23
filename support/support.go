@@ -30,6 +30,7 @@ func Print(app, ver, gitRev string, gomod []byte) {
 		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli")).
 		WithPackages(pkgs.Collect("rds", "rds-sync", "systemd", "tuned")).
 		WithChecks(checkSystem()...).
+		WithChecks(checkSyncDaemon()).
 		WithChecks(checkKeepalived()).
 		WithApps(getRedisVersion()).
 		WithNetwork(network.Collect()).
@@ -105,6 +106,24 @@ func checkSystem() []support.Check {
 	}
 
 	return chks
+}
+
+// checkSyncDaemon checks for sync daemon status
+func checkSyncDaemon() support.Check {
+	if !CORE.IsSyncDaemonInstalled() {
+		return support.Check{}
+	}
+
+	chk := support.Check{Status: support.CHECK_OK, Title: "Sync Daemon"}
+
+	switch CORE.IsSyncDaemonActive() {
+	case true:
+		chk.Message = "Sync daemon works"
+	default:
+		chk.Status, chk.Message = support.CHECK_SKIP, "Sync daemon is stopped"
+	}
+
+	return chk
 }
 
 // getRedisVersion returns current Redis version
