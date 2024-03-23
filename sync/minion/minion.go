@@ -2,7 +2,7 @@ package minion
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -321,22 +321,30 @@ func processCommands(items []*API.CommandQueueItem) {
 		switch item.Command {
 		case API.COMMAND_CREATE:
 			createCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_DESTROY:
 			destroyCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_EDIT:
 			editCommandHandler(item)
 		case API.COMMAND_START:
 			startCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_STOP:
 			stopCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_RESTART:
 			restartCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_START_ALL:
 			startAllCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_STOP_ALL:
 			stopAllCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_RESTART_ALL:
 			restartAllCommandHandler(item)
+			updateInstancesStates()
 		case API.COMMAND_SENTINEL_START:
 			sentinelStartCommandHandler(item)
 		case API.COMMAND_SENTINEL_STOP:
@@ -1009,6 +1017,15 @@ func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueIte
 	}
 
 	return result
+}
+
+// updateInstancesStates updates instances states
+func updateInstancesStates() {
+	err := CORE.SaveStates(CORE.GetStatesFilePath())
+
+	if err != nil {
+		log.Warn("Can't update instances states: %v", err)
+	}
 }
 
 // syncBlocker used for blocking RDS sync process when Redis replica syncing

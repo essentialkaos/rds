@@ -2,7 +2,7 @@ package sync
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -37,7 +37,7 @@ import (
 
 const (
 	APP  = "RDS Sync"
-	VER  = "1.3.4"
+	VER  = "1.3.5"
 	DESC = "Syncing daemon for RDS"
 )
 

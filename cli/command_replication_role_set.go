@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -64,7 +64,7 @@ func ReplicationRoleSetCommand(args CommandArgs) int {
 
 	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
 
-	if virtualIP != "" && targetRole != CORE.ROLE_MASTER {
+	if virtualIP != "" && targetRole == CORE.ROLE_MASTER {
 		switch CORE.GetKeepalivedState() {
 		case CORE.KEEPALIVED_STATE_UNKNOWN:
 			terminal.Error("Can't check keepalived virtual IP status")

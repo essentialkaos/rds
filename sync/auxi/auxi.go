@@ -2,7 +2,7 @@ package auxi
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -36,6 +36,6 @@ func GetCoreCompatibility(version string) API.CoreCompatibility {
 
 // parseVersionString parse and return app version and core version
 func parseVersionString(version string) (string, string) {
-	return strutil.ReadField(version, 0, false, "/"),
-		strutil.ReadField(version, 1, false, "/")
+	return strutil.ReadField(version, 0, false, '/'),
+		strutil.ReadField(version, 1, false, '/')
 }

@@ -2,260 +2,132 @@ package support
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
 	"fmt"
-	"os"
-	"runtime"
-	"runtime/debug"
-	"strings"
 
-	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fmtutil"
-	"github.com/essentialkaos/ek/v12/hash"
-	"github.com/essentialkaos/ek/v12/strutil"
-	"github.com/essentialkaos/ek/v12/system"
-	"github.com/essentialkaos/ek/v12/system/container"
-
-	"github.com/essentialkaos/depsy"
+	"github.com/essentialkaos/ek/v12/support"
+	"github.com/essentialkaos/ek/v12/support/deps"
+	"github.com/essentialkaos/ek/v12/support/network"
+	"github.com/essentialkaos/ek/v12/support/pkgs"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// Pkg contains basic package info
-type Pkg struct {
-	Name    string
-	Version string
-}
-
-// Pkgs is slice with packages
-type Pkgs []Pkg
-
-// ////////////////////////////////////////////////////////////////////////////////// //
-
 // Print prints verbose info about application, system, dependencies and
 // important environment
 func Print(app, ver, gitRev string, gomod []byte) {
-	fmtutil.SeparatorTitleColorTag = "{s-}"
-	fmtutil.SeparatorFullscreen = false
-	fmtutil.SeparatorColorTag = "{s-}"
-	fmtutil.SeparatorSize = 80
-
-	showApplicationInfo(app, ver, gitRev)
-	showOSInfo()
-	showConfigurationInfo()
-	showRedisVersionInfo()
-	showKeepalivedInfo()
-	showDepsInfo(gomod)
-
-	fmtutil.Separator(false)
+	support.Collect(app, ver).
+		WithRevision(gitRev).
+		WithDeps(deps.Extract(gomod)).
+		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72")).
+		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli")).
+		WithPackages(pkgs.Collect("rds", "rds-sync", "systemd", "tuned")).
+		WithChecks(checkSystem()...).
+		WithChecks(checkSyncDaemon()).
+		WithChecks(checkKeepalived()).
+		WithApps(getRedisVersion()).
+		WithNetwork(network.Collect()).
+		Print()
 }
 
-// ////////////////////////////////////////////////////////////////////////////////// //
+// checkKeepalived checks status of keepalived
+func checkKeepalived() support.Check {
+	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
 
-// showOSInfo shows verbose information about system
-func showOSInfo() {
-	osInfo, err := system.GetOSInfo()
-
-	if err == nil {
-		fmtutil.Separator(false, "OS INFO")
-
-		printInfo(12, "Name", osInfo.ColoredName())
-		printInfo(12, "Pretty Name", osInfo.ColoredPrettyName())
-		printInfo(12, "Version", osInfo.Version)
-		printInfo(12, "ID", osInfo.ID)
-		printInfo(12, "ID Like", osInfo.IDLike)
-		printInfo(12, "Version ID", osInfo.VersionID)
-		printInfo(12, "Version Code", osInfo.VersionCodename)
-		printInfo(12, "Platform ID", osInfo.PlatformID)
-		printInfo(12, "CPE", osInfo.CPEName)
+	if virtualIP == "" {
+		return support.Check{}
 	}
 
-	systemInfo, err := system.GetSystemInfo()
+	chk := support.Check{Status: support.CHECK_OK, Title: "Virtual IP"}
+
+	switch CORE.GetKeepalivedState() {
+	case CORE.KEEPALIVED_STATE_MASTER:
+		chk.Message = fmt.Sprintf("%s (master)", virtualIP)
+	case CORE.KEEPALIVED_STATE_BACKUP:
+		chk.Message = fmt.Sprintf("%s (backup)", virtualIP)
+	default:
+		chk.Message = fmt.Sprintf("%s (unknown status)", virtualIP)
+		chk.Status = support.CHECK_WARN
+	}
+
+	return chk
+}
+
+// checkSystem checks system for problems
+func checkSystem() []support.Check {
+	var chks []support.Check
+
+	currentRedisVer, err := CORE.GetRedisVersion()
 
 	if err != nil {
-		return
-	} else if osInfo == nil {
-		fmtutil.Separator(false, "SYSTEM INFO")
-		printInfo(12, "Name", systemInfo.OS)
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Redis", "Can't check Redis version"})
 	}
 
-	printInfo(12, "Arch", systemInfo.Arch)
-	printInfo(12, "Kernel", systemInfo.Kernel)
-
-	containerEngine := "No"
-
-	switch container.GetEngine() {
-	case container.DOCKER:
-		containerEngine = "Yes (Docker)"
-	case container.PODMAN:
-		containerEngine = "Yes (Podman)"
-	case container.LXC:
-		containerEngine = "Yes (LXC)"
+	if currentRedisVer.IsZero() {
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Redis", "Can't extract or parse Redis version"})
 	}
-
-	fmtc.NewLine()
-
-	printInfo(12, "Container", containerEngine)
-}
-
-// showApplicationInfo shows verbose information about application
-func showApplicationInfo(app, ver, gitRev string) {
-	fmtutil.Separator(false, "APPLICATION INFO")
-
-	printInfo(7, "Name", app)
-	printInfo(7, "Version", fmtc.Sprintf("%s{s}/%s{!}", ver, CORE.VERSION))
-
-	printInfo(7, "Go", fmtc.Sprintf(
-		"%s {s}(%s/%s){!}",
-		strings.TrimLeft(runtime.Version(), "go"),
-		runtime.GOOS, runtime.GOARCH,
-	))
-
-	if gitRev == "" {
-		gitRev = extractGitRevFromBuildInfo()
-	}
-
-	if gitRev != "" {
-		if !fmtc.DisableColors && fmtc.IsTrueColorSupported() {
-			printInfo(7, "Git SHA", gitRev+getHashColorBullet(gitRev))
-		} else {
-			printInfo(7, "Git SHA", gitRev)
-		}
-	}
-
-	bin, _ := os.Executable()
-	binSHA := hash.FileHash(bin)
-
-	if binSHA != "" {
-		binSHA = strutil.Head(binSHA, 7)
-		if !fmtc.DisableColors && fmtc.IsTrueColorSupported() {
-			printInfo(7, "Bin SHA", binSHA+getHashColorBullet(binSHA))
-		} else {
-			printInfo(7, "Bin SHA", binSHA)
-		}
-	}
-}
-
-// showConfigurationInfo shows info about system configuration
-func showConfigurationInfo() {
-	fmtutil.Separator(false, "CONFIGURATION INFO")
 
 	status, err := CORE.GetSystemConfigurationStatus(true)
 
 	if err != nil {
-		fmtc.Printf("  {r}Unable to check system: %v{!}\n", err.Error())
-		return
+		chks = append(chks, support.Check{support.CHECK_ERROR, "System", "Can't check system for problems"})
+		return chks
 	}
 
-	fmtFlag := func(v bool) string {
-		switch v {
-		case true:
-			return fmtc.Sprintf("{r~}Has issues{!}")
-		default:
-			return fmtc.Sprintf("No issues")
-		}
-	}
-
-	printInfo(10, "THP", fmtFlag(status.HasTHPIssues))
-	printInfo(10, "Kernel", fmtFlag(status.HasKernelIssues))
-	printInfo(10, "Limits", fmtFlag(status.HasLimitsIssues))
-	printInfo(10, "Filesystem", fmtFlag(status.HasFSIssues))
-}
-
-// showRedisVersionInfo shows info about redis version
-func showRedisVersionInfo() {
-	fmtutil.Separator(false, "REDIS INFO")
-
-	currentRedisVer, _ := CORE.GetRedisVersion()
-
-	printInfo(12, "Redis Server", currentRedisVer.String())
-}
-
-// showDepsInfo shows information about all dependencies
-func showDepsInfo(gomod []byte) {
-	deps := depsy.Extract(gomod, false)
-
-	if len(deps) == 0 {
-		return
-	}
-
-	fmtutil.Separator(false, "DEPENDENCIES")
-
-	for _, dep := range deps {
-		if dep.Extra == "" {
-			fmtc.Printf(" {s}%8s{!}  %s\n", dep.Version, dep.Path)
-		} else {
-			fmtc.Printf(" {s}%8s{!}  %s {s-}(%s){!}\n", dep.Version, dep.Path, dep.Extra)
-		}
-	}
-}
-
-// showKeepalivedInfo shows info about keepalived virtual IP
-func showKeepalivedInfo() {
-	fmtutil.Separator(false, "KEEPALIVED INFO")
-
-	virtualIP := CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP)
-
-	if virtualIP == "" {
-		printInfo(10, "Virtual IP", "")
-		return
-	}
-
-	switch CORE.GetKeepalivedState() {
-	case CORE.KEEPALIVED_STATE_MASTER:
-		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {g}(master){!}", virtualIP))
-	case CORE.KEEPALIVED_STATE_BACKUP:
-		printInfo(10, "Virtual IP", fmtc.Sprintf("%s {s}(backup){!}", virtualIP))
-	default:
-		printInfo(10, "Virtual IP", fmtc.Sprint("{r}check error{!}"))
-	}
-}
-
-// extractGitRevFromBuildInfo extracts git SHA from embedded build info
-func extractGitRevFromBuildInfo() string {
-	info, ok := debug.ReadBuildInfo()
-
-	if !ok {
-		return ""
-	}
-
-	for _, s := range info.Settings {
-		if s.Key == "vcs.revision" && len(s.Value) > 7 {
-			return s.Value[:7]
-		}
-	}
-
-	return ""
-}
-
-// getHashColorBullet return bullet with color from hash
-func getHashColorBullet(v string) string {
-	if len(v) > 6 {
-		v = strutil.Head(v, 6)
-	}
-
-	return fmtc.Sprintf(" {#" + strutil.Head(v, 6) + "}● {!}")
-}
-
-// printInfo formats and prints info record
-func printInfo(size int, name, value string) {
-	name += ":"
-	size++
-
-	if value == "" {
-		fm := fmt.Sprintf("  {*}%%-%ds{!}  {s-}—{!}\n", size)
-		fmtc.Printf(fm, name)
+	if status.HasTHPIssues {
+		chks = append(chks, support.Check{support.CHECK_ERROR, "THP", "Transparent hugepages are not disabled"})
 	} else {
-		fm := fmt.Sprintf("  {*}%%-%ds{!}  %%s\n", size)
-		fmtc.Printf(fm, name, value)
+		chks = append(chks, support.Check{support.CHECK_OK, "THP", "No issues"})
 	}
+
+	if status.HasKernelIssues {
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Kernel", "Kernel is not properly configured for Redis"})
+	} else {
+		chks = append(chks, support.Check{support.CHECK_OK, "Kernel", "No issues"})
+	}
+
+	if status.HasLimitsIssues {
+		chks = append(chks, support.Check{support.CHECK_OK, "Limits", "Limits are not set"})
+	} else {
+		chks = append(chks, support.Check{support.CHECK_OK, "Limits", "No issues"})
+	}
+
+	if status.HasFSIssues {
+		chks = append(chks, support.Check{support.CHECK_OK, "Filesystem", "Not enough free space on disk"})
+	} else {
+		chks = append(chks, support.Check{support.CHECK_OK, "Filesystem", "No issues"})
+	}
+
+	return chks
 }
 
-// ////////////////////////////////////////////////////////////////////////////////// //
+// checkSyncDaemon checks for sync daemon status
+func checkSyncDaemon() support.Check {
+	if !CORE.IsSyncDaemonInstalled() {
+		return support.Check{}
+	}
+
+	chk := support.Check{Status: support.CHECK_OK, Title: "Sync Daemon"}
+
+	switch CORE.IsSyncDaemonActive() {
+	case true:
+		chk.Message = "Sync daemon works"
+	default:
+		chk.Status, chk.Message = support.CHECK_SKIP, "Sync daemon is stopped"
+	}
+
+	return chk
+}
+
+// getRedisVersion returns current Redis version
+func getRedisVersion() support.App {
+	currentRedisVer, _ := CORE.GetRedisVersion()
+	return support.App{"Redis", currentRedisVer.String()}
+}

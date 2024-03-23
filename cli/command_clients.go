@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -96,7 +96,7 @@ func printClientsInfo(clientsData, filter string) {
 			break
 		}
 
-		info := parseFieldsLine(line, " ")
+		info := parseFieldsLine(line, ' ')
 		sub, _ := strconv.Atoi(info["sub"])
 		psub, _ := strconv.Atoi(info["psub"])
 		age, _ := strconv.Atoi(info["age"])

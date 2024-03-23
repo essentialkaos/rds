@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2023 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -77,7 +77,7 @@ func printLatencyStatsInfo(info *REDIS.Info) {
 
 	for _, v := range section.Fields {
 		cmdName := strings.ToUpper(strutil.Exclude(v, "latency_percentiles_usec_"))
-		cmdLat := parseFieldsLine(section.Values[v], ",")
+		cmdLat := parseFieldsLine(section.Values[v], ',')
 
 		cmdName = strings.ReplaceAll(cmdName, "|", " ")
 
