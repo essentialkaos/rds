@@ -12,6 +12,7 @@ import (
 
 	"github.com/essentialkaos/ek/v12/support"
 	"github.com/essentialkaos/ek/v12/support/deps"
+	"github.com/essentialkaos/ek/v12/support/network"
 	"github.com/essentialkaos/ek/v12/support/pkgs"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -31,6 +32,7 @@ func Print(app, ver, gitRev string, gomod []byte) {
 		WithChecks(checkSystem()...).
 		WithChecks(checkKeepalived()).
 		WithApps(getRedisVersion()).
+		WithNetwork(network.Collect()).
 		Print()
 }
 
