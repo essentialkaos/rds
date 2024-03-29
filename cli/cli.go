@@ -45,7 +45,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.10.2"
+	VER  = "1.10.3"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -63,23 +63,23 @@ const EMPTY_RESULT = "-none-"
 
 // Command line options list
 const (
-	OPT_PRIVATE         = "p:private"
-	OPT_EXTRA           = "x:extra"
-	OPT_TAGS            = "t:tags"
-	OPT_FORMAT          = "f:format"
-	OPT_SECURE          = "s:secure"
-	OPT_DISABLE_SAVES   = "ds:disable-saves"
-	OPT_YES             = "y:yes"
-	OPT_PAGER           = "P:pager"
-	OPT_SIMPLE          = "S:simple"
-	OPT_RAW             = "R:raw"
-	OPT_NO_COLOR        = "nc:no-color"
-	OPT_HELP            = "h:help"
-	OPT_VERSION         = "v:version"
-	OPT_VERBOSE_VERSION = "vv:verbose-version"
+	OPT_PRIVATE       = "p:private"
+	OPT_EXTRA         = "x:extra"
+	OPT_TAGS          = "t:tags"
+	OPT_FORMAT        = "f:format"
+	OPT_SECURE        = "s:secure"
+	OPT_DISABLE_SAVES = "ds:disable-saves"
+	OPT_YES           = "y:yes"
+	OPT_PAGER         = "P:pager"
+	OPT_SIMPLE        = "S:simple"
+	OPT_RAW           = "R:raw"
+	OPT_NO_COLOR      = "nc:no-color"
+	OPT_HELP          = "h:help"
+	OPT_VERSION       = "v:version"
 
-	OPT_GENERATE_MAN = "generate-man"
-	OPT_COMPLETION   = "completion"
+	OPT_VERBOSE_VERSION = "vv:verbose-version"
+	OPT_GENERATE_MAN    = "generate-man"
+	OPT_COMPLETION      = "completion"
 )
 
 // Supported commands
@@ -190,23 +190,23 @@ type CommandRoutine struct {
 
 // optMap is map with options data
 var optMap = options.Map{
-	OPT_PRIVATE:         {Type: options.BOOL},
-	OPT_EXTRA:           {Type: options.BOOL},
-	OPT_TAGS:            {},
-	OPT_FORMAT:          {},
-	OPT_SECURE:          {Type: options.BOOL},
-	OPT_DISABLE_SAVES:   {Type: options.BOOL},
-	OPT_PAGER:           {Type: options.BOOL},
-	OPT_SIMPLE:          {Type: options.BOOL},
-	OPT_RAW:             {Type: options.BOOL},
-	OPT_YES:             {Type: options.BOOL},
-	OPT_NO_COLOR:        {Type: options.BOOL},
-	OPT_HELP:            {Type: options.BOOL},
-	OPT_VERSION:         {Type: options.MIXED},
-	OPT_VERBOSE_VERSION: {Type: options.BOOL},
+	OPT_PRIVATE:       {Type: options.BOOL},
+	OPT_EXTRA:         {Type: options.BOOL},
+	OPT_TAGS:          {},
+	OPT_FORMAT:        {},
+	OPT_SECURE:        {Type: options.BOOL},
+	OPT_DISABLE_SAVES: {Type: options.BOOL},
+	OPT_PAGER:         {Type: options.BOOL},
+	OPT_SIMPLE:        {Type: options.BOOL},
+	OPT_RAW:           {Type: options.BOOL},
+	OPT_YES:           {Type: options.BOOL},
+	OPT_NO_COLOR:      {Type: options.BOOL},
+	OPT_HELP:          {Type: options.BOOL},
+	OPT_VERSION:       {Type: options.MIXED},
 
-	OPT_GENERATE_MAN: {Type: options.BOOL},
-	OPT_COMPLETION:   {},
+	OPT_VERBOSE_VERSION: {Type: options.BOOL},
+	OPT_GENERATE_MAN:    {Type: options.BOOL},
+	OPT_COMPLETION:      {},
 }
 
 // aliases is map [alias → command]
@@ -1287,12 +1287,11 @@ func genAbout(gitRev string) *usage.About {
 		License:    "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>",
 		Owner:      "ESSENTIAL KAOS",
 		BugTracker: "https://kaos.sh/rds",
-
-		UpdateChecker: usage.UpdateChecker{"essentialkaos/rds", update.GitHubChecker},
 	}
 
 	if gitRev != "" {
 		about.Build = "git:" + gitRev
+		about.UpdateChecker = usage.UpdateChecker{"essentialkaos/rds", update.GitHubChecker}
 	}
 
 	return about

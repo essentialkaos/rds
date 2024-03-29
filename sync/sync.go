@@ -37,7 +37,7 @@ import (
 
 const (
 	APP  = "RDS Sync"
-	VER  = "1.3.5"
+	VER  = "1.3.6"
 	DESC = "Syncing daemon for RDS"
 )
 
@@ -48,12 +48,12 @@ const CONFIG_FILE = "/etc/rds.knf"
 
 // Command line options
 const (
-	OPT_NO_COLOR        = "nc:no-color"
-	OPT_HELP            = "h:help"
-	OPT_VERSION         = "v:version"
-	OPT_VERBOSE_VERSION = "vv:verbose-version"
+	OPT_NO_COLOR = "nc:no-color"
+	OPT_HELP     = "h:help"
+	OPT_VERSION  = "v:version"
 
-	OPT_GENERATE_MAN = "generate-man"
+	OPT_VERBOSE_VERSION = "vv:verbose-version"
+	OPT_GENERATE_MAN    = "generate-man"
 )
 
 // Exit codes
@@ -66,12 +66,12 @@ const (
 
 // optMap is map with options data
 var optMap = options.Map{
-	OPT_NO_COLOR:        {Type: options.BOOL},
-	OPT_HELP:            {Type: options.BOOL},
-	OPT_VERSION:         {Type: options.MIXED},
-	OPT_VERBOSE_VERSION: {Type: options.BOOL},
+	OPT_NO_COLOR: {Type: options.BOOL},
+	OPT_HELP:     {Type: options.BOOL},
+	OPT_VERSION:  {Type: options.MIXED},
 
-	OPT_GENERATE_MAN: {Type: options.BOOL},
+	OPT_VERBOSE_VERSION: {Type: options.BOOL},
+	OPT_GENERATE_MAN:    {Type: options.BOOL},
 }
 
 // colors for usage info
@@ -113,7 +113,7 @@ func Init(gitRev string, gomod []byte) {
 	setupLogger()
 
 	req.Global.SetUserAgent("RDS-Sync", VER)
-	log.Aux(strings.Repeat("-", 88))
+	log.Divider()
 
 	validateConfig()
 	checkVirtualIP()
@@ -132,7 +132,7 @@ func Init(gitRev string, gomod []byte) {
 
 // preConfigureUI configure user interface
 func preConfigureUI() {
-	if !tty.IsTTY() {
+	if !tty.IsTTY() || tty.IsSystemd() {
 		fmtc.DisableColors = true
 	}
 
