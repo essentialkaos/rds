@@ -23,6 +23,7 @@ import (
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 	"github.com/essentialkaos/ek/v12/timeutil"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -166,7 +167,7 @@ func BackupRestoreCommand(args CommandArgs) int {
 	fmtc.NewLine()
 
 	for {
-		selectedIndex, err := terminal.Read(fmt.Sprintf("Enter index of snapshot to restore (1-%d)", numBackups), true)
+		selectedIndex, err := input.Read(fmt.Sprintf("Enter index of snapshot to restore (1-%d)", numBackups), true)
 
 		if err != nil {
 			return EC_OK
@@ -241,7 +242,7 @@ func BackupCleanCommand(args CommandArgs) int {
 
 	fmtc.NewLine()
 
-	ok, _ := terminal.ReadAnswer("Delete all these snapshots?", "N")
+	ok, _ := input.ReadAnswer("Delete all these snapshots?", "N")
 
 	if !ok {
 		return EC_OK

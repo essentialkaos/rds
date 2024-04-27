@@ -15,6 +15,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fsutil"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -80,7 +81,7 @@ func RestoreStateCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	ok, err := terminal.ReadAnswer(
+	ok, err := input.ReadAnswer(
 		fmtc.Sprintf("Do you want to restore states from file %s?", statesFile), "N",
 	)
 
@@ -180,7 +181,7 @@ func checkForRestoreState(args CommandArgs) int {
 
 	time.Sleep(10 * time.Second)
 
-	ok, err := terminal.ReadAnswer("Do you want to restore state for all instances?", "N")
+	ok, err := input.ReadAnswer("Do you want to restore state for all instances?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL

@@ -10,6 +10,7 @@ package cli
 import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"
@@ -61,7 +62,7 @@ func DestroyCommand(args CommandArgs) int {
 
 	terminal.Warn("Warning! This action will delete ALL data (configuration file, data, logs).\n")
 
-	ok, err := terminal.ReadAnswer("Do you want to destroy this instance?", "N")
+	ok, err := input.ReadAnswer("Do you want to destroy this instance?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL

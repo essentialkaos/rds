@@ -18,6 +18,7 @@ import (
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"
@@ -40,7 +41,7 @@ func BatchEditCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	ok, err := terminal.ReadAnswer(
+	ok, err := input.ReadAnswer(
 		pluralize.P(
 			"Do you want to modify meta for %d %s?",
 			len(idList), "instance", "instances",
@@ -56,7 +57,7 @@ func BatchEditCommand(args CommandArgs) int {
 	info, err := readEditInfo(false, true, true, true)
 
 	if err != nil {
-		if err == terminal.ErrKillSignal {
+		if err == input.ErrKillSignal {
 			return EC_OK
 		}
 

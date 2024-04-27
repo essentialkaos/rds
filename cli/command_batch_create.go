@@ -23,6 +23,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"
@@ -57,7 +58,7 @@ func BatchCreateCommand(args CommandArgs) int {
 
 	showInstanceList(infoList)
 
-	ok, err := terminal.ReadAnswer("Create these instances?", "N")
+	ok, err := input.ReadAnswer("Create these instances?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL

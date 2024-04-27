@@ -13,6 +13,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"
@@ -143,7 +144,7 @@ func checkForStartAll() int {
 	terminal.Warn("This command would start ALL instances even if they didn't work before")
 	terminal.Warn("the system reboot. Maybe is better to use 'restore-state' command?\n")
 
-	ok, err := terminal.ReadAnswer("Do you really want to start ALL instances?", "N")
+	ok, err := input.ReadAnswer("Do you really want to start ALL instances?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL
@@ -157,7 +158,7 @@ func checkForStartAll() int {
 
 	time.Sleep(10 * time.Second)
 
-	ok, err = terminal.ReadAnswer("Do you want to start all instances?", "N")
+	ok, err = input.ReadAnswer("Do you want to start all instances?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL

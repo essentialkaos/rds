@@ -14,6 +14,7 @@ import (
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"
@@ -52,7 +53,7 @@ func EditCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	ok, err := terminal.ReadAnswer(
+	ok, err := input.ReadAnswer(
 		"Do you want to modify meta for this instance?", "Y",
 	)
 
@@ -72,7 +73,7 @@ func EditCommand(args CommandArgs) int {
 	info, err := readEditInfo(true, true, true, true)
 
 	if err != nil {
-		if err == terminal.ErrKillSignal {
+		if err == input.ErrKillSignal {
 			return EC_OK
 		}
 
@@ -149,7 +150,7 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (*instanceBa
 	info := &instanceBasicInfo{}
 
 	if readDesc {
-		info.Desc, err = terminal.Read("Please enter a new description (or leave blank to keep existing)", false)
+		info.Desc, err = input.Read("Please enter a new description (or leave blank to keep existing)", false)
 
 		if err != nil {
 			return nil, err
@@ -160,7 +161,7 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (*instanceBa
 
 	if readPass {
 		for {
-			info.InstancePassword, err = terminal.ReadPassword("Please enter a new password (or leave blank to keep existing)", false)
+			info.InstancePassword, err = input.ReadPassword("Please enter a new password (or leave blank to keep existing)", false)
 
 			if err != nil {
 				return nil, err
@@ -179,7 +180,7 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (*instanceBa
 
 	if readOwner {
 		for {
-			info.Owner, err = terminal.Read("Please enter a new owner name (or leave blank to keep existing)", false)
+			info.Owner, err = input.Read("Please enter a new owner name (or leave blank to keep existing)", false)
 
 			if err != nil {
 				return nil, err
@@ -200,7 +201,7 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (*instanceBa
 		supportedReplTypes := []string{string(CORE.REPL_TYPE_REPLICA), string(CORE.REPL_TYPE_STANDBY)}
 
 		for {
-			info.ReplicationType, err = terminal.Read("Please enter a new replication type (or leave blank to keep existing)", false)
+			info.ReplicationType, err = input.Read("Please enter a new replication type (or leave blank to keep existing)", false)
 
 			if err != nil {
 				return nil, err
