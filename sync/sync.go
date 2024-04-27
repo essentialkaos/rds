@@ -195,6 +195,8 @@ func setupLogger() {
 		terminal.Error("Can't setup logger: %v", err)
 		os.Exit(1)
 	}
+
+	log.Divider()
 }
 
 // setupReqEngine configures HTTP request engine
