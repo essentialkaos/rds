@@ -119,14 +119,18 @@ func printSettingsProperty(name, value string, hidden bool) {
 			fmtc.Printf("%s {r}✖ {!}\n", value)
 		}
 
-	case name == "virtual-ip" && value != "":
-		switch CORE.GetKeepalivedState() {
-		case CORE.KEEPALIVED_STATE_UNKNOWN:
-			fmtc.Println(value)
-		case CORE.KEEPALIVED_STATE_MASTER:
-			fmtc.Printf("%s {g}(master){!}\n", value)
-		case CORE.KEEPALIVED_STATE_BACKUP:
-			fmtc.Printf("%s {s}(backup){!}\n", value)
+	case name == "virtual-ip":
+		if value != "" {
+			switch CORE.GetKeepalivedState() {
+			case CORE.KEEPALIVED_STATE_UNKNOWN:
+				fmtc.Println(value)
+			case CORE.KEEPALIVED_STATE_MASTER:
+				fmtc.Printf("%s {g}(master){!}\n", value)
+			case CORE.KEEPALIVED_STATE_BACKUP:
+				fmtc.Printf("%s {s}(backup){!}\n", value)
+			}
+		} else {
+			fmtc.Println("{s-}[empty]{!}")
 		}
 
 	case hidden:
