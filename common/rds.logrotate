@@ -28,6 +28,6 @@
   create 640 root root
   sharedscripts
   postrotate
-    systemctl reload rds-sync.service &> /dev/null || :
+    systemctl kill --signal HUP --kill-who=main rds-sync.service &> /dev/null || :
   endscript
 }

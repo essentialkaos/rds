@@ -51,6 +51,7 @@ func checkKeepalived() support.Check {
 	case CORE.KEEPALIVED_STATE_MASTER:
 		chk.Message = fmt.Sprintf("%s (master)", virtualIP)
 	case CORE.KEEPALIVED_STATE_BACKUP:
+		chk.Status = support.CHECK_SKIP
 		chk.Message = fmt.Sprintf("%s (backup)", virtualIP)
 	default:
 		chk.Message = fmt.Sprintf("%s (unknown status)", virtualIP)
