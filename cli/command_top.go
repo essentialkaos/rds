@@ -149,13 +149,10 @@ func TopDiffCommand(args CommandArgs) int {
 	}
 
 	dumpFile := args.Get(0)
+	err = fsutil.ValidatePerms("FRS", dumpFile)
 
-	switch {
-	case !fsutil.IsExist(dumpFile):
-		terminal.Error("File %s doesn't exist", dumpFile)
-		return EC_ERROR
-	case !fsutil.IsNonEmpty(dumpFile):
-		terminal.Error("File %s is empty", dumpFile)
+	if err != nil {
+		terminal.Error(err)
 		return EC_ERROR
 	}
 

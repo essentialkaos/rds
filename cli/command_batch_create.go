@@ -141,11 +141,9 @@ func readInstanceList(file string) ([]*instanceBasicInfo, error) {
 	defer fd.Close()
 
 	r := csv.NewReader(fd)
-	line := 0
 
 	for {
-		line++
-		rec, err := r.Read()
+		row, err := r.Read()
 
 		if err == io.EOF {
 			break
@@ -153,69 +151,75 @@ func readInstanceList(file string) ([]*instanceBasicInfo, error) {
 			return nil, err
 		}
 
-		err = validateInstanceListRecord(rec)
+		err = validateInstanceListRow(row)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Can't parse row %d: %v", r.Line(), err)
 		}
 
 		result = append(result, &instanceBasicInfo{
-			Owner:            rec[0],
-			InstancePassword: rec[1],
-			ReplicationType:  rec[2],
-			ServicePassword:  rec[3],
-			Desc:             rec[4],
+			Owner:            row.Get(0),
+			InstancePassword: row.Get(1),
+			ReplicationType:  row.Get(2),
+			ServicePassword:  row.Get(3),
+			Desc:             row.Get(4),
 		})
 	}
 
 	return result, nil
 }
 
-// validateInstanceListRecord validate CSV record values
-func validateInstanceListRecord(rec []string) error {
-	if len(rec) != 5 {
+// validateInstanceListRow validate CSV record values
+func validateInstanceListRow(row csv.Row) error {
+	if row.Size() != 5 {
 		return errors.New("Not enough records (at least 5 columns required)")
 	}
 
+	owner := row.Get(0)
+	instPass := row.Get(1)
+	replType := row.Get(2)
+	srvPass := row.Get(3)
+	desc := row.Get(4)
+
 	switch {
-	case strutil.Exclude(rec[0], " ") == "":
+	case strutil.Exclude(owner, " ") == "":
 		return errors.New("Column 1 must contain valid user name")
 
-	case strutil.Exclude(rec[1], " ") == "":
+	case strutil.Exclude(instPass, " ") == "":
 		return errors.New("Column 2 must contain valid password")
 
-	case strutil.Exclude(rec[2], " ") == "":
+	case strutil.Exclude(replType, " ") == "":
 		return errors.New("Column 3 must contain valid replication type")
 
-	case strutil.Exclude(rec[4], " ") == "":
+	case strutil.Exclude(desc, " ") == "":
 		return errors.New("Column 5 must contain valid description")
 
-	case len(rec[1]) < CORE.Config.GetI(CORE.MAIN_MIN_PASS_LENGTH):
+	case len(instPass) < CORE.Config.GetI(CORE.MAIN_MIN_PASS_LENGTH):
 		return fmt.Errorf("Password can't be less than %s symbols long", CORE.Config.GetS(CORE.MAIN_MIN_PASS_LENGTH))
 
-	case rec[3] != "" && len(rec[3]) < CORE.Config.GetI(CORE.MAIN_MIN_PASS_LENGTH):
+	case srvPass != "" && len(srvPass) < CORE.Config.GetI(CORE.MAIN_MIN_PASS_LENGTH):
 		return fmt.Errorf("Auth password can't be less than %s symbols long", CORE.Config.GetS(CORE.MAIN_MIN_PASS_LENGTH))
 
-	case rec[2] != "" && rec[2] != string(CORE.REPL_TYPE_REPLICA) && rec[2] != string(CORE.REPL_TYPE_STANDBY):
+	case replType != "" && replType != string(CORE.REPL_TYPE_REPLICA) && replType != string(CORE.REPL_TYPE_STANDBY):
 		return errors.New("Column 3 must contain valid replication type (\"replica\" or \"standby\")")
 
-	case len(rec[4]) < CORE.MIN_DESC_LENGTH:
+	case len(desc) < CORE.MIN_DESC_LENGTH:
 		return fmt.Errorf("Description must at least %d symbols long", CORE.MIN_DESC_LENGTH)
 
-	case len(rec[4]) > CORE.MAX_DESC_LENGTH:
+	case len(desc) > CORE.MAX_DESC_LENGTH:
 		return fmt.Errorf("Description must be less than %d symbols long", CORE.MAX_DESC_LENGTH)
 
-	case strings.Contains(rec[0], " "):
+	case strings.Contains(owner, " "):
 		return errors.New("Owner name can't contain spaces")
 
-	case strings.Contains(rec[1], " "):
+	case strings.Contains(instPass, " "):
 		return errors.New("Password can't contain spaces")
 
-	case strings.Contains(rec[3], " "):
+	case strings.Contains(srvPass, " "):
 		return errors.New("Auth password can't contain spaces")
 
-	case !system.IsUserExist(rec[0]):
-		return fmt.Errorf("The user with name %s doesn't exist on the system", rec[0])
+	case !system.IsUserExist(owner):
+		return fmt.Errorf("The user with name %s doesn't exist on the system", owner)
 	}
 
 	return nil
