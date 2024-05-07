@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.10.4
+Version:        1.10.5
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -36,7 +36,7 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.3.7
+Version:   1.3.8
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -186,6 +186,9 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Wed May 08 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.5-0
+- Dependencies update
+
 * Sat Apr 27 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.4-0
 - Fixed output of sections with no properties in 'settings' command
 - Fixed output of empty value in 'settings' command for keepalived
