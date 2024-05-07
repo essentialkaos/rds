@@ -12,6 +12,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/essentialkaos/ek/v12/errutil"
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/log"
 	"github.com/essentialkaos/ek/v12/netutil"
@@ -20,6 +21,7 @@ import (
 	"github.com/essentialkaos/ek/v12/signal"
 	"github.com/essentialkaos/ek/v12/sliceutil"
 	"github.com/essentialkaos/ek/v12/system/procname"
+	"github.com/essentialkaos/ek/v12/terminal"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/man"
@@ -36,7 +38,7 @@ import (
 
 const (
 	APP  = "RDS Sync"
-	VER  = "1.3.6"
+	VER  = "1.3.7"
 	DESC = "Syncing daemon for RDS"
 )
 
@@ -92,12 +94,11 @@ func Init(gitRev string, gomod []byte) {
 
 	configureUI()
 
-	if options.GetB(OPT_VERSION) {
+	switch {
+	case options.GetB(OPT_VERSION):
 		genAbout(gitRev).Print(options.GetS(OPT_VERSION))
 		os.Exit(EC_OK)
-	}
-
-	if options.GetB(OPT_HELP) {
+	case options.GetB(OPT_HELP):
 		genUsage().Print()
 		os.Exit(EC_OK)
 	}
@@ -111,16 +112,20 @@ func Init(gitRev string, gomod []byte) {
 
 	setupLogger()
 
-	req.Global.SetUserAgent("RDS-Sync", VER)
-	log.Divider()
+	err := errutil.Chain(
+		setupReqEngine,
+		validateConfig,
+		checkVirtualIP,
+		checkSystemConfiguration,
+		addSignalHandlers,
+		disableProxy,
+		renameProcess,
+	)
 
-	validateConfig()
-	checkVirtualIP()
-	checkSystemConfiguration()
-
-	addSignalHandlers()
-	disableProxy()
-	renameProcess()
+	if err != nil {
+		log.Crit(err.Error())
+		CORE.Shutdown(EC_ERROR)
+	}
 
 	ec := startSyncDaemon(gitRev)
 
@@ -156,15 +161,12 @@ func configureUI() {
 func parseOptions() {
 	_, errs := options.Parse(optMap)
 
-	if len(errs) == 0 {
+	if errs.IsEmpty() {
 		return
 	}
 
-	printError("Options parsing errors: ")
-
-	for _, err := range errs {
-		printError("  %v\n", err)
-	}
+	terminal.Error("Options parsing errors:")
+	terminal.Error(errs.String())
 
 	os.Exit(EC_ERROR)
 }
@@ -179,97 +181,105 @@ func initRDSCore() {
 
 	for _, err := range errs {
 		// At this moment all error messages goes to stderr
-		printError(err.Error())
+		terminal.Error(err)
 	}
 
 	os.Exit(EC_ERROR)
 }
 
-// setupLogger setup logger
+// setupLogger configures logger
 func setupLogger() {
 	err := CORE.SetLogOutput(CORE.LOG_FILE_SYNC, CORE.Config.GetS(CORE.LOG_LEVEL), true)
 
 	if err != nil {
-		printError("Can't setup logger: %v", err)
-		os.Exit(EC_ERROR)
+		terminal.Error("Can't setup logger: %v", err)
+		os.Exit(1)
 	}
+
+	log.Divider()
+}
+
+// setupReqEngine configures HTTP request engine
+func setupReqEngine() error {
+	req.Global.SetUserAgent("RDS-Sync", VER)
+	return nil
 }
 
 // addSignalHandlers add signal handlers for TERM/INT/HUP signals
-func addSignalHandlers() {
+func addSignalHandlers() error {
 	signal.Handlers{
 		signal.TERM: termSignalHandler,
 		signal.INT:  intSignalHandler,
 		signal.HUP:  hupSignalHandler,
 	}.Track()
+
+	return nil
 }
 
 // disableProxy disable proxy for requests to sync daemon
-func disableProxy() {
+func disableProxy() error {
 	os.Setenv("http_proxy", "")
 	os.Setenv("https_proxy", "")
 	os.Setenv("HTTP_PROXY", "")
 	os.Setenv("HTTPS_PROXY", "")
+
+	return nil
 }
 
 // checkVirtualIP checks keepalived virtual IP on master node with standby failover
-func checkVirtualIP() {
+func checkVirtualIP() error {
 	if !CORE.IsFailoverMethod(CORE.FAILOVER_METHOD_STANDBY) ||
 		!CORE.IsMaster() || CORE.Config.Is(CORE.KEEPALIVED_VIRTUAL_IP, "") {
-		return
+		return nil
 	}
 
 	switch CORE.GetKeepalivedState() {
 	case CORE.KEEPALIVED_STATE_MASTER:
-		return
+		return nil
 
 	case CORE.KEEPALIVED_STATE_BACKUP:
-		log.Crit(
+		return fmt.Errorf(
 			"This server has no keepalived virtual IP (%s)",
 			CORE.Config.GetS(CORE.KEEPALIVED_VIRTUAL_IP),
 		)
-
-	default:
-		log.Crit("Can't check keepalived virtual IP status")
 	}
 
-	CORE.Shutdown(EC_ERROR)
+	return fmt.Errorf("Can't check keepalived virtual IP status")
 }
 
 // checkSystemConfiguration check system configuration
-func checkSystemConfiguration() {
+func checkSystemConfiguration() error {
 	status, err := CORE.GetSystemConfigurationStatus(false)
 
 	if err == nil && !status.HasProblems {
-		return
+		return nil
 	}
 
 	if err != nil {
-		log.Crit("Can't check system configuration: %v", err)
-		CORE.Shutdown(EC_ERROR)
+		return fmt.Errorf("Can't check system configuration: %v", err)
 	}
 
 	if status.HasTHPIssues {
-		log.Crit("You should disable THP (Transparent Huge Pages) on this system.")
+		return fmt.Errorf("You should disable THP (Transparent Huge Pages) on this system.")
 	}
 
 	if status.HasLimitsIssues {
-		log.Crit("You should increase the maximum number of open file descriptors for the Redis user.")
+		return fmt.Errorf("You should increase the maximum number of open file descriptors for the Redis user.")
 	}
 
 	if status.HasKernelIssues {
-		log.Crit("You should set vm.overcommit_memory setting and increase net.core.somaxconn setting in your sysctl configuration file.")
+		return fmt.Errorf("You should set vm.overcommit_memory setting and increase net.core.somaxconn setting in your sysctl configuration file.")
 	}
 
 	if status.HasFSIssues {
-		log.Crit("You should increase the size of the partition used for Redis data. Size of the partition should be at least twice bigger than the size of available memory (physical + swap).")
+		return fmt.Errorf("You should increase the size of the partition used for Redis data. Size of the partition should be at least twice bigger than the size of available memory (physical + swap).")
 	}
 
-	CORE.Shutdown(EC_ERROR)
+	return nil
 }
 
 // validateConfig validate sync specific configuration values
-func validateConfig() {
+func validateConfig() error {
 	if CORE.Config.GetS(CORE.REPLICATION_ROLE) == CORE.ROLE_MASTER {
 		ips := netutil.GetAllIP()
 		ips = append(ips, netutil.GetAllIP6()...)
@@ -278,8 +288,7 @@ func validateConfig() {
 
 		if !sliceutil.Contains(ips, masterIP) {
 			if !CORE.Config.GetB(CORE.MAIN_DISABLE_IP_CHECK) {
-				log.Crit("Configuration error: The system has no interface with IP %s", masterIP)
-				CORE.Shutdown(EC_ERROR)
+				return fmt.Errorf("Configuration error: The system has no interface with IP %s", masterIP)
 			} else {
 				log.Warn("Configuration warning: The system has no interface with IP %s", masterIP)
 			}
@@ -287,14 +296,14 @@ func validateConfig() {
 	}
 
 	if !CORE.Config.HasProp(CORE.REPLICATION_AUTH_TOKEN) {
-		log.Crit("Configuration error: Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
-		CORE.Shutdown(EC_ERROR)
+		return fmt.Errorf("Configuration error: Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
 	}
 
 	if len(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)) != CORE.TOKEN_LENGTH {
-		log.Crit("Configuration error: Auth token must be %d symbols long", CORE.TOKEN_LENGTH)
-		CORE.Shutdown(EC_ERROR)
+		return fmt.Errorf("Configuration error: Auth token must be %d symbols long", CORE.TOKEN_LENGTH)
 	}
+
+	return nil
 }
 
 // startSyncDaemon starts sync daemon service
@@ -304,7 +313,7 @@ func startSyncDaemon(gitRev string) int {
 	role := CORE.Config.GetS(CORE.REPLICATION_ROLE)
 
 	if role == "" {
-		log.Warn("Replication is disabled. Shutdown…")
+		log.Error("Replication is disabled. Shutdown…")
 		return EC_ERROR
 	}
 
@@ -324,7 +333,7 @@ func startSyncDaemon(gitRev string) int {
 }
 
 // renameProcess renames current daemon process
-func renameProcess() {
+func renameProcess() error {
 	var args []string
 	var role string
 
@@ -332,7 +341,7 @@ func renameProcess() {
 	case CORE.ROLE_MASTER, CORE.ROLE_MINION, CORE.ROLE_SENTINEL:
 		role = CORE.Config.GetS(CORE.REPLICATION_ROLE)
 	default:
-		return
+		return nil
 	}
 
 	for i := range os.Args {
@@ -344,7 +353,7 @@ func renameProcess() {
 		}
 	}
 
-	procname.Set(args)
+	return procname.Set(args)
 }
 
 // shutdown gracefully shutdown daemon
@@ -361,11 +370,6 @@ func shutdown(code int) {
 	log.Info("Bye-Bye!")
 
 	CORE.Shutdown(code)
-}
-
-// printError prints error message to console
-func printError(f string, a ...any) {
-	fmtc.Fprintf(os.Stderr, "{r}"+f+"{!}\n", a...)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //

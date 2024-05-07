@@ -19,6 +19,7 @@ import (
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/system/container"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -157,7 +158,7 @@ func GoCommand(args CommandArgs) int {
 	if configurationStatus.HasProblems {
 		fmtc.Println("\n{*}Before RDS usage, we highly recommend to configure your system.{!}\n")
 
-		ok, err := terminal.ReadAnswer("Show tuning guide?", "Y")
+		ok, err := input.ReadAnswer("Show tuning guide?", "Y")
 
 		if err != nil {
 			return EC_ERROR
@@ -171,7 +172,7 @@ func GoCommand(args CommandArgs) int {
 
 			if container.GetEngine() == "" {
 				fmtc.Println("Also, we can run all these commands for you as well.\n")
-				ok, err = terminal.ReadAnswer("Run commands?", "Y")
+				ok, err = input.ReadAnswer("Run commands?", "Y")
 
 				if ok && err == nil {
 					runTuningCommands()
@@ -192,7 +193,7 @@ func GoCommand(args CommandArgs) int {
 	if CORE.IsSyncDaemonInstalled() && CORE.Config.Is(CORE.REPLICATION_AUTH_TOKEN, "") {
 		fmtc.Println("\n{*}You have installed and not configured RDS Sync daemon on the system.{!}\n")
 
-		ok, err := terminal.ReadAnswer("Show syncing configuration guide?", "Y")
+		ok, err := input.ReadAnswer("Show syncing configuration guide?", "Y")
 
 		if err != nil {
 			return EC_ERROR

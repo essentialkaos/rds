@@ -27,6 +27,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 	"github.com/essentialkaos/ek/v12/terminal/tty"
 	"github.com/essentialkaos/ek/v12/usage"
 	"github.com/essentialkaos/ek/v12/usage/completion/bash"
@@ -45,7 +46,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.10.3"
+	VER  = "1.10.4"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -339,12 +340,12 @@ func configureUI() {
 		fmtc.DisableColors = true
 	}
 
-	terminal.TitleColorTag = "{s}"
+	input.TitleColorTag = "{s}"
 
 	if !options.GetB(OPT_SIMPLE) && !prefs.SimpleUI {
-		terminal.Prompt = "{s}›{!} "
-		terminal.MaskSymbol = "•"
-		terminal.MaskSymbolColorTag = "{s-}"
+		input.Prompt = "{s}›{!} "
+		input.MaskSymbol = "•"
+		input.MaskSymbolColorTag = "{s-}"
 
 		RC.Prompt = "{s}›{!} "
 		RC.UseColoredPrompt = true
@@ -363,7 +364,7 @@ func configureUI() {
 	strutil.EllipsisSuffix = "…"
 
 	if options.GetB(OPT_YES) {
-		terminal.AlwaysYes = true
+		input.AlwaysYes = true
 	}
 
 	if options.GetB(OPT_RAW) {
@@ -749,11 +750,11 @@ func authenticate(auth AuthFlag, strict bool, instanceID string) (bool, error) {
 		message = "Please enter instance password or superuser password"
 	}
 
-	password, err = terminal.ReadPassword(message, true)
+	password, err = input.ReadPassword(message, true)
 
 	fmtc.NewLine()
 
-	if err == terminal.ErrKillSignal {
+	if err == input.ErrKillSignal {
 		CORE.Shutdown(EC_OK)
 	}
 

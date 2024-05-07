@@ -11,6 +11,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -68,7 +69,7 @@ func regenerateInstanceConfig(id int) int {
 		return EC_ERROR
 	}
 
-	ok, err := terminal.ReadAnswer(
+	ok, err := input.ReadAnswer(
 		"Do you want to regenerate configuration file for this instance?", "N",
 	)
 
@@ -104,7 +105,7 @@ func regenerateInstanceConfig(id int) int {
 
 // regenerateAllConfigs regenerates configuration files for all instances
 func regenerateAllConfigs() int {
-	ok, err := terminal.ReadAnswer("Do you want to regenerate configuration files for all instances?", "N")
+	ok, err := input.ReadAnswer("Do you want to regenerate configuration files for all instances?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL

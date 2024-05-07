@@ -15,6 +15,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtutil/table"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	CORE "github.com/essentialkaos/rds/core"
 	REDIS "github.com/essentialkaos/rds/redis"
@@ -87,7 +88,7 @@ func reloadInstanceConfig(id int) int {
 
 	fmtc.Println("{s}Note that some configuration properties can't be updated without instance restart.{!}\n")
 
-	ok, err := terminal.ReadAnswer(
+	ok, err := input.ReadAnswer(
 		"Do you want to reload configuration for this instance?", "N",
 	)
 
@@ -123,7 +124,7 @@ Use {*}REPLICAOF{!} or {*}SLAVEOF{!} commands for changing replication settings.
 
 	fmtc.NewLine()
 
-	ok, err = terminal.ReadAnswer(
+	ok, err = input.ReadAnswer(
 		"Do you want to apply this settings?", "N",
 	)
 
@@ -154,7 +155,7 @@ Use {*}REPLICAOF{!} or {*}SLAVEOF{!} commands for changing replication settings.
 func reloadAllConfigs() int {
 	fmtc.Println("{s}Note that some configuration properties can't be updated without instance restart.{!}\n")
 
-	ok, err := terminal.ReadAnswer("Do you want to reload configurations for all instances?", "N")
+	ok, err := input.ReadAnswer("Do you want to reload configurations for all instances?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL

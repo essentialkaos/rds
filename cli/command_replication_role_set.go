@@ -14,6 +14,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	CORE "github.com/essentialkaos/rds/core"
 	REDIS "github.com/essentialkaos/rds/redis"
@@ -94,7 +95,7 @@ func ReplicationRoleSetCommand(args CommandArgs) int {
 
 	fmtc.NewLine()
 
-	ok, err := terminal.ReadAnswer("Do you OK with that?", "N")
+	ok, err := input.ReadAnswer("Do you OK with that?", "N")
 
 	if err != nil || !ok {
 		return EC_ERROR

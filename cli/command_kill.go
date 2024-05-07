@@ -11,6 +11,7 @@ import (
 	"github.com/essentialkaos/ek/v12/fmtc"
 	"github.com/essentialkaos/ek/v12/spinner"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -60,7 +61,7 @@ func KillCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	ok, err := terminal.ReadAnswer("Do you want to kill this instance?", "N")
+	ok, err := input.ReadAnswer("Do you want to kill this instance?", "N")
 
 	if !ok || err != nil {
 		return EC_CANCEL

@@ -23,6 +23,7 @@ import (
 	"github.com/essentialkaos/ek/v12/strutil"
 	"github.com/essentialkaos/ek/v12/system"
 	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v12/terminal/input"
 	"github.com/essentialkaos/ek/v12/timeutil"
 	"github.com/essentialkaos/ek/v12/version"
 
@@ -497,7 +498,7 @@ func warnAboutUnsafeAction(id int, message string) bool {
 		fmtc.NewLine()
 	}
 
-	ok, err := terminal.ReadAnswer(message, "N")
+	ok, err := input.ReadAnswer(message, "N")
 
 	if !ok || err != nil {
 		return false
@@ -527,7 +528,7 @@ func isEnoughMemoryToCreate() bool {
 
 	fmtc.NewLine()
 
-	ok, err := terminal.ReadAnswer("Do you want to create new instances?", "N")
+	ok, err := input.ReadAnswer("Do you want to create new instances?", "N")
 
 	if !ok || err != nil {
 		return false
@@ -574,7 +575,7 @@ func isSystemConfigured() bool {
 
 	fmtc.NewLine()
 
-	ok, err := terminal.ReadAnswer("Do you want to proceed (it highly unrecommended)?", "N")
+	ok, err := input.ReadAnswer("Do you want to proceed (it highly unrecommended)?", "N")
 
 	if !ok || err != nil {
 		return false
@@ -606,7 +607,7 @@ func checkVirtualIP() bool {
 
 	fmtc.NewLine()
 
-	ok, err := terminal.ReadAnswer("Do you want to proceed (it highly unrecommended)?", "N")
+	ok, err := input.ReadAnswer("Do you want to proceed (it highly unrecommended)?", "N")
 
 	if !ok || err != nil {
 		return false
