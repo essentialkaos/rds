@@ -187,6 +187,8 @@ systemctl daemon-reload &>/dev/null || :
 
 %changelog
 * Sat Apr 27 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.4-0
+- Fixed output of sections with no properties in 'settings' command
+- Fixed output of empty value in 'settings' command for keepalived
 - Code refactoring
 - Dependencies update
 

@@ -78,6 +78,10 @@ func printSpecificSettings(args CommandArgs) int {
 
 // printSettingsSection prints configuration section settings
 func printSettingsSection(section string) {
+	if len(CORE.Config.Props(section)) == 0 {
+		return
+	}
+
 	fmtutil.Separator(true)
 	fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section))
 	fmtutil.Separator(true)
