@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/essentialkaos/ek/v12/options"
-	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v13/options"
+	"github.com/essentialkaos/ek/v13/terminal"
 
 	CORE "github.com/essentialkaos/rds/core"
 	RC "github.com/essentialkaos/rds/redis/client"

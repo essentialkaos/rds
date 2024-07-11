@@ -10,10 +10,10 @@ package support
 import (
 	"fmt"
 
-	"github.com/essentialkaos/ek/v12/support"
-	"github.com/essentialkaos/ek/v12/support/deps"
-	"github.com/essentialkaos/ek/v12/support/network"
-	"github.com/essentialkaos/ek/v12/support/pkgs"
+	"github.com/essentialkaos/ek/v13/support"
+	"github.com/essentialkaos/ek/v13/support/deps"
+	"github.com/essentialkaos/ek/v13/support/network"
+	"github.com/essentialkaos/ek/v13/support/pkgs"
 
 	CORE "github.com/essentialkaos/rds/core"
 )

@@ -10,7 +10,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/essentialkaos/ek/v12/log"
+	"github.com/essentialkaos/ek/v13/log"
 
 	CORE "github.com/essentialkaos/rds/core"
 )

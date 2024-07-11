@@ -8,9 +8,9 @@ package cli
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
-	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fmtutil/panel"
-	"github.com/essentialkaos/ek/v12/protip"
+	"github.com/essentialkaos/ek/v13/fmtc"
+	"github.com/essentialkaos/ek/v13/fmtutil/panel"
+	"github.com/essentialkaos/ek/v13/protip"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
