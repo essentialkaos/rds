@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"os"
 	"os/exec"
@@ -37,7 +38,6 @@ import (
 	"github.com/essentialkaos/ek/v13/passwd"
 	"github.com/essentialkaos/ek/v13/path"
 	"github.com/essentialkaos/ek/v13/pid"
-	"github.com/essentialkaos/ek/v13/rand"
 	"github.com/essentialkaos/ek/v13/strutil"
 	"github.com/essentialkaos/ek/v13/system"
 	"github.com/essentialkaos/ek/v13/system/process"
@@ -2345,7 +2345,7 @@ func GetKeepalivedState() KeepalivedState {
 
 // GenPassword generates secure password with random length (16-28)
 func GenPassword() string {
-	return passwd.GenPassword(16+rand.Int(6), passwd.STRENGTH_MEDIUM)
+	return passwd.GenPassword(16+rand.Intn(6), passwd.STRENGTH_MEDIUM)
 }
 
 // Shutdown safely shutdown app
