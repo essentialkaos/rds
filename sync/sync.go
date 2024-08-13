@@ -38,7 +38,7 @@ import (
 
 const (
 	APP  = "RDS Sync"
-	VER  = "1.3.9"
+	VER  = "1.4.0"
 	DESC = "Syncing daemon for RDS"
 )
 
