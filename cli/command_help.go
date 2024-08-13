@@ -1122,8 +1122,10 @@ func (i helpInfo) render() {
 func (i helpInfo) renderUsage() {
 	fmtc.Println("{*}Usage{!}\n")
 
+	fmtc.NameColor("app", colorTagApp)
+
 	if len(i.arguments) == 0 {
-		fmtc.Printf("  rds %s\n\n", i.command)
+		fmtc.Printf("  {?app}rds{!} {y}%s{!}\n\n", i.command)
 		return
 	}
 
@@ -1133,7 +1135,7 @@ func (i helpInfo) renderUsage() {
 		arguments = append(arguments, cmdArg.name)
 	}
 
-	fmtc.Printf("  rds {y}%s{!} {#45}%s{!}\n\n", i.command, strings.Join(arguments, " "))
+	fmtc.Printf("  {?app}rds{!} {y}%s{!} {#45}%s{!}\n\n", i.command, strings.Join(arguments, " "))
 }
 
 // renderDescription render description
