@@ -153,6 +153,7 @@ const (
 	COMMAND_TOP_DUMP             = "top-dump"
 	COMMAND_TRACK                = "track"
 	COMMAND_VALIDATE_TEMPLATES   = "validate-templates"
+	COMMAND_UPTIME               = "uptime"
 )
 
 const (
@@ -458,45 +459,45 @@ func initCommands() {
 	allowCommands := CORE.Config.GetB(CORE.REPLICATION_ALLOW_COMMANDS)
 
 	if isMaster {
-		commands[COMMAND_START] = &CommandRoutine{StartCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-		commands[COMMAND_STOP] = &CommandRoutine{StopCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-		commands[COMMAND_RESTART] = &CommandRoutine{RestartCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-		commands[COMMAND_KILL] = &CommandRoutine{KillCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_START_ALL] = &CommandRoutine{StartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_STOP_ALL] = &CommandRoutine{StopAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_RESTART_ALL] = &CommandRoutine{RestartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_RELOAD] = &CommandRoutine{ReloadCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_REGEN] = &CommandRoutine{RegenCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_MAINTENANCE] = &CommandRoutine{MaintenanceCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_BACKUP_CREATE] = &CommandRoutine{BackupCreateCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-		commands[COMMAND_BACKUP_RESTORE] = &CommandRoutine{BackupRestoreCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_BACKUP_CLEAN] = &CommandRoutine{BackupCleanCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
+		commands[COMMAND_BACKUP_CREATE] = &CommandRoutine{BackupCreateCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_BACKUP_LIST] = &CommandRoutine{BackupListCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-	} else if isMinion && allowCommands {
-		commands[COMMAND_START] = &CommandRoutine{StartCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_STOP] = &CommandRoutine{StopCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_RESTART] = &CommandRoutine{RestartCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_BACKUP_RESTORE] = &CommandRoutine{BackupRestoreCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_KILL] = &CommandRoutine{KillCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_START_ALL] = &CommandRoutine{StartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_STOP_ALL] = &CommandRoutine{StopAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_RESTART_ALL] = &CommandRoutine{RestartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_RELOAD] = &CommandRoutine{ReloadCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_REGEN] = &CommandRoutine{RegenCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_MAINTENANCE] = &CommandRoutine{MaintenanceCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_BACKUP_CREATE] = &CommandRoutine{BackupCreateCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_BACKUP_RESTORE] = &CommandRoutine{BackupRestoreCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_REGEN] = &CommandRoutine{RegenCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_RELOAD] = &CommandRoutine{ReloadCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_RESTART] = &CommandRoutine{RestartCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
+		commands[COMMAND_RESTART_ALL] = &CommandRoutine{RestartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_START] = &CommandRoutine{StartCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
+		commands[COMMAND_START_ALL] = &CommandRoutine{StartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_STOP] = &CommandRoutine{StopCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
+		commands[COMMAND_STOP_ALL] = &CommandRoutine{StopAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+	} else if isMinion && allowCommands {
 		commands[COMMAND_BACKUP_CLEAN] = &CommandRoutine{BackupCleanCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_BACKUP_CREATE] = &CommandRoutine{BackupCreateCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_BACKUP_LIST] = &CommandRoutine{BackupListCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_BACKUP_RESTORE] = &CommandRoutine{BackupRestoreCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_KILL] = &CommandRoutine{KillCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_MAINTENANCE] = &CommandRoutine{MaintenanceCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_REGEN] = &CommandRoutine{RegenCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_RELOAD] = &CommandRoutine{ReloadCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_RESTART] = &CommandRoutine{RestartCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_RESTART_ALL] = &CommandRoutine{RestartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_START] = &CommandRoutine{StartCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_START_ALL] = &CommandRoutine{StartAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_STOP] = &CommandRoutine{StopCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_STOP_ALL] = &CommandRoutine{StopAllCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 	}
 
 	if isMaster {
+		commands[COMMAND_BATCH_CREATE] = &CommandRoutine{BatchCreateCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_BATCH_EDIT] = &CommandRoutine{BatchEditCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_CREATE] = &CommandRoutine{CreateCommand, AUTH_NO, true}
 		commands[COMMAND_DESTROY] = &CommandRoutine{DestroyCommand, AUTH_INSTANCE | AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_EDIT] = &CommandRoutine{EditCommand, AUTH_INSTANCE | AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_BATCH_CREATE] = &CommandRoutine{BatchCreateCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_BATCH_EDIT] = &CommandRoutine{BatchEditCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_STATE_SAVE] = &CommandRoutine{SaveStateCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_STATE_RESTORE] = &CommandRoutine{RestoreStateCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_STATE_SAVE] = &CommandRoutine{SaveStateCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_TAG_ADD] = &CommandRoutine{TagAddCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_TAG_REMOVE] = &CommandRoutine{TagRemoveCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 	}
@@ -530,25 +531,26 @@ func initCommands() {
 	}
 
 	if !isSentinel {
+		commands[COMMAND_CHECK] = &CommandRoutine{CheckCommand, AUTH_NO, true}
+		commands[COMMAND_CLIENTS] = &CommandRoutine{ClientsCommand, AUTH_NO, true}
+		commands[COMMAND_CPU] = &CommandRoutine{CPUCommand, AUTH_NO, true}
 		commands[COMMAND_GO] = &CommandRoutine{GoCommand, AUTH_NO, true}
 		commands[COMMAND_INFO] = &CommandRoutine{InfoCommand, AUTH_NO, options.GetS(OPT_FORMAT) == "" && !useRawOutput}
-		commands[COMMAND_CLIENTS] = &CommandRoutine{ClientsCommand, AUTH_NO, true}
-		commands[COMMAND_STATS_COMMAND] = &CommandRoutine{StatsCommandCommand, AUTH_NO, true}
-		commands[COMMAND_STATS_LATENCY] = &CommandRoutine{StatsLatencyCommand, AUTH_NO, true}
-		commands[COMMAND_STATS_ERROR] = &CommandRoutine{StatsErrorCommand, AUTH_NO, true}
-		commands[COMMAND_CPU] = &CommandRoutine{CPUCommand, AUTH_NO, true}
 		commands[COMMAND_LIST] = &CommandRoutine{ListCommand, AUTH_NO, !useRawOutput}
+		commands[COMMAND_LOG] = &CommandRoutine{LogCommand, AUTH_NO, !useRawOutput}
 		commands[COMMAND_MEMORY] = &CommandRoutine{MemoryCommand, AUTH_NO, !useRawOutput}
+		commands[COMMAND_SLOWLOG_GET] = &CommandRoutine{SlowlogGetCommand, AUTH_NO, true}
+		commands[COMMAND_SLOWLOG_RESET] = &CommandRoutine{SlowlogResetCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_STATS] = &CommandRoutine{StatsCommand, AUTH_NO, options.GetS(OPT_FORMAT) == "" && !useRawOutput}
+		commands[COMMAND_STATS_COMMAND] = &CommandRoutine{StatsCommandCommand, AUTH_NO, true}
+		commands[COMMAND_STATS_ERROR] = &CommandRoutine{StatsErrorCommand, AUTH_NO, true}
+		commands[COMMAND_STATS_LATENCY] = &CommandRoutine{StatsLatencyCommand, AUTH_NO, true}
+		commands[COMMAND_STATUS] = &CommandRoutine{StatusCommand, AUTH_NO, true}
 		commands[COMMAND_TOP] = &CommandRoutine{TopCommand, AUTH_NO, !useRawOutput}
 		commands[COMMAND_TOP_DIFF] = &CommandRoutine{TopDiffCommand, AUTH_NO, true}
 		commands[COMMAND_TOP_DUMP] = &CommandRoutine{TopDumpCommand, AUTH_NO, true}
-		commands[COMMAND_SLOWLOG_GET] = &CommandRoutine{SlowlogGetCommand, AUTH_NO, true}
-		commands[COMMAND_SLOWLOG_RESET] = &CommandRoutine{SlowlogResetCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-		commands[COMMAND_STATUS] = &CommandRoutine{StatusCommand, AUTH_NO, true}
-		commands[COMMAND_CHECK] = &CommandRoutine{CheckCommand, AUTH_NO, true}
 		commands[COMMAND_TRACK] = &CommandRoutine{TrackCommand, AUTH_NO, true}
-		commands[COMMAND_LOG] = &CommandRoutine{LogCommand, AUTH_NO, !useRawOutput}
+		commands[COMMAND_UPTIME] = &CommandRoutine{UptimeCommand, AUTH_NO, true}
 	}
 
 	if isSentinelFailover {
@@ -573,20 +575,20 @@ func initCommands() {
 
 	if isMaster {
 		if CORE.Config.GetB(CORE.REPLICATION_ALWAYS_PROPAGATE) {
-			commands[COMMAND_START] = &CommandRoutine{StartPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-			commands[COMMAND_STOP] = &CommandRoutine{StopPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 			commands[COMMAND_RESTART] = &CommandRoutine{RestartPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-			commands[COMMAND_START_ALL] = &CommandRoutine{StartAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-			commands[COMMAND_STOP_ALL] = &CommandRoutine{StopAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 			commands[COMMAND_RESTART_ALL] = &CommandRoutine{RestartAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+			commands[COMMAND_START] = &CommandRoutine{StartPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
+			commands[COMMAND_START_ALL] = &CommandRoutine{StartAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+			commands[COMMAND_STOP] = &CommandRoutine{StopPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
+			commands[COMMAND_STOP_ALL] = &CommandRoutine{StopAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 		}
 
-		commands[COMMAND_START_PROP] = &CommandRoutine{StartPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
-		commands[COMMAND_STOP_PROP] = &CommandRoutine{StopPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
+		commands[COMMAND_RESTART_ALL_PROP] = &CommandRoutine{RestartAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
 		commands[COMMAND_RESTART_PROP] = &CommandRoutine{RestartPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_START_ALL_PROP] = &CommandRoutine{StartAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_START_PROP] = &CommandRoutine{StartPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 		commands[COMMAND_STOP_ALL_PROP] = &CommandRoutine{StopAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
-		commands[COMMAND_RESTART_ALL_PROP] = &CommandRoutine{RestartAllPropCommand, AUTH_SUPERUSER | AUTH_STRICT, true}
+		commands[COMMAND_STOP_PROP] = &CommandRoutine{StopPropCommand, AUTH_INSTANCE | AUTH_SUPERUSER, true}
 	}
 
 	commands[COMMAND_VALIDATE_TEMPLATES] = &CommandRoutine{ValidateTemplatesCommand, AUTH_NO, true}
@@ -836,6 +838,7 @@ func getSpellcheckModel() *spellcheck.Model {
 		COMMAND_STATUS, COMMAND_STOP, COMMAND_STOP_ALL, COMMAND_STOP_ALL_PROP,
 		COMMAND_STOP_PROP, COMMAND_TAG_ADD, COMMAND_TAG_REMOVE, COMMAND_TOP,
 		COMMAND_TOP_DIFF, COMMAND_TOP_DUMP, COMMAND_TRACK, COMMAND_VALIDATE_TEMPLATES,
+		COMMAND_UPTIME,
 	})
 }
 
@@ -1001,6 +1004,7 @@ func showSmartUsage() {
 		info.AddCommand(COMMAND_STATS_COMMAND, "Show statistics based on the command type", "id")
 		info.AddCommand(COMMAND_STATS_LATENCY, "Show latency statistics based on the command type", "id")
 		info.AddCommand(COMMAND_STATS_ERROR, "Show error statistics", "id")
+		info.AddCommand(COMMAND_UPTIME, "Show instances uptime info")
 		info.AddCommand(COMMAND_TOP, "Show instances top", "?field", "?num")
 		info.AddCommand(COMMAND_TOP_DIFF, "Compare current and dumped top data", "file", "?field", "?num")
 		info.AddCommand(COMMAND_TOP_DUMP, "Dump top data to file", "file")
@@ -1159,6 +1163,7 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_TOP, "Show instances top", "?field", "?num")
 	info.AddCommand(COMMAND_TOP_DIFF, "Compare current and dumped top data", "file", "?field", "?num")
 	info.AddCommand(COMMAND_TOP_DUMP, "Dump top data to file", "file")
+	info.AddCommand(COMMAND_UPTIME, "Show instances uptime info")
 	info.AddCommand(COMMAND_SLOWLOG_GET, "Show last entries from slow log", "id", "?num")
 	info.AddCommand(COMMAND_SLOWLOG_RESET, "Clear slow log", "id")
 	info.AddCommand(COMMAND_TAG_ADD, "Add tag to instance", "id", "tag")

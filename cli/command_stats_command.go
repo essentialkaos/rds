@@ -20,7 +20,6 @@ import (
 	"github.com/essentialkaos/ek/v13/pager"
 	"github.com/essentialkaos/ek/v13/strutil"
 	"github.com/essentialkaos/ek/v13/terminal"
-	"github.com/essentialkaos/ek/v13/timeutil"
 
 	CORE "github.com/essentialkaos/rds/core"
 	REDIS "github.com/essentialkaos/rds/redis"
@@ -93,7 +92,7 @@ func printCommandStatsInfo(info *REDIS.Info) {
 		t.Add(
 			cmdName,
 			fmtutil.PrettyNum(cmdCalls),
-			formatCommandTotalTime(cmdTime),
+			formatDuration(cmdTime),
 			fmt.Sprintf("%s μs", cmdStats["usec_per_call"]),
 			fmtutil.PrettyNum(cmdRejected),
 			fmtutil.PrettyNum(cmdFailed),
@@ -101,16 +100,4 @@ func printCommandStatsInfo(info *REDIS.Info) {
 	}
 
 	t.Render()
-}
-
-// formatCommandTotalTime formats total duration of commands execution
-func formatCommandTotalTime(dur time.Duration) string {
-	switch {
-	case dur >= time.Hour:
-		return fmt.Sprintf("%.2g hr", dur.Hours())
-	case dur >= time.Minute:
-		return fmt.Sprintf("%.2g m", dur.Minutes())
-	}
-
-	return timeutil.MiniDuration(dur)
 }

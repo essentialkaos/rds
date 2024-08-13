@@ -190,6 +190,8 @@ systemctl daemon-reload &>/dev/null || :
 
 %changelog
 * Thu Jul 11 2024 Anton Novojilov <andy@essentialkaos.com> - 1.11.0-0
+- [cli] Added 'uptime' command
+- [cli] Improved output of 'stats-command' command
 - Package ek updated to v13
 
 * Wed May 08 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.5-0

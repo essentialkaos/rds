@@ -706,3 +706,42 @@ func applyHighlights(data string, highlights []string) string {
 
 	return data
 }
+
+// formatDuration formats duration to short notation
+func formatDuration(dur time.Duration) string {
+	switch {
+	case dur >= time.Hour:
+		return fmt.Sprintf("%.2g hr", dur.Hours())
+	case dur >= time.Minute:
+		return fmt.Sprintf("%.2g m", dur.Minutes())
+	}
+
+	return timeutil.MiniDuration(dur)
+}
+
+// getInstanceDataInfo returns info about instance data (RDB/AOF)
+func getInstanceDataInfo(id int) (int64, time.Time, error) {
+	var err error
+	var size int64
+	var modTime time.Time
+
+	dumpFile := CORE.GetInstanceRDBPath(id)
+
+	if fsutil.IsExist(dumpFile) {
+		size = fsutil.GetSize(dumpFile)
+		modTime, err = fsutil.GetMTime(dumpFile)
+	} else {
+		aofFile := CORE.GetInstanceAOFPath(id)
+
+		if fsutil.IsExist(aofFile) {
+			size = fsutil.GetSize(dumpFile)
+			modTime, err = fsutil.GetMTime(aofFile)
+		}
+	}
+
+	if err != nil {
+		return size, modTime, fmt.Errorf("Can't check data modification date: %w", err)
+	}
+
+	return size, modTime, nil
+}

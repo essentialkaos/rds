@@ -115,6 +115,7 @@ func HelpCommand(args CommandArgs) int {
 		COMMAND_TOP_DUMP:             helpCommandTopDump,
 		COMMAND_TRACK:                helpCommandTrack,
 		COMMAND_VALIDATE_TEMPLATES:   helpCommandValidateTemplates,
+		COMMAND_UPTIME:               helpCommandUptime,
 	}
 
 	helpFunc, hasInfo := commandList[commandName]
@@ -1007,6 +1008,17 @@ func helpCommandValidateTemplates() {
 		desc:    "Validate Redis and Sentinel configuration file templates.",
 		examples: []helpInfoExample{
 			{"", "", "Validate templates"},
+		},
+	}.render()
+}
+
+// helpCommandUptime prints info about "uptime" command usage
+func helpCommandUptime() {
+	helpInfo{
+		command: COMMAND_UPTIME,
+		desc:    "Show information about instances uptime and the last save date.",
+		examples: []helpInfoExample{
+			{"", "", "Show uptime information"},
 		},
 	}.render()
 }
