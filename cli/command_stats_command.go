@@ -93,7 +93,7 @@ func printCommandStatsInfo(info *REDIS.Info) {
 		t.Add(
 			cmdName,
 			fmtutil.PrettyNum(cmdCalls),
-			timeutil.PrettyDuration(cmdTime),
+			formatCommandTotalTime(cmdTime),
 			fmt.Sprintf("%s μs", cmdStats["usec_per_call"]),
 			fmtutil.PrettyNum(cmdRejected),
 			fmtutil.PrettyNum(cmdFailed),
@@ -101,4 +101,16 @@ func printCommandStatsInfo(info *REDIS.Info) {
 	}
 
 	t.Render()
+}
+
+// formatCommandTotalTime formats total duration of commands execution
+func formatCommandTotalTime(dur time.Duration) string {
+	switch {
+	case dur >= time.Hour:
+		return fmt.Sprintf("%.2g hr", dur.Hours())
+	case dur >= time.Minute:
+		return fmt.Sprintf("%.2g m", dur.Minutes())
+	}
+
+	return timeutil.MiniDuration(dur)
 }
