@@ -43,7 +43,7 @@ var infoSections = []string{
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// InfoCommand is "cli" command handler
+// InfoCommand is "info" command handler
 func InfoCommand(args CommandArgs) int {
 	var err error
 	var sections []string
@@ -87,9 +87,12 @@ func InfoCommand(args CommandArgs) int {
 	if !state.IsWorks() {
 		// Print basic instance info for stopped or dead instances
 		if isInfoSectionRequired(sections, "instance") {
-			showInstanceBasicInfo(t, id, nil, state)
-			t.Border()
-			return EC_OK
+			if showInstanceBasicInfo(t, id, nil, state) {
+				t.Border()
+				return EC_OK
+			} else {
+				return EC_ERROR
+			}
 		}
 
 		renderInfoDataError(format, "Instance must work for executing this command")
@@ -157,14 +160,15 @@ func renderInfoDataError(format, message string) {
 }
 
 // showInstanceBasicInfo print info about instance
-func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.State) {
+func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.State) bool {
 	var size int64
 	var modTime time.Time
 
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		return
+		terminal.Error("Can't read instance meta: %v", err)
+		return false
 	}
 
 	host := CORE.Config.GetS(CORE.MAIN_HOSTNAME, netutil.GetIP())
@@ -227,6 +231,8 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 			))
 		}
 	}
+
+	return true
 }
 
 // renderInfoData print instance info

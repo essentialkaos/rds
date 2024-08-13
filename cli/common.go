@@ -300,7 +300,7 @@ func getInstanceIDWithColor(id int, state CORE.State) string {
 // getInstanceOwnerWithColor returns owner name with color tags
 func getInstanceOwnerWithColor(meta *CORE.InstanceMeta, before bool) string {
 	if meta == nil {
-		return "{s-}unknown{!}"
+		return "{s-}??????{!}"
 	}
 
 	owner := meta.Auth.User
@@ -339,7 +339,7 @@ func isInstanceOwnerExist(owner string) bool {
 // getInstanceDescWithTags returns instance description with rendered tags
 func getInstanceDescWithTags(meta *CORE.InstanceMeta, isWorks bool, highlights []string) string {
 	if meta == nil {
-		return "{s-}UNKNOWN{!}"
+		return "{s-}—{!}"
 	}
 
 	desc := meta.Desc
