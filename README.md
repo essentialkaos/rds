@@ -22,11 +22,11 @@
 > [!IMPORTANT]
 > We highly recommend you checkout [Requirements](https://github.com/essentialkaos/rds/wiki/Requirements) before RDS installation. It can save you from useless work.
 
-#### From [ESSENTIAL KAOS YUM/DNF Repository](https://pkgs.kaos.st)
+#### From [ESSENTIAL KAOS DNF Repository](https://pkgs.kaos.st)
 
 ```bash
-sudo yum install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
-sudo yum install rds rds-sync redis70
+sudo dnf install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
+sudo dnf install rds rds-sync redis70
 ```
 
 Run `sudo rds go` command and follow the instructions. Check out the [FAQ section](https://kaos.sh/rds/w/FAQ) of our wiki for common questions about using RDS.
