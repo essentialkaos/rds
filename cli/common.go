@@ -707,18 +707,6 @@ func applyHighlights(data string, highlights []string) string {
 	return data
 }
 
-// formatDuration formats duration to short notation
-func formatDuration(dur time.Duration) string {
-	switch {
-	case dur >= time.Hour:
-		return fmt.Sprintf("%.2g hr", dur.Hours())
-	case dur >= time.Minute:
-		return fmt.Sprintf("%.2g m", dur.Minutes())
-	}
-
-	return timeutil.MiniDuration(dur)
-}
-
 // getInstanceDataInfo returns info about instance data (RDB/AOF)
 func getInstanceDataInfo(id int) (int64, time.Time, error) {
 	var err error
