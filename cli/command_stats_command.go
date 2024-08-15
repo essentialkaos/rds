@@ -8,19 +8,18 @@ package cli
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/v12/fmtutil"
-	"github.com/essentialkaos/ek/v12/fmtutil/table"
-	"github.com/essentialkaos/ek/v12/mathutil"
-	"github.com/essentialkaos/ek/v12/options"
-	"github.com/essentialkaos/ek/v12/pager"
-	"github.com/essentialkaos/ek/v12/strutil"
-	"github.com/essentialkaos/ek/v12/terminal"
-	"github.com/essentialkaos/ek/v12/timeutil"
+	"github.com/essentialkaos/ek/v13/fmtutil"
+	"github.com/essentialkaos/ek/v13/fmtutil/table"
+	"github.com/essentialkaos/ek/v13/mathutil"
+	"github.com/essentialkaos/ek/v13/options"
+	"github.com/essentialkaos/ek/v13/pager"
+	"github.com/essentialkaos/ek/v13/strutil"
+	"github.com/essentialkaos/ek/v13/terminal"
+	"github.com/essentialkaos/ek/v13/timeutil"
 
 	CORE "github.com/essentialkaos/rds/core"
 	REDIS "github.com/essentialkaos/rds/redis"
@@ -84,8 +83,10 @@ func printCommandStatsInfo(info *REDIS.Info) {
 		cmdName := strings.ToUpper(strutil.Exclude(v, "cmdstat_"))
 		cmdName = strings.ReplaceAll(cmdName, "|", " ")
 		cmdStats := parseFieldsLine(section.Values[v], ',')
-		cmdUSec, _ := strconv.Atoi(cmdStats["usec"])
-		cmdTime := time.Microsecond * time.Duration(mathutil.Max(cmdUSec, 1))
+		cmdTotalUs, _ := strconv.Atoi(cmdStats["usec"])
+		cmdTotal := time.Microsecond * time.Duration(mathutil.Max(cmdTotalUs, 1))
+		cmdCallUs, _ := strconv.ParseFloat(cmdStats["usec_per_call"], 64)
+		cmdCall := time.Duration(float64(time.Microsecond) * cmdCallUs)
 		cmdCalls, _ := strconv.Atoi(cmdStats["calls"])
 		cmdRejected, _ := strconv.Atoi(strutil.Q(cmdStats["rejected_calls"], "0"))
 		cmdFailed, _ := strconv.Atoi(strutil.Q(cmdStats["failed_calls"], "0"))
@@ -93,8 +94,8 @@ func printCommandStatsInfo(info *REDIS.Info) {
 		t.Add(
 			cmdName,
 			fmtutil.PrettyNum(cmdCalls),
-			timeutil.PrettyDuration(cmdTime),
-			fmt.Sprintf("%s μs", cmdStats["usec_per_call"]),
+			timeutil.MiniDuration(cmdTotal),
+			timeutil.MiniDuration(cmdCall),
 			fmtutil.PrettyNum(cmdRejected),
 			fmtutil.PrettyNum(cmdFailed),
 		)

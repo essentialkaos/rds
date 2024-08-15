@@ -14,19 +14,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fmtutil"
-	"github.com/essentialkaos/ek/v12/fmtutil/table"
-	"github.com/essentialkaos/ek/v12/fsutil"
-	"github.com/essentialkaos/ek/v12/netutil"
-	"github.com/essentialkaos/ek/v12/options"
-	"github.com/essentialkaos/ek/v12/pager"
-	"github.com/essentialkaos/ek/v12/pluralize"
-	"github.com/essentialkaos/ek/v12/sliceutil"
-	"github.com/essentialkaos/ek/v12/spellcheck"
-	"github.com/essentialkaos/ek/v12/strutil"
-	"github.com/essentialkaos/ek/v12/terminal"
-	"github.com/essentialkaos/ek/v12/timeutil"
+	"github.com/essentialkaos/ek/v13/fmtc"
+	"github.com/essentialkaos/ek/v13/fmtutil"
+	"github.com/essentialkaos/ek/v13/fmtutil/table"
+	"github.com/essentialkaos/ek/v13/netutil"
+	"github.com/essentialkaos/ek/v13/options"
+	"github.com/essentialkaos/ek/v13/pager"
+	"github.com/essentialkaos/ek/v13/pluralize"
+	"github.com/essentialkaos/ek/v13/sliceutil"
+	"github.com/essentialkaos/ek/v13/spellcheck"
+	"github.com/essentialkaos/ek/v13/strutil"
+	"github.com/essentialkaos/ek/v13/terminal"
+	"github.com/essentialkaos/ek/v13/timeutil"
 
 	CORE "github.com/essentialkaos/rds/core"
 	REDIS "github.com/essentialkaos/rds/redis"
@@ -44,7 +43,7 @@ var infoSections = []string{
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// InfoCommand is "cli" command handler
+// InfoCommand is "info" command handler
 func InfoCommand(args CommandArgs) int {
 	var err error
 	var sections []string
@@ -88,9 +87,12 @@ func InfoCommand(args CommandArgs) int {
 	if !state.IsWorks() {
 		// Print basic instance info for stopped or dead instances
 		if isInfoSectionRequired(sections, "instance") {
-			showInstanceBasicInfo(t, id, nil, state)
-			t.Border()
-			return EC_OK
+			if showInstanceBasicInfo(t, id, nil, state) {
+				t.Border()
+				return EC_OK
+			} else {
+				return EC_ERROR
+			}
 		}
 
 		renderInfoDataError(format, "Instance must work for executing this command")
@@ -158,30 +160,19 @@ func renderInfoDataError(format, message string) {
 }
 
 // showInstanceBasicInfo print info about instance
-func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.State) {
-	var (
-		size      int64
-		modTime   time.Time
-		lastSave  time.Duration
-		dumpExist bool
-	)
+func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.State) bool {
+	var size int64
+	var modTime time.Time
 
 	meta, err := CORE.GetInstanceMeta(id)
 
 	if err != nil {
-		return
+		terminal.Error("Can't read instance meta: %v", err)
+		return false
 	}
 
 	host := CORE.Config.GetS(CORE.MAIN_HOSTNAME, netutil.GetIP())
-	dumpFile := CORE.GetInstanceRDBPath(id)
-
-	if fsutil.IsExist(dumpFile) {
-		size = fsutil.GetSize(dumpFile)
-		modTime, _ = fsutil.GetMTime(dumpFile)
-		lastSave = time.Since(modTime)
-
-		dumpExist = true
-	}
+	size, modTime, _ = getInstanceDataInfo(id)
 
 	compatible := "Not checked"
 
@@ -204,10 +195,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 
 	created := time.Unix(meta.Created, 0)
 
-	uri := fmt.Sprintf(
-		"redis://%s:%d/%s",
-		host, CORE.GetInstancePort(id), db,
-	)
+	uri := fmt.Sprintf("redis://%s:%d/%s", host, CORE.GetInstancePort(id), db)
 
 	t.Border()
 	fmtc.Println(" ▾ {*}INSTANCE{!}")
@@ -222,7 +210,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	t.Print("URI", uri)
 	t.Print("Compatibility", compatible+" {s-}"+redisVersionInfo+"{!}")
 
-	if dumpExist {
+	if !modTime.IsZero() {
 		t.Print("Dump size", fmtutil.PrettySize(size))
 
 		switch {
@@ -239,10 +227,12 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 		default:
 			t.Print("Last save", fmt.Sprintf("%s {s-}(%s ago)",
 				timeutil.Format(modTime, "%Y/%m/%d %H:%M:%S"),
-				formatLastSaveDate(int(lastSave/time.Second)),
+				formatLastSaveDate(int(time.Since(modTime)/time.Second)),
 			))
 		}
 	}
+
+	return true
 }
 
 // renderInfoData print instance info

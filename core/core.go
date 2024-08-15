@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"os"
 	"os/exec"
@@ -25,29 +26,28 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/essentialkaos/ek/v12/env"
-	"github.com/essentialkaos/ek/v12/errutil"
-	"github.com/essentialkaos/ek/v12/fsutil"
-	"github.com/essentialkaos/ek/v12/initsystem"
-	"github.com/essentialkaos/ek/v12/jsonutil"
-	"github.com/essentialkaos/ek/v12/knf"
-	"github.com/essentialkaos/ek/v12/log"
-	"github.com/essentialkaos/ek/v12/mathutil"
-	"github.com/essentialkaos/ek/v12/netutil"
-	"github.com/essentialkaos/ek/v12/passwd"
-	"github.com/essentialkaos/ek/v12/path"
-	"github.com/essentialkaos/ek/v12/pid"
-	"github.com/essentialkaos/ek/v12/rand"
-	"github.com/essentialkaos/ek/v12/strutil"
-	"github.com/essentialkaos/ek/v12/system"
-	"github.com/essentialkaos/ek/v12/system/process"
-	"github.com/essentialkaos/ek/v12/uuid"
-	"github.com/essentialkaos/ek/v12/version"
+	"github.com/essentialkaos/ek/v13/env"
+	"github.com/essentialkaos/ek/v13/errutil"
+	"github.com/essentialkaos/ek/v13/fsutil"
+	"github.com/essentialkaos/ek/v13/initsystem"
+	"github.com/essentialkaos/ek/v13/jsonutil"
+	"github.com/essentialkaos/ek/v13/knf"
+	"github.com/essentialkaos/ek/v13/log"
+	"github.com/essentialkaos/ek/v13/mathutil"
+	"github.com/essentialkaos/ek/v13/netutil"
+	"github.com/essentialkaos/ek/v13/passwd"
+	"github.com/essentialkaos/ek/v13/path"
+	"github.com/essentialkaos/ek/v13/pid"
+	"github.com/essentialkaos/ek/v13/strutil"
+	"github.com/essentialkaos/ek/v13/system"
+	"github.com/essentialkaos/ek/v13/system/process"
+	"github.com/essentialkaos/ek/v13/uuid"
+	"github.com/essentialkaos/ek/v13/version"
 
-	knfv "github.com/essentialkaos/ek/v12/knf/validators"
-	knff "github.com/essentialkaos/ek/v12/knf/validators/fs"
-	knfn "github.com/essentialkaos/ek/v12/knf/validators/network"
-	knfs "github.com/essentialkaos/ek/v12/knf/validators/system"
+	knfv "github.com/essentialkaos/ek/v13/knf/validators"
+	knff "github.com/essentialkaos/ek/v13/knf/validators/fs"
+	knfn "github.com/essentialkaos/ek/v13/knf/validators/network"
+	knfs "github.com/essentialkaos/ek/v13/knf/validators/system"
 
 	REDIS "github.com/essentialkaos/rds/redis"
 	SENTINEL "github.com/essentialkaos/rds/sentinel"
@@ -2345,7 +2345,7 @@ func GetKeepalivedState() KeepalivedState {
 
 // GenPassword generates secure password with random length (16-28)
 func GenPassword() string {
-	return passwd.GenPassword(16+rand.Int(6), passwd.STRENGTH_MEDIUM)
+	return passwd.GenPassword(16+rand.Intn(6), passwd.STRENGTH_MEDIUM)
 }
 
 // Shutdown safely shutdown app
@@ -2576,52 +2576,54 @@ func validateDependencies() []error {
 // validateConfig validate config values
 func validateConfig(c *knf.Config) []error {
 	validators := []*knf.Validator{
-		{MAIN_MAX_INSTANCES, knfv.Empty, nil},
-		{MAIN_WARN_USED_MEMORY, knfv.Empty, nil},
-		{MAIN_MIN_PASS_LENGTH, knfv.Empty, nil},
+		{MAIN_MAX_INSTANCES, knfv.Set, nil},
+		{MAIN_WARN_USED_MEMORY, knfv.Set, nil},
+		{MAIN_MIN_PASS_LENGTH, knfv.Set, nil},
 
 		// MAIN //
 
-		{MAIN_MAX_INSTANCES, knfv.Less, MIN_INSTANCES},
-		{MAIN_MAX_INSTANCES, knfv.Greater, MAX_INSTANCES},
-		{MAIN_WARN_USED_MEMORY, knfv.Less, 0},
-		{MAIN_WARN_USED_MEMORY, knfv.Greater, 100},
-		{MAIN_MIN_PASS_LENGTH, knfv.Less, MIN_PASS_LENGTH},
-		{MAIN_MIN_PASS_LENGTH, knfv.Greater, MAX_PASS_LENGTH},
+		{MAIN_MAX_INSTANCES, knfv.Greater, MIN_INSTANCES},
+		{MAIN_MAX_INSTANCES, knfv.Less, MAX_INSTANCES},
+		{MAIN_WARN_USED_MEMORY, knfv.Greater, 0},
+		{MAIN_WARN_USED_MEMORY, knfv.Less, 100},
+		{MAIN_MIN_PASS_LENGTH, knfv.Greater, MIN_PASS_LENGTH},
+		{MAIN_MIN_PASS_LENGTH, knfv.Less, MAX_PASS_LENGTH},
 
 		// DELAY //
 
-		{DELAY_START, knfv.Empty, nil},
-		{DELAY_STOP, knfv.Empty, nil},
-		{DELAY_STOP, knfv.Less, MIN_STOP_DELAY},
-		{DELAY_STOP, knfv.Greater, MAX_STOP_DELAY},
-		{DELAY_START, knfv.Less, MIN_START_DELAY},
-		{DELAY_START, knfv.Greater, MAX_START_DELAY},
+		{DELAY_START, knfv.Set, nil},
+		{DELAY_STOP, knfv.Set, nil},
+		{DELAY_STOP, knfv.Greater, MIN_STOP_DELAY},
+		{DELAY_STOP, knfv.Less, MAX_STOP_DELAY},
+		{DELAY_START, knfv.Greater, MIN_START_DELAY},
+		{DELAY_START, knfv.Less, MAX_START_DELAY},
 
 		// REDIS //
 
-		{REDIS_BINARY, knfv.Empty, nil},
-		{REDIS_USER, knfv.Empty, nil},
+		{REDIS_BINARY, knfv.Set, nil},
+		{REDIS_USER, knfv.Set, nil},
 		{REDIS_USER, knfs.User, nil},
-		{REDIS_START_PORT, knfv.Empty, nil},
-		{REDIS_START_PORT, knfv.Less, MIN_PORT},
-		{REDIS_START_PORT, knfv.Greater, MAX_PORT},
-		{REDIS_NICE, knfv.Less, MIN_NICE},
-		{REDIS_NICE, knfv.Greater, MAX_NICE},
-		{REDIS_IONICE_CLASS, knfv.Less, MIN_IONICE_CLASS},
-		{REDIS_IONICE_CLASS, knfv.Greater, MAX_IONICE_CLASS},
-		{REDIS_IONICE_CLASSDATA, knfv.Less, MIN_IONICE_CLASSDATA},
-		{REDIS_IONICE_CLASSDATA, knfv.Greater, MAX_IONICE_CLASSDATA},
+		{REDIS_START_PORT, knfv.Set, nil},
+		{REDIS_START_PORT, knfn.Port, nil},
+		{REDIS_START_PORT, knfv.Greater, MIN_PORT},
+		{REDIS_START_PORT, knfv.Less, MAX_PORT},
+		{REDIS_NICE, knfv.Greater, MIN_NICE},
+		{REDIS_NICE, knfv.Less, MAX_NICE},
+		{REDIS_IONICE_CLASS, knfv.Greater, MIN_IONICE_CLASS},
+		{REDIS_IONICE_CLASS, knfv.Less, MAX_IONICE_CLASS},
+		{REDIS_IONICE_CLASSDATA, knfv.Greater, MIN_IONICE_CLASSDATA},
+		{REDIS_IONICE_CLASSDATA, knfv.Less, MAX_IONICE_CLASSDATA},
 
 		// SENTINEL //
 
-		{SENTINEL_BINARY, knfv.Empty, nil},
-		{SENTINEL_QUORUM, knfv.Empty, nil},
-		{SENTINEL_DOWN_AFTER, knfv.Empty, nil},
-		{SENTINEL_FAILOVER_TIMEOUT, knfv.Empty, nil},
-		{SENTINEL_PARALLEL_SYNCS, knfv.Empty, nil},
-		{SENTINEL_PORT, knfv.Less, MIN_PORT},
-		{SENTINEL_PORT, knfv.Greater, MAX_PORT},
+		{SENTINEL_BINARY, knfv.Set, nil},
+		{SENTINEL_QUORUM, knfv.Set, nil},
+		{SENTINEL_DOWN_AFTER, knfv.Set, nil},
+		{SENTINEL_FAILOVER_TIMEOUT, knfv.Set, nil},
+		{SENTINEL_PARALLEL_SYNCS, knfv.Set, nil},
+		{SENTINEL_PORT, knfn.Port, nil},
+		{SENTINEL_PORT, knfv.Greater, MIN_PORT},
+		{SENTINEL_PORT, knfv.Less, MAX_PORT},
 
 		// KEEPALIVED
 
@@ -2629,28 +2631,28 @@ func validateConfig(c *knf.Config) []error {
 
 		// TEMPLATES //
 
-		{TEMPLATES_REDIS, knfv.Empty, nil},
-		{TEMPLATES_SENTINEL, knfv.Empty, nil},
+		{TEMPLATES_REDIS, knfv.Set, nil},
+		{TEMPLATES_SENTINEL, knfv.Set, nil},
 		{TEMPLATES_REDIS, knff.Perms, "DRX"},
 		{TEMPLATES_SENTINEL, knff.Perms, "DRX"},
 
 		// PATHS //
 
-		{PATH_META_DIR, knfv.Empty, nil},
-		{PATH_CONFIG_DIR, knfv.Empty, nil},
-		{PATH_DATA_DIR, knfv.Empty, nil},
-		{PATH_PID_DIR, knfv.Empty, nil},
-		{PATH_LOG_DIR, knfv.Empty, nil},
+		{PATH_META_DIR, knfv.Set, nil},
+		{PATH_CONFIG_DIR, knfv.Set, nil},
+		{PATH_DATA_DIR, knfv.Set, nil},
+		{PATH_PID_DIR, knfv.Set, nil},
+		{PATH_LOG_DIR, knfv.Set, nil},
 		{PATH_META_DIR, knff.Perms, "DRX"},
 		{PATH_CONFIG_DIR, knff.Perms, "DRX"},
 		{PATH_DATA_DIR, knff.Perms, "DRX"},
 		{PATH_PID_DIR, knff.Perms, "DRX"},
 		{PATH_LOG_DIR, knff.Perms, "DRX"},
-		{PATH_PID_DIR, knff.Owner, Config.GetS(REDIS_USER)},
+		{PATH_PID_DIR, knff.Owner, Config.GetS(REDIS_USER, "redis")},
 
 		// LOG //
 
-		{LOG_LEVEL, knfv.NotContains, []string{
+		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, []string{
 			"", "debug", "info", "warn", "error", "crit",
 		}},
 	}
@@ -2660,19 +2662,19 @@ func validateConfig(c *knf.Config) []error {
 	if c.GetS(REPLICATION_ROLE) != "" {
 		validators = append(validators,
 			&knf.Validator{REPLICATION_MASTER_IP, knfn.IP, nil},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Empty, nil},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Less, MIN_PORT},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Greater, MAX_PORT},
-			&knf.Validator{REPLICATION_AUTH_TOKEN, knfv.NotLen, TOKEN_LENGTH},
-			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MIN_SYNC_WAIT},
-			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MAX_SYNC_WAIT},
-			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.NotContains, []string{
+			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Set, nil},
+			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Greater, MIN_PORT},
+			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Less, MAX_PORT},
+			&knf.Validator{REPLICATION_AUTH_TOKEN, knfv.LenEquals, TOKEN_LENGTH},
+			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MIN_SYNC_WAIT},
+			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MAX_SYNC_WAIT},
+			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.SetToAny, []string{
 				string(FAILOVER_METHOD_STANDBY), string(FAILOVER_METHOD_SENTINEL),
 			}},
-			&knf.Validator{REPLICATION_DEFAULT_ROLE, knfv.NotContains, []string{
+			&knf.Validator{REPLICATION_DEFAULT_ROLE, knfv.SetToAny, []string{
 				string(REPL_TYPE_STANDBY), string(REPL_TYPE_REPLICA),
 			}},
-			&knf.Validator{REPLICATION_ROLE, knfv.NotContains, []string{
+			&knf.Validator{REPLICATION_ROLE, knfv.SetToAny, []string{
 				"", ROLE_MASTER, ROLE_MINION, ROLE_SENTINEL,
 			}},
 		)

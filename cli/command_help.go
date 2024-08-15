@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fmtutil"
-	"github.com/essentialkaos/ek/v12/options"
-	"github.com/essentialkaos/ek/v12/pager"
-	"github.com/essentialkaos/ek/v12/terminal"
+	"github.com/essentialkaos/ek/v13/fmtc"
+	"github.com/essentialkaos/ek/v13/fmtutil"
+	"github.com/essentialkaos/ek/v13/options"
+	"github.com/essentialkaos/ek/v13/pager"
+	"github.com/essentialkaos/ek/v13/terminal"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -115,6 +115,7 @@ func HelpCommand(args CommandArgs) int {
 		COMMAND_TOP_DUMP:             helpCommandTopDump,
 		COMMAND_TRACK:                helpCommandTrack,
 		COMMAND_VALIDATE_TEMPLATES:   helpCommandValidateTemplates,
+		COMMAND_UPTIME:               helpCommandUptime,
 	}
 
 	helpFunc, hasInfo := commandList[commandName]
@@ -1011,6 +1012,17 @@ func helpCommandValidateTemplates() {
 	}.render()
 }
 
+// helpCommandUptime prints info about "uptime" command usage
+func helpCommandUptime() {
+	helpInfo{
+		command: COMMAND_UPTIME,
+		desc:    "Show information about instances uptime and the last save date.",
+		examples: []helpInfoExample{
+			{"", "", "Show uptime information"},
+		},
+	}.render()
+}
+
 // helpCommandBackupCreate prints info about "backup-create" command usage
 func helpCommandBackupCreate() {
 	helpInfo{
@@ -1110,8 +1122,10 @@ func (i helpInfo) render() {
 func (i helpInfo) renderUsage() {
 	fmtc.Println("{*}Usage{!}\n")
 
+	fmtc.NameColor("app", colorTagApp)
+
 	if len(i.arguments) == 0 {
-		fmtc.Printf("  rds %s\n\n", i.command)
+		fmtc.Printf("  {?app}rds{!} {y}%s{!}\n\n", i.command)
 		return
 	}
 
@@ -1121,7 +1135,7 @@ func (i helpInfo) renderUsage() {
 		arguments = append(arguments, cmdArg.name)
 	}
 
-	fmtc.Printf("  rds {y}%s{!} {#45}%s{!}\n\n", i.command, strings.Join(arguments, " "))
+	fmtc.Printf("  {?app}rds{!} {y}%s{!} {#45}%s{!}\n\n", i.command, strings.Join(arguments, " "))
 }
 
 // renderDescription render description

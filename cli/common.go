@@ -16,16 +16,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fmtutil/panel"
-	"github.com/essentialkaos/ek/v12/fmtutil/table"
-	"github.com/essentialkaos/ek/v12/fsutil"
-	"github.com/essentialkaos/ek/v12/strutil"
-	"github.com/essentialkaos/ek/v12/system"
-	"github.com/essentialkaos/ek/v12/terminal"
-	"github.com/essentialkaos/ek/v12/terminal/input"
-	"github.com/essentialkaos/ek/v12/timeutil"
-	"github.com/essentialkaos/ek/v12/version"
+	"github.com/essentialkaos/ek/v13/fmtc"
+	"github.com/essentialkaos/ek/v13/fmtutil/panel"
+	"github.com/essentialkaos/ek/v13/fmtutil/table"
+	"github.com/essentialkaos/ek/v13/fsutil"
+	"github.com/essentialkaos/ek/v13/strutil"
+	"github.com/essentialkaos/ek/v13/system"
+	"github.com/essentialkaos/ek/v13/terminal"
+	"github.com/essentialkaos/ek/v13/terminal/input"
+	"github.com/essentialkaos/ek/v13/timeutil"
+	"github.com/essentialkaos/ek/v13/version"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -300,7 +300,7 @@ func getInstanceIDWithColor(id int, state CORE.State) string {
 // getInstanceOwnerWithColor returns owner name with color tags
 func getInstanceOwnerWithColor(meta *CORE.InstanceMeta, before bool) string {
 	if meta == nil {
-		return "{s-}unknown{!}"
+		return "{s-}??????{!}"
 	}
 
 	owner := meta.Auth.User
@@ -339,7 +339,7 @@ func isInstanceOwnerExist(owner string) bool {
 // getInstanceDescWithTags returns instance description with rendered tags
 func getInstanceDescWithTags(meta *CORE.InstanceMeta, isWorks bool, highlights []string) string {
 	if meta == nil {
-		return "{s-}UNKNOWN{!}"
+		return "{s-}—{!}"
 	}
 
 	desc := meta.Desc
@@ -705,4 +705,31 @@ func applyHighlights(data string, highlights []string) string {
 	}
 
 	return data
+}
+
+// getInstanceDataInfo returns info about instance data (RDB/AOF)
+func getInstanceDataInfo(id int) (int64, time.Time, error) {
+	var err error
+	var size int64
+	var modTime time.Time
+
+	dumpFile := CORE.GetInstanceRDBPath(id)
+
+	if fsutil.IsExist(dumpFile) {
+		size = fsutil.GetSize(dumpFile)
+		modTime, err = fsutil.GetMTime(dumpFile)
+	} else {
+		aofFile := CORE.GetInstanceAOFPath(id)
+
+		if fsutil.IsExist(aofFile) {
+			size = fsutil.GetSize(dumpFile)
+			modTime, err = fsutil.GetMTime(aofFile)
+		}
+	}
+
+	if err != nil {
+		return size, modTime, fmt.Errorf("Can't check data modification date: %w", err)
+	}
+
+	return size, modTime, nil
 }

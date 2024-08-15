@@ -10,7 +10,7 @@ package client
 import (
 	"fmt"
 
-	"github.com/essentialkaos/ek/v12/req"
+	"github.com/essentialkaos/ek/v13/req"
 
 	API "github.com/essentialkaos/rds/api"
 	CORE "github.com/essentialkaos/rds/core"

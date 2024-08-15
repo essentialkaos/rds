@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.10.5
+Version:        1.11.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -21,7 +21,7 @@ Source0:        https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  golang >= 1.21
+BuildRequires:  golang >= 1.22
 
 Requires:       tuned
 
@@ -36,7 +36,7 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.3.8
+Version:   1.4.0
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -189,6 +189,13 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Thu Jul 11 2024 Anton Novojilov <andy@essentialkaos.com> - 1.11.0-0
+- [cli] Added 'uptime' command
+- [cli] Improved output of 'stats-command' command
+- [cli] Improved output of 'help' command
+- Package ek updated to v13
+- Code refactoring
+
 * Wed May 08 2024 Anton Novojilov <andy@essentialkaos.com> - 1.10.5-0
 - Dependencies update
 

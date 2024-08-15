@@ -10,8 +10,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/essentialkaos/ek/v12/fmtc"
-	"github.com/essentialkaos/ek/v12/fmtutil"
+	"github.com/essentialkaos/ek/v13/fmtc"
+	"github.com/essentialkaos/ek/v13/fmtutil"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
