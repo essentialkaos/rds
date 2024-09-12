@@ -16,6 +16,7 @@ import (
 
 	"github.com/essentialkaos/ek/v13/fsutil"
 	"github.com/essentialkaos/ek/v13/system"
+	"github.com/essentialkaos/ek/v13/system/sysctl"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -45,24 +46,6 @@ func getTHPStatus() (bool, bool, error) {
 	return thpEnabled, thpDefrag, nil
 }
 
-// getSysctlSetting read setting value from sysctl
-func getSysctlSetting(key string) (int, error) {
-	cmd := exec.Command("sysctl", "-n", key)
-	output, err := cmd.Output()
-
-	if err != nil {
-		return -1, fmt.Errorf("Error while sysctl execution: %v", err)
-	}
-
-	value, err := strconv.Atoi(strings.Trim(string(output), "\n\r"))
-
-	if err != nil {
-		return -1, fmt.Errorf("Can't parse sysctl output: %v", err)
-	}
-
-	return value, nil
-}
-
 // isSystemHasTHPIssues returns true if system has problems with THP
 func isSystemHasTHPIssues() (bool, error) {
 	thpEnabled, thpDefrag, err := getTHPStatus()
@@ -76,13 +59,13 @@ func isSystemHasTHPIssues() (bool, error) {
 
 // isSystemHasKernelIssues returns true if system has problems with kernel configuration
 func isSystemHasKernelIssues() (bool, error) {
-	overcommitMem, err := getSysctlSetting("vm.overcommit_memory")
+	overcommitMem, err := sysctl.GetI("vm.overcommit_memory")
 
 	if err != nil {
 		return false, err
 	}
 
-	somaxconn, err := getSysctlSetting("net.core.somaxconn")
+	somaxconn, err := sysctl.GetI("net.core.somaxconn")
 
 	if err != nil {
 		return false, err
