@@ -468,10 +468,10 @@ var redisVersion version.Version
 
 // supportedVersions is map with supported Redis versions
 var supportedVersions = map[string]bool{
-	"6.0": true,
 	"6.2": true,
 	"7.0": true,
 	"7.2": true,
+	"7.4": true,
 }
 
 // tagRegex is regex pattern for tag validation
