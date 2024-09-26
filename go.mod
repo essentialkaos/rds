@@ -4,7 +4,7 @@ go 1.22.7
 
 require (
 	github.com/essentialkaos/ek/v13 v13.5.1
-	github.com/essentialkaos/go-linenoise/v3 v3.6.0
+	github.com/essentialkaos/go-linenoise/v3 v3.6.1
 	github.com/essentialkaos/redy/v4 v4.4.0
 )
 
