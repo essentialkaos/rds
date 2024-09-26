@@ -9,13 +9,13 @@ package cli
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/essentialkaos/ek/v13/fmtutil/table"
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/pager"
-	"github.com/essentialkaos/ek/v13/sliceutil"
 	"github.com/essentialkaos/ek/v13/terminal"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -103,7 +103,7 @@ func printConfInfo(fileConfig *REDIS.Config, diff []REDIS.ConfigPropDiff, filter
 	t := table.NewTable("NAME", "VALUE")
 
 	for _, prop := range fileConfig.Props {
-		if !options.GetB(OPT_PRIVATE) && sliceutil.Contains(FilteredProps, prop) {
+		if !options.GetB(OPT_PRIVATE) && slices.Contains(FilteredProps, prop) {
 			continue
 		}
 
