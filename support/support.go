@@ -12,8 +12,10 @@ import (
 
 	"github.com/essentialkaos/ek/v13/support"
 	"github.com/essentialkaos/ek/v13/support/deps"
+	"github.com/essentialkaos/ek/v13/support/kernel"
 	"github.com/essentialkaos/ek/v13/support/network"
 	"github.com/essentialkaos/ek/v13/support/pkgs"
+	"github.com/essentialkaos/ek/v13/support/resources"
 
 	CORE "github.com/essentialkaos/rds/core"
 )
@@ -26,15 +28,22 @@ func Print(app, ver, gitRev string, gomod []byte) {
 	support.Collect(app, ver).
 		WithRevision(gitRev).
 		WithDeps(deps.Extract(gomod)).
-		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72")).
-		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli")).
+		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72,redis74")).
+		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli,redis74-cli")).
 		WithPackages(pkgs.Collect("rds", "rds-sync", "systemd", "tuned")).
 		WithChecks(checkSystem()...).
 		WithChecks(checkSyncDaemon()).
 		WithChecks(checkKeepalived()).
 		WithApps(getRedisVersion()).
 		WithNetwork(network.Collect()).
-		Print()
+		WithResources(resources.Collect()).
+		WithKernel(kernel.Collect(
+			"vm.swappiness",
+			"vm.overcommit_memory",
+			"net.core.somaxconn",
+			"vm.nr_hugepages",
+			"vm.nr_overcommit_hugepages",
+		)).Print()
 }
 
 // checkKeepalived checks status of keepalived
