@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 
 	"github.com/essentialkaos/ek/v13/fmtc"
 	"github.com/essentialkaos/ek/v13/fmtutil"
@@ -21,7 +22,6 @@ import (
 	"github.com/essentialkaos/ek/v13/pager"
 	"github.com/essentialkaos/ek/v13/passwd"
 	"github.com/essentialkaos/ek/v13/req"
-	"github.com/essentialkaos/ek/v13/sliceutil"
 	"github.com/essentialkaos/ek/v13/spellcheck"
 	"github.com/essentialkaos/ek/v13/spinner"
 	"github.com/essentialkaos/ek/v13/strutil"
@@ -620,7 +620,7 @@ func runCommand(args options.Arguments) {
 	}
 
 	if !CORE.HasSUAuth() && !CORE.IsMinion() {
-		if !sliceutil.Contains(safeCommands, cmd) {
+		if !slices.Contains(safeCommands, cmd) {
 			fmtc.Println("\nBefore usage you must execute {*}rds go{!} command.\n")
 			return
 		}
@@ -641,7 +641,7 @@ for {*_}ANY{!} command.
 		)
 	}
 
-	if CORE.IsMinion() && sliceutil.Contains(dangerousCommands, cmd) {
+	if CORE.IsMinion() && slices.Contains(dangerousCommands, cmd) {
 		fmtc.NewLine()
 		panel.Warn("Executing commands on a minion node",
 			`Note that you are running a dangerous command on a {*c}minion{!} node. You must do so
