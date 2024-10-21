@@ -11,7 +11,6 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -27,7 +26,7 @@ import (
 	"time"
 
 	"github.com/essentialkaos/ek/v13/env"
-	"github.com/essentialkaos/ek/v13/errutil"
+	"github.com/essentialkaos/ek/v13/errors"
 	"github.com/essentialkaos/ek/v13/fsutil"
 	"github.com/essentialkaos/ek/v13/initsystem"
 	"github.com/essentialkaos/ek/v13/jsonutil"
@@ -687,7 +686,7 @@ func ReadSUAuth() (*SuperuserAuth, error) {
 
 // ValidateTemplates validates templates for Redis and Sentinel
 func ValidateTemplates() []error {
-	var errs errutil.Errors
+	var errs errors.Bundle
 
 	meta, err := NewInstanceMeta("test", "test")
 
@@ -1082,17 +1081,17 @@ func RegenerateInstanceConfig(id int) error {
 		return err
 	}
 
-	errs := errutil.NewErrors()
-
-	errs.Add(os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID))
+	errs := errors.NewBundle().Add(
+		os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID),
+		os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID),
+		os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID),
+	)
 
 	if fsutil.IsExist(GetInstanceLogFilePath(id)) {
 		errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
 	}
 
-	if errs.HasErrors() {
+	if !errs.IsEmpty() {
 		return errs.Last()
 	}
 
@@ -2726,14 +2725,12 @@ func createInstanceData(meta *InstanceMeta) error {
 		return err
 	}
 
-	errs := errutil.NewErrors()
-
-	errs.Add(os.Chown(logDir, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(dataDir, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(logFile, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(confFile, redisUser.UID, redisUser.GID))
-
-	return errs.Last()
+	return errors.NewBundle().Add(
+		os.Chown(logDir, redisUser.UID, redisUser.GID),
+		os.Chown(dataDir, redisUser.UID, redisUser.GID),
+		os.Chown(logFile, redisUser.UID, redisUser.GID),
+		os.Chown(confFile, redisUser.UID, redisUser.GID),
+	).Last()
 }
 
 // saveInstanceMeta save meta data to file
@@ -3090,12 +3087,10 @@ func generateSentinelConfig() error {
 		}
 	}
 
-	errs := errutil.NewErrors()
-
-	errs.Add(os.Chown(sentinelConfig, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(sentinelLogFile, redisUser.UID, redisUser.GID))
-
-	return errs.Last()
+	return errors.NewBundle().Add(
+		os.Chown(sentinelConfig, redisUser.UID, redisUser.GID),
+		os.Chown(sentinelLogFile, redisUser.UID, redisUser.GID),
+	).Last()
 }
 
 // getConfigTemplateData reads configuration data from template
