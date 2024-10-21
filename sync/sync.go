@@ -12,7 +12,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/essentialkaos/ek/v13/errutil"
+	"github.com/essentialkaos/ek/v13/errors"
 	"github.com/essentialkaos/ek/v13/fmtc"
 	"github.com/essentialkaos/ek/v13/log"
 	"github.com/essentialkaos/ek/v13/netutil"
@@ -112,7 +112,7 @@ func Init(gitRev string, gomod []byte) {
 
 	setupLogger()
 
-	err := errutil.Chain(
+	err := errors.Chain(
 		setupReqEngine,
 		validateConfig,
 		checkVirtualIP,
@@ -166,7 +166,7 @@ func parseOptions() {
 	}
 
 	terminal.Error("Options parsing errors:")
-	terminal.Error(errs.String())
+	terminal.Error(errs.Error("- "))
 
 	os.Exit(EC_ERROR)
 }
