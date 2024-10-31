@@ -85,11 +85,9 @@ func RestoreStateCommand(args CommandArgs) int {
 		fmtc.Sprintf("Do you want to restore states from file %s?", statesFile), "N",
 	)
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	statesInfo, err := CORE.ReadStates(statesFile)
 
@@ -183,11 +181,9 @@ func checkForRestoreState(args CommandArgs) int {
 
 	ok, err := input.ReadAnswer("Do you want to restore state for all instances?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	return EC_OK
 }

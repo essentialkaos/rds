@@ -184,7 +184,7 @@ func GoCommand(args CommandArgs) int {
 			}
 		} else {
 			fmtc.Printf(
-				"\n{s}Anyway, you can find system configuration guide at\n{_}%s{!}\n",
+				"{s}Anyway, you can find system configuration guide at\n{_}%s{!}\n",
 				_GUIDE_TUNING_URL,
 			)
 		}
@@ -218,7 +218,7 @@ func GoCommand(args CommandArgs) int {
 			fmtc.Printf("{s}More information can be found at {_}%s{!}\n", _GUIDE_SYNCING_URL)
 		} else {
 			fmtc.Printf(
-				"\n{s}Anyway, you can find syncing configuration guide at\n{_}%s{!}\n",
+				"{s}Anyway, you can find syncing configuration guide at\n{_}%s{!}\n",
 				_GUIDE_SYNCING_URL,
 			)
 		}

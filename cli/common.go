@@ -500,11 +500,9 @@ func warnAboutUnsafeAction(id int, message string) bool {
 
 	ok, err := input.ReadAnswer(message, "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return false
 	}
-
-	fmtc.NewLine()
 
 	return true
 }
@@ -530,11 +528,9 @@ func isEnoughMemoryToCreate() bool {
 
 	ok, err := input.ReadAnswer("Do you want to create new instances?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return false
 	}
-
-	fmtc.NewLine()
 
 	return true
 }
@@ -577,11 +573,9 @@ func isSystemConfigured() bool {
 
 	ok, err := input.ReadAnswer("Do you want to proceed (it highly unrecommended)?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return false
 	}
-
-	fmtc.NewLine()
 
 	return true
 }
@@ -609,11 +603,9 @@ func checkVirtualIP() bool {
 
 	ok, err := input.ReadAnswer("Do you want to proceed (it highly unrecommended)?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return false
 	}
-
-	fmtc.NewLine()
 
 	return true
 }

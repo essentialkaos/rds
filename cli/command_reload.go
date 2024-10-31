@@ -92,7 +92,7 @@ func reloadInstanceConfig(id int) int {
 		"Do you want to reload configuration for this instance?", "N",
 	)
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
 
@@ -102,8 +102,6 @@ func reloadInstanceConfig(id int) int {
 		terminal.Error(err)
 		return EC_ERROR
 	}
-
-	fmtc.NewLine()
 
 	if isDiffContainsReplicationProp(diff) {
 		panel.Warn("Replication settings is changed",
@@ -128,11 +126,9 @@ Use {*}REPLICAOF{!} or {*}SLAVEOF{!} commands for changing replication settings.
 		"Do you want to apply this settings?", "N",
 	)
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	errs := CORE.ReloadInstanceConfig(id)
 
@@ -157,11 +153,9 @@ func reloadAllConfigs() int {
 
 	ok, err := input.ReadAnswer("Do you want to reload configurations for all instances?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	instances, err := CORE.GetInstanceIDListByState(CORE.INSTANCE_STATE_WORKS)
 

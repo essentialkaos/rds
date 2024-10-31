@@ -57,11 +57,9 @@ func StopAllCommand(args CommandArgs) int {
 
 		ok, err := input.ReadAnswer("Do you want to stop all instances?", "N")
 
-		if !ok || err != nil {
+		if err != nil || !ok {
 			return EC_ERROR
 		}
-
-		fmtc.NewLine()
 	}
 
 	if isSomeConfigUpdated(idList) {
@@ -72,11 +70,9 @@ func StopAllCommand(args CommandArgs) int {
 
 		ok, err := input.ReadAnswer("Do you want to stop all instances?", "N")
 
-		if !ok || err != nil {
+		if err != nil || !ok {
 			return EC_ERROR
 		}
-
-		fmtc.NewLine()
 	}
 
 	return stopAllInstances(idList)

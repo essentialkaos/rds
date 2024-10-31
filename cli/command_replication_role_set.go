@@ -101,8 +101,6 @@ func ReplicationRoleSetCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	fmtc.NewLine()
-
 	var ec int
 
 	if CORE.IsMaster() {

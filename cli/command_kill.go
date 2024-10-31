@@ -63,11 +63,9 @@ func KillCommand(args CommandArgs) int {
 
 	ok, err := input.ReadAnswer("Do you want to kill this instance?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	spinner.Show("Killing instance {*}%d{!}", id)
 	err = CORE.KillInstance(id)
