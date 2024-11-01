@@ -167,13 +167,12 @@ func BackupRestoreCommand(args CommandArgs) int {
 	fmtc.NewLine()
 
 	for {
-		selectedIndex, err := input.Read(fmt.Sprintf("Enter index of snapshot to restore (1-%d)", numBackups), true)
+		inputTitle := fmt.Sprintf("Enter index of snapshot to restore (1-%d)", numBackups)
+		selectedIndex, err := input.Read(inputTitle, input.NotEmpty, input.IsNumber)
 
 		if err != nil {
 			return EC_OK
 		}
-
-		fmtc.NewLine()
 
 		index, err = strconv.Atoi(selectedIndex)
 
@@ -242,13 +241,11 @@ func BackupCleanCommand(args CommandArgs) int {
 
 	fmtc.NewLine()
 
-	ok, _ := input.ReadAnswer("Delete all these snapshots?", "N")
+	ok, err := input.ReadAnswer("Delete all these snapshots?", "N")
 
-	if !ok {
+	if err != nil || !ok {
 		return EC_OK
 	}
-
-	fmtc.NewLine()
 
 	spinner.Show("Removing instance backups {s}(%d){!}", numBackups)
 

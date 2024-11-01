@@ -46,7 +46,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.11.1"
+	VER  = "1.11.2"
 	DESC = "Tool for Redis orchestration"
 )
 
@@ -342,6 +342,7 @@ func configureUI() {
 	}
 
 	input.TitleColorTag = "{s}"
+	input.NewLine = true
 
 	if !options.GetB(OPT_SIMPLE) && !prefs.SimpleUI {
 		input.Prompt = "{s}›{!} "
@@ -752,11 +753,9 @@ func authenticate(auth AuthFlag, strict bool, instanceID string) (bool, error) {
 		message = "Please enter instance password or superuser password"
 	}
 
-	password, err = input.ReadPassword(message, true)
+	password, err = input.ReadPassword(message, input.NotEmpty)
 
-	fmtc.NewLine()
-
-	if err == input.ErrKillSignal {
+	if err != nil {
 		CORE.Shutdown(EC_OK)
 	}
 

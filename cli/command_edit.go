@@ -11,8 +11,6 @@ import (
 	"fmt"
 
 	"github.com/essentialkaos/ek/v13/fmtc"
-	"github.com/essentialkaos/ek/v13/sliceutil"
-	"github.com/essentialkaos/ek/v13/system"
 	"github.com/essentialkaos/ek/v13/terminal"
 	"github.com/essentialkaos/ek/v13/terminal/input"
 
@@ -57,7 +55,7 @@ func EditCommand(args CommandArgs) int {
 		"Do you want to modify meta for this instance?", "Y",
 	)
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
 
@@ -67,8 +65,6 @@ func EditCommand(args CommandArgs) int {
 		terminal.Error(err)
 		return EC_ERROR
 	}
-
-	fmtc.NewLine()
 
 	info, err := readEditInfo(true, true, true, true)
 
@@ -150,75 +146,47 @@ func readEditInfo(readDesc, readPass, readOwner, readReplType bool) (*instanceBa
 	info := &instanceBasicInfo{}
 
 	if readDesc {
-		info.Desc, err = input.Read("Please enter a new description (or leave blank to keep existing)", false)
+		info.Desc, err = input.Read(
+			"Please enter a new description (or leave blank to keep existing)",
+			inputValidatorDesc{},
+		)
 
 		if err != nil {
 			return nil, err
 		}
-
-		fmtc.NewLine()
 	}
 
 	if readPass {
-		for {
-			info.InstancePassword, err = input.ReadPassword("Please enter a new password (or leave blank to keep existing)", false)
+		info.InstancePassword, err = input.ReadPassword(
+			"Please enter a new password (or leave blank to keep existing)",
+			inputValidatorPassword{},
+		)
 
-			if err != nil {
-				return nil, err
-			}
-
-			if info.InstancePassword != "" && len(info.InstancePassword) < CORE.Config.GetI(CORE.MAIN_MIN_PASS_LENGTH) {
-				terminal.Error("\nPassword can't be less than %s symbols.\n", CORE.Config.GetS(CORE.MAIN_MIN_PASS_LENGTH))
-				continue
-			}
-
-			break
+		if err != nil {
+			return nil, err
 		}
-
-		fmtc.NewLine()
 	}
 
 	if readOwner {
-		for {
-			info.Owner, err = input.Read("Please enter a new owner name (or leave blank to keep existing)", false)
+		info.Owner, err = input.Read(
+			"Please enter a new owner name (or leave blank to keep existing)",
+			inputValidatorOwner{},
+		)
 
-			if err != nil {
-				return nil, err
-			}
-
-			if info.Owner == "" || system.IsUserExist(info.Owner) {
-				break
-			} else {
-				terminal.Error("\nUser %s doesn't exist on this system\n", info.Owner)
-				continue
-			}
+		if err != nil {
+			return nil, err
 		}
-
-		fmtc.NewLine()
 	}
 
 	if readReplType {
-		supportedReplTypes := []string{string(CORE.REPL_TYPE_REPLICA), string(CORE.REPL_TYPE_STANDBY)}
+		info.ReplicationType, err = input.Read(
+			"Please enter a new replication type (or leave blank to keep existing)",
+			inputValidatorRole{},
+		)
 
-		for {
-			info.ReplicationType, err = input.Read("Please enter a new replication type (or leave blank to keep existing)", false)
-
-			if err != nil {
-				return nil, err
-			}
-
-			if info.ReplicationType == "" || sliceutil.Contains(supportedReplTypes, info.ReplicationType) {
-				break
-			} else {
-				terminal.Error(
-					"\nUnsupported replication type. Only \"%s\" and \"%s\" is supported.\n",
-					CORE.REPL_TYPE_REPLICA, CORE.REPL_TYPE_STANDBY,
-				)
-				continue
-			}
+		if err != nil {
+			return nil, err
 		}
-
-		fmtc.NewLine()
 	}
 
 	return info, nil

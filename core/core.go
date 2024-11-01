@@ -11,7 +11,6 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -27,7 +26,7 @@ import (
 	"time"
 
 	"github.com/essentialkaos/ek/v13/env"
-	"github.com/essentialkaos/ek/v13/errutil"
+	"github.com/essentialkaos/ek/v13/errors"
 	"github.com/essentialkaos/ek/v13/fsutil"
 	"github.com/essentialkaos/ek/v13/initsystem"
 	"github.com/essentialkaos/ek/v13/jsonutil"
@@ -687,7 +686,7 @@ func ReadSUAuth() (*SuperuserAuth, error) {
 
 // ValidateTemplates validates templates for Redis and Sentinel
 func ValidateTemplates() []error {
-	var errs errutil.Errors
+	var errs errors.Bundle
 
 	meta, err := NewInstanceMeta("test", "test")
 
@@ -1082,17 +1081,17 @@ func RegenerateInstanceConfig(id int) error {
 		return err
 	}
 
-	errs := errutil.NewErrors()
-
-	errs.Add(os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID))
+	errs := errors.NewBundle().Add(
+		os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID),
+		os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID),
+		os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID),
+	)
 
 	if fsutil.IsExist(GetInstanceLogFilePath(id)) {
 		errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
 	}
 
-	if errs.HasErrors() {
+	if !errs.IsEmpty() {
 		return errs.Last()
 	}
 
@@ -1448,17 +1447,12 @@ func StartInstance(id int, controlLoading bool) error {
 		return fmt.Errorf("Instance with ID %d doesn't exist", id)
 	}
 
-	err := checkConfigDaemonizeOption(id)
-
-	if err != nil {
-		return err
-	}
-
-	err = runAsUser(
+	err := runAsUser(
 		Config.GetS(REDIS_USER),
 		GetInstanceLogFilePath(id),
 		Config.GetS(REDIS_BINARY),
 		GetInstanceConfigFilePath(id),
+		"--daemonize", "yes", // Always daemonize server
 	)
 
 	if err != nil {
@@ -1709,6 +1703,7 @@ func SentinelStart() []error {
 		sentinelLogFile,
 		Config.GetS(SENTINEL_BINARY),
 		sentinelConfig,
+		"--daemonize", "yes", // Always daemonize server
 	)
 
 	if err != nil {
@@ -2575,7 +2570,7 @@ func validateDependencies() []error {
 
 // validateConfig validate config values
 func validateConfig(c *knf.Config) []error {
-	validators := []*knf.Validator{
+	validators := knf.Validators{
 		{MAIN_MAX_INSTANCES, knfv.Set, nil},
 		{MAIN_WARN_USED_MEMORY, knfv.Set, nil},
 		{MAIN_MIN_PASS_LENGTH, knfv.Set, nil},
@@ -2659,26 +2654,27 @@ func validateConfig(c *knf.Config) []error {
 
 	// REPLICATION //
 
-	if c.GetS(REPLICATION_ROLE) != "" {
-		validators = append(validators,
-			&knf.Validator{REPLICATION_MASTER_IP, knfn.IP, nil},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Set, nil},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Greater, MIN_PORT},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Less, MAX_PORT},
-			&knf.Validator{REPLICATION_AUTH_TOKEN, knfv.LenEquals, TOKEN_LENGTH},
-			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MIN_SYNC_WAIT},
-			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MAX_SYNC_WAIT},
-			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.SetToAny, []string{
+	validators.AddIf(
+		c.GetS(REPLICATION_ROLE) != "",
+		knf.Validators{
+			{REPLICATION_MASTER_IP, knfn.IP, nil},
+			{REPLICATION_MASTER_PORT, knfv.Set, nil},
+			{REPLICATION_MASTER_PORT, knfv.Greater, MIN_PORT},
+			{REPLICATION_MASTER_PORT, knfv.Less, MAX_PORT},
+			{REPLICATION_AUTH_TOKEN, knfv.LenEquals, TOKEN_LENGTH},
+			{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MIN_SYNC_WAIT},
+			{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MAX_SYNC_WAIT},
+			{REPLICATION_FAILOVER_METHOD, knfv.SetToAny, []string{
 				string(FAILOVER_METHOD_STANDBY), string(FAILOVER_METHOD_SENTINEL),
 			}},
-			&knf.Validator{REPLICATION_DEFAULT_ROLE, knfv.SetToAny, []string{
+			{REPLICATION_DEFAULT_ROLE, knfv.SetToAny, []string{
 				string(REPL_TYPE_STANDBY), string(REPL_TYPE_REPLICA),
 			}},
-			&knf.Validator{REPLICATION_ROLE, knfv.SetToAny, []string{
+			{REPLICATION_ROLE, knfv.SetToAny, []string{
 				"", ROLE_MASTER, ROLE_MINION, ROLE_SENTINEL,
 			}},
-		)
-	}
+		},
+	)
 
 	return c.Validate(validators)
 }
@@ -2726,14 +2722,12 @@ func createInstanceData(meta *InstanceMeta) error {
 		return err
 	}
 
-	errs := errutil.NewErrors()
-
-	errs.Add(os.Chown(logDir, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(dataDir, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(logFile, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(confFile, redisUser.UID, redisUser.GID))
-
-	return errs.Last()
+	return errors.NewBundle().Add(
+		os.Chown(logDir, redisUser.UID, redisUser.GID),
+		os.Chown(dataDir, redisUser.UID, redisUser.GID),
+		os.Chown(logFile, redisUser.UID, redisUser.GID),
+		os.Chown(confFile, redisUser.UID, redisUser.GID),
+	).Last()
 }
 
 // saveInstanceMeta save meta data to file
@@ -3090,12 +3084,10 @@ func generateSentinelConfig() error {
 		}
 	}
 
-	errs := errutil.NewErrors()
-
-	errs.Add(os.Chown(sentinelConfig, redisUser.UID, redisUser.GID))
-	errs.Add(os.Chown(sentinelLogFile, redisUser.UID, redisUser.GID))
-
-	return errs.Last()
+	return errors.NewBundle().Add(
+		os.Chown(sentinelConfig, redisUser.UID, redisUser.GID),
+		os.Chown(sentinelLogFile, redisUser.UID, redisUser.GID),
+	).Last()
 }
 
 // getConfigTemplateData reads configuration data from template
@@ -3581,28 +3573,6 @@ func execShutdownCommand(id int) error {
 	}
 
 	ExecCommand(id, req)
-
-	return nil
-}
-
-// checkConfigDaemonizeOption returns an error if it impossible to start
-// instance due to disabled daemonizing
-func checkConfigDaemonizeOption(id int) error {
-	config, err := ReadInstanceConfig(id)
-
-	if err != nil {
-		return err
-	}
-
-	daemonizeOpt, ok := config.Data["daemonize"]
-
-	if !ok {
-		return ErrCantReadDaemonizeOption
-	}
-
-	if strings.Join(daemonizeOpt, "") != "yes" {
-		return ErrCantDaemonizeInstance
-	}
 
 	return nil
 }

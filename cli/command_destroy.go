@@ -64,11 +64,9 @@ func DestroyCommand(args CommandArgs) int {
 
 	ok, err := input.ReadAnswer("Do you want to destroy this instance?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	err = CORE.DestroyInstance(id)
 

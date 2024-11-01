@@ -150,7 +150,7 @@ func RunRedisCli(cfg *Config) error {
 			resp = client.Cmd(cmd[0], convertCommandSlice(cmd[1:]))
 		}
 
-		fmt.Printf("\n" + formatResp(resp, false) + "\n")
+		fmt.Print("\n" + formatResp(resp, false) + "\n")
 
 		if cmd[0] == "SELECT" && !resp.HasType(redy.ERR) {
 			// Ignore error because redis return ok response

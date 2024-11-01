@@ -48,11 +48,9 @@ func BatchEditCommand(args CommandArgs) int {
 		), "Y",
 	)
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	info, err := readEditInfo(false, true, true, true)
 

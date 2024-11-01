@@ -507,7 +507,7 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, knf.Second)
+	maxSyncWait := CORE.Config.GetD(CORE.REPLICATION_MAX_SYNC_WAIT, knf.SECOND)
 	maxInitTimeDur := maxSyncWait * time.Duration(len(fetchResponse.Instances))
 	deadline := time.Now().Add(maxInitTimeDur)
 

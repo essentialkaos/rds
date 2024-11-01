@@ -54,11 +54,9 @@ func RestartAllCommand(args CommandArgs) int {
 
 		ok, err := input.ReadAnswer("Do you want to restart all instances?", "N")
 
-		if !ok || err != nil {
+		if err != nil || !ok {
 			return EC_ERROR
 		}
-
-		fmtc.NewLine()
 	}
 
 	if isSomeConfigUpdated(idList) {
@@ -69,11 +67,9 @@ func RestartAllCommand(args CommandArgs) int {
 
 		ok, err := input.ReadAnswer("Do you want to restart all instances?", "N")
 
-		if !ok || err != nil {
+		if err != nil || !ok {
 			return EC_ERROR
 		}
-
-		fmtc.NewLine()
 	}
 
 	log.Info("(%s) Initiated the restarting of all working instances", CORE.User.RealName)

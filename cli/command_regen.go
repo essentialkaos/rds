@@ -73,11 +73,9 @@ func regenerateInstanceConfig(id int) int {
 		"Do you want to regenerate configuration file for this instance?", "N",
 	)
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	meta, err := CORE.GetInstanceMeta(id)
 
@@ -107,11 +105,9 @@ func regenerateInstanceConfig(id int) int {
 func regenerateAllConfigs() int {
 	ok, err := input.ReadAnswer("Do you want to regenerate configuration files for all instances?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	for _, id := range CORE.GetInstanceIDList() {
 		meta, err := CORE.GetInstanceMeta(id)

@@ -146,11 +146,9 @@ func checkForStartAll() int {
 
 	ok, err := input.ReadAnswer("Do you really want to start ALL instances?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	terminal.Warn("If you have disabled data saving for instances on the master node and instances dump data")
 	terminal.Warn("only on minions, it can cause FULL DATA LOSS. Please check it before proceeding.\n")
@@ -160,11 +158,9 @@ func checkForStartAll() int {
 
 	ok, err = input.ReadAnswer("Do you want to start all instances?", "N")
 
-	if !ok || err != nil {
+	if err != nil || !ok {
 		return EC_CANCEL
 	}
-
-	fmtc.NewLine()
 
 	return EC_OK
 }
