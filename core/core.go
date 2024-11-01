@@ -2570,7 +2570,7 @@ func validateDependencies() []error {
 
 // validateConfig validate config values
 func validateConfig(c *knf.Config) []error {
-	validators := []*knf.Validator{
+	validators := knf.Validators{
 		{MAIN_MAX_INSTANCES, knfv.Set, nil},
 		{MAIN_WARN_USED_MEMORY, knfv.Set, nil},
 		{MAIN_MIN_PASS_LENGTH, knfv.Set, nil},
@@ -2654,26 +2654,27 @@ func validateConfig(c *knf.Config) []error {
 
 	// REPLICATION //
 
-	if c.GetS(REPLICATION_ROLE) != "" {
-		validators = append(validators,
-			&knf.Validator{REPLICATION_MASTER_IP, knfn.IP, nil},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Set, nil},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Greater, MIN_PORT},
-			&knf.Validator{REPLICATION_MASTER_PORT, knfv.Less, MAX_PORT},
-			&knf.Validator{REPLICATION_AUTH_TOKEN, knfv.LenEquals, TOKEN_LENGTH},
-			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MIN_SYNC_WAIT},
-			&knf.Validator{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MAX_SYNC_WAIT},
-			&knf.Validator{REPLICATION_FAILOVER_METHOD, knfv.SetToAny, []string{
+	validators.AddIf(
+		c.GetS(REPLICATION_ROLE) != "",
+		knf.Validators{
+			{REPLICATION_MASTER_IP, knfn.IP, nil},
+			{REPLICATION_MASTER_PORT, knfv.Set, nil},
+			{REPLICATION_MASTER_PORT, knfv.Greater, MIN_PORT},
+			{REPLICATION_MASTER_PORT, knfv.Less, MAX_PORT},
+			{REPLICATION_AUTH_TOKEN, knfv.LenEquals, TOKEN_LENGTH},
+			{REPLICATION_MAX_SYNC_WAIT, knfv.Greater, MIN_SYNC_WAIT},
+			{REPLICATION_MAX_SYNC_WAIT, knfv.Less, MAX_SYNC_WAIT},
+			{REPLICATION_FAILOVER_METHOD, knfv.SetToAny, []string{
 				string(FAILOVER_METHOD_STANDBY), string(FAILOVER_METHOD_SENTINEL),
 			}},
-			&knf.Validator{REPLICATION_DEFAULT_ROLE, knfv.SetToAny, []string{
+			{REPLICATION_DEFAULT_ROLE, knfv.SetToAny, []string{
 				string(REPL_TYPE_STANDBY), string(REPL_TYPE_REPLICA),
 			}},
-			&knf.Validator{REPLICATION_ROLE, knfv.SetToAny, []string{
+			{REPLICATION_ROLE, knfv.SetToAny, []string{
 				"", ROLE_MASTER, ROLE_MINION, ROLE_SENTINEL,
 			}},
-		)
-	}
+		},
+	)
 
 	return c.Validate(validators)
 }

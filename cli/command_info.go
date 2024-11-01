@@ -10,6 +10,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -21,7 +22,6 @@ import (
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/pager"
 	"github.com/essentialkaos/ek/v13/pluralize"
-	"github.com/essentialkaos/ek/v13/sliceutil"
 	"github.com/essentialkaos/ek/v13/spellcheck"
 	"github.com/essentialkaos/ek/v13/strutil"
 	"github.com/essentialkaos/ek/v13/terminal"
@@ -378,11 +378,11 @@ func convertInfoValueType(value string) any {
 // isInfoSectionRequired return true if sections list contains given section or if
 // sections list is empty
 func isInfoSectionRequired(sections []string, section string) bool {
-	if len(sections) == 0 || sliceutil.Contains(sections, "all") {
+	if len(sections) == 0 || slices.Contains(sections, "all") {
 		return true
 	}
 
-	return sliceutil.Contains(sections, section)
+	return slices.Contains(sections, section)
 }
 
 // formatLastSaveDate format time since last save

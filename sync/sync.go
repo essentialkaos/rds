@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 
 	"github.com/essentialkaos/ek/v13/errors"
 	"github.com/essentialkaos/ek/v13/fmtc"
@@ -19,7 +20,6 @@ import (
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/req"
 	"github.com/essentialkaos/ek/v13/signal"
-	"github.com/essentialkaos/ek/v13/sliceutil"
 	"github.com/essentialkaos/ek/v13/system/procname"
 	"github.com/essentialkaos/ek/v13/terminal"
 	"github.com/essentialkaos/ek/v13/terminal/tty"
@@ -286,7 +286,7 @@ func validateConfig() error {
 
 		masterIP := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
 
-		if !sliceutil.Contains(ips, masterIP) {
+		if !slices.Contains(ips, masterIP) {
 			if !CORE.Config.GetB(CORE.MAIN_DISABLE_IP_CHECK) {
 				return fmt.Errorf("Configuration error: The system has no interface with IP %s", masterIP)
 			} else {

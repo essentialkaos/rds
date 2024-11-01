@@ -10,6 +10,7 @@ package redis
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -141,7 +142,7 @@ func GetConfigsDiff(fileConfig, memConfig *Config) []ConfigPropDiff {
 
 	props := append(memConfig.Props, fileConfig.Props...)
 	sort.Strings(props)
-	props = sliceutil.Deduplicate(props)
+	props = slices.Compact(props)
 
 	for _, prop := range props {
 		fp, mp := fileConfig.Get(prop), memConfig.Get(prop)
@@ -156,7 +157,7 @@ func GetConfigsDiff(fileConfig, memConfig *Config) []ConfigPropDiff {
 			}
 		}
 
-		if sliceutil.Contains(filteredProps, prop) {
+		if slices.Contains(filteredProps, prop) {
 			continue
 		}
 
