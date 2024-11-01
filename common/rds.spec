@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.11.1
+Version:        1.11.2
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -36,7 +36,7 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.4.1
+Version:   1.4.2
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -189,6 +189,11 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Fri Nov 01 2024 Anton Novojilov <andy@essentialkaos.com> - 1.11.2-0
+- [cli|sync] Fixed bug with daemonizing Redis server
+- Dependencies update
+- Code refactoring
+
 * Thu Sep 26 2024 Anton Novojilov <andy@essentialkaos.com> - 1.11.1-0
 - Collect more data for verbose version info
 - Dependencies update

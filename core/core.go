@@ -1447,17 +1447,12 @@ func StartInstance(id int, controlLoading bool) error {
 		return fmt.Errorf("Instance with ID %d doesn't exist", id)
 	}
 
-	err := checkConfigDaemonizeOption(id)
-
-	if err != nil {
-		return err
-	}
-
-	err = runAsUser(
+	err := runAsUser(
 		Config.GetS(REDIS_USER),
 		GetInstanceLogFilePath(id),
 		Config.GetS(REDIS_BINARY),
 		GetInstanceConfigFilePath(id),
+		"--daemonize", "yes", // Always daemonize server
 	)
 
 	if err != nil {
@@ -1708,6 +1703,7 @@ func SentinelStart() []error {
 		sentinelLogFile,
 		Config.GetS(SENTINEL_BINARY),
 		sentinelConfig,
+		"--daemonize", "yes", // Always daemonize server
 	)
 
 	if err != nil {
@@ -3576,28 +3572,6 @@ func execShutdownCommand(id int) error {
 	}
 
 	ExecCommand(id, req)
-
-	return nil
-}
-
-// checkConfigDaemonizeOption returns an error if it impossible to start
-// instance due to disabled daemonizing
-func checkConfigDaemonizeOption(id int) error {
-	config, err := ReadInstanceConfig(id)
-
-	if err != nil {
-		return err
-	}
-
-	daemonizeOpt, ok := config.Data["daemonize"]
-
-	if !ok {
-		return ErrCantReadDaemonizeOption
-	}
-
-	if strings.Join(daemonizeOpt, "") != "yes" {
-		return ErrCantDaemonizeInstance
-	}
 
 	return nil
 }
