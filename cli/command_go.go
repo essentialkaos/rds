@@ -148,10 +148,10 @@ const (
 func GoCommand(args CommandArgs) int {
 	generateSUAuthData()
 
-	fmtc.NameColor("app", "{c*}")
-	fmtc.NameColor("cmd", "{#110}")
-	fmtc.NameColor("cfg", "{#103}")
-	fmtc.NameColor("prop", "{#173}")
+	fmtc.AddColor("app", "{c*}")
+	fmtc.AddColor("cmd", "{#110}")
+	fmtc.AddColor("cfg", "{#103}")
+	fmtc.AddColor("prop", "{#173}")
 
 	configurationStatus, _ := CORE.GetSystemConfigurationStatus(false)
 
@@ -183,8 +183,8 @@ func GoCommand(args CommandArgs) int {
 				time.Sleep(5 * time.Second)
 			}
 		} else {
-			fmtc.Printf(
-				"{s}Anyway, you can find system configuration guide at\n{_}%s{!}\n",
+			fmtc.Printfn(
+				"{s}Anyway, you can find system configuration guide at\n{_}%s{!}",
 				_GUIDE_TUNING_URL,
 			)
 		}
@@ -215,10 +215,10 @@ func GoCommand(args CommandArgs) int {
 				guideData.String(), panel.INDENT_OUTER,
 			)
 
-			fmtc.Printf("{s}More information can be found at {_}%s{!}\n", _GUIDE_SYNCING_URL)
+			fmtc.Printfn("{s}More information can be found at {_}%s{!}", _GUIDE_SYNCING_URL)
 		} else {
-			fmtc.Printf(
-				"{s}Anyway, you can find syncing configuration guide at\n{_}%s{!}\n",
+			fmtc.Printfn(
+				"{s}Anyway, you can find syncing configuration guide at\n{_}%s{!}",
 				_GUIDE_SYNCING_URL,
 			)
 		}
@@ -253,7 +253,7 @@ func generateSUAuthData() {
 	fmtc.Println("We have generated a password for you. With this password, you can execute {*}any{!} command on {*}any{!} instance.")
 
 	fmtutil.Separator(false)
-	fmtc.Printf("  {*}Your superuser password is:{!} {c@*} %s {!}\n", password)
+	fmtc.Printfn("  {*}Your superuser password is:{!} {c@*} %s {!}", password)
 	fmtutil.Separator(false)
 
 	terminal.Warn("Warning! We don't save any passwords. Please save this password in a safe place.")

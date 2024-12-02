@@ -250,7 +250,7 @@ func renderInfoData(t *table.Table, info *REDIS.Info, sections []string) {
 		}
 
 		t.Border()
-		fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section.Header))
+		fmtc.Printfn(" ▾ {*}%s{!}", strings.ToUpper(section.Header))
 		t.Border()
 
 		for _, v := range section.Fields {

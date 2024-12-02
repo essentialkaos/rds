@@ -126,8 +126,8 @@ func TopDumpCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	fmtc.Printf(
-		"{g}Dump successfully saved as %s (%s){!}\n",
+	fmtc.Printfn(
+		"{g}Dump successfully saved as %s (%s){!}",
 		output, fmtutil.PrettySize(fsutil.GetSize(output)),
 	)
 
@@ -355,9 +355,9 @@ func printTopInfo(items topItems, resultNum int, diff bool) {
 
 		} else {
 			if items[i].IsFloat {
-				fmtc.Printf("%d %f\n", item.ID, items[i].Value)
+				fmtc.Printfn("%d %f", item.ID, items[i].Value)
 			} else {
-				fmtc.Printf("%d %.0f\n", item.ID, items[i].Value)
+				fmtc.Printfn("%d %.0f", item.ID, items[i].Value)
 			}
 		}
 

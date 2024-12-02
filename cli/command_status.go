@@ -44,7 +44,7 @@ func StatusCommand(args CommandArgs) int {
 
 	switch {
 	case state.IsStopped():
-		fmtc.Printf("Instance {*}%d{!} is {y}stopped{!}\n", id)
+		fmtc.Printfn("Instance {*}%d{!} is {y}stopped{!}", id)
 		return EC_OK
 	case state.IsDead():
 		terminal.Error("PID file for instance %d exist, but service doesn't work", id)
@@ -57,19 +57,19 @@ func StatusCommand(args CommandArgs) int {
 		if state.IsSaving() {
 			switch {
 			case info != nil && info.Get("persistence", "rdb_bgsave_in_progress") == "1":
-				fmtc.Printf(
-					"Instance {*}%d{!} is {g}works{!} and {g*}saving data{!} {s-}(started %s ago){!}\n",
+				fmtc.Printfn(
+					"Instance {*}%d{!} is {g}works{!} and {g*}saving data{!} {s-}(started %s ago){!}",
 					id, timeutil.PrettyDuration(info.GetI("persistence", "rdb_current_bgsave_time_sec")),
 				)
 
 			case info != nil && info.Get("persistence", "aof_rewrite_in_progress") == "1":
-				fmtc.Printf(
-					"Instance {*}%d{!} is {g}works{!} and {g*}saving data{!} {s-}(started %s ago){!}\n",
+				fmtc.Printfn(
+					"Instance {*}%d{!} is {g}works{!} and {g*}saving data{!} {s-}(started %s ago){!}",
 					id, timeutil.PrettyDuration(info.GetI("persistence", "aof_current_rewrite_time_sec")),
 				)
 
 			default:
-				fmtc.Printf("Instance {*}%d{!} is {g}works{!} and {g*}saving data{!}\n", id)
+				fmtc.Printfn("Instance {*}%d{!} is {g}works{!} and {g*}saving data{!}", id)
 			}
 
 			return EC_OK
@@ -77,26 +77,26 @@ func StatusCommand(args CommandArgs) int {
 
 		if state.IsLoading() {
 			if info != nil {
-				fmtc.Printf(
-					"Instance {*}%d{!} is {g}works{!} and {c}loading{!} {s-}(%s%% loaded){!}\n",
+				fmtc.Printfn(
+					"Instance {*}%d{!} is {g}works{!} and {c}loading{!} {s-}(%s%% loaded){!}",
 					id, info.Get("persistence", "loading_loaded_perc"),
 				)
 				return EC_OK
 			}
 
-			fmtc.Printf("Instance {*}%d{!} is {g}works{!} and {c}loading{!}\n", id)
+			fmtc.Printfn("Instance {*}%d{!} is {g}works{!} and {c}loading{!}", id)
 			return EC_OK
 		}
 
 		switch {
 		case state.IsHang():
-			fmtc.Printf("Instance {*}%d{!} is {m}hang{!}\n", id)
+			fmtc.Printfn("Instance {*}%d{!} is {m}hang{!}", id)
 			return EC_OK
 		case state.IsSyncing():
-			fmtc.Printf("Instance {*}%d{!} is {g}works{!} and {g_}syncing{!}\n", id)
+			fmtc.Printfn("Instance {*}%d{!} is {g}works{!} and {g_}syncing{!}", id)
 			return EC_OK
 		default:
-			fmtc.Printf("Instance {*}%d{!} is {g}works{!}\n", id)
+			fmtc.Printfn("Instance {*}%d{!} is {g}works{!}", id)
 			return EC_OK
 		}
 	}

@@ -506,29 +506,29 @@ func helpCommandList() {
 	info.renderArguments()
 
 	fmtc.Println("  Avialalbe filter values:\n")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "my", "My (owned by current user) instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "works", "Working instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "stopped", "Stopped instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "idle", "Instances with no traffic (less than 5 commands per second)")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "active", "Instances with traffic")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "dead", "Dead instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "hang", "Hang instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "syncing", "Syncing instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "saving", "Saving instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "loading", "Loading instances")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "abandoned", "Instances with no traffic for a long time (≥ week)")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "master-up", "Instances with working syncing")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "master-down", "Instances with broken syncing")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "no-replica", "Instances with no replicas")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "with-replica", "Instances with one or more replicas")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "with-errors", "Instances with errors")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "outdated", "Instances which require restart for update")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "orphan", "Instances owned by deleted users")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "standby", "Instances with standby replication")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "replica", "Instances with real replicas")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "secure", "Instances with enabled authentication")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "@{tag}", "Instances tagged by given tag")
-	fmtc.Printf("    {b}%-13s{!} %s\n", "{username}", "Instances owned by given user")
+	fmtc.Printfn("    {b}%-13s{!} %s", "my", "My (owned by current user) instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "works", "Working instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "stopped", "Stopped instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "idle", "Instances with no traffic (less than 5 commands per second)")
+	fmtc.Printfn("    {b}%-13s{!} %s", "active", "Instances with traffic")
+	fmtc.Printfn("    {b}%-13s{!} %s", "dead", "Dead instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "hang", "Hang instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "syncing", "Syncing instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "saving", "Saving instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "loading", "Loading instances")
+	fmtc.Printfn("    {b}%-13s{!} %s", "abandoned", "Instances with no traffic for a long time (≥ week)")
+	fmtc.Printfn("    {b}%-13s{!} %s", "master-up", "Instances with working syncing")
+	fmtc.Printfn("    {b}%-13s{!} %s", "master-down", "Instances with broken syncing")
+	fmtc.Printfn("    {b}%-13s{!} %s", "no-replica", "Instances with no replicas")
+	fmtc.Printfn("    {b}%-13s{!} %s", "with-replica", "Instances with one or more replicas")
+	fmtc.Printfn("    {b}%-13s{!} %s", "with-errors", "Instances with errors")
+	fmtc.Printfn("    {b}%-13s{!} %s", "outdated", "Instances which require restart for update")
+	fmtc.Printfn("    {b}%-13s{!} %s", "orphan", "Instances owned by deleted users")
+	fmtc.Printfn("    {b}%-13s{!} %s", "standby", "Instances with standby replication")
+	fmtc.Printfn("    {b}%-13s{!} %s", "replica", "Instances with real replicas")
+	fmtc.Printfn("    {b}%-13s{!} %s", "secure", "Instances with enabled authentication")
+	fmtc.Printfn("    {b}%-13s{!} %s", "@{tag}", "Instances tagged by given tag")
+	fmtc.Printfn("    {b}%-13s{!} %s", "{username}", "Instances owned by given user")
 	fmtc.NewLine()
 	fmtc.Println("  If no instances are found using the property search, rds will try to find instances using")
 	fmtc.Println("  a full-text search of instance descriptions.")
@@ -1122,10 +1122,10 @@ func (i helpInfo) render() {
 func (i helpInfo) renderUsage() {
 	fmtc.Println("{*}Usage{!}\n")
 
-	fmtc.NameColor("app", colorTagApp)
+	fmtc.AddColor("app", colorTagApp)
 
 	if len(i.arguments) == 0 {
-		fmtc.Printf("  {?app}rds{!} {y}%s{!}\n\n", i.command)
+		fmtc.Printfn("  {?app}rds{!} {y}%s{!}\n", i.command)
 		return
 	}
 
@@ -1135,7 +1135,7 @@ func (i helpInfo) renderUsage() {
 		arguments = append(arguments, cmdArg.name)
 	}
 
-	fmtc.Printf("  {?app}rds{!} {y}%s{!} {#45}%s{!}\n\n", i.command, strings.Join(arguments, " "))
+	fmtc.Printfn("  {?app}rds{!} {y}%s{!} {#45}%s{!}\n", i.command, strings.Join(arguments, " "))
 }
 
 // renderDescription render description
@@ -1180,7 +1180,7 @@ func (i helpInfo) renderOptions() {
 	fmtStr := getArgumentFormatting(i.options)
 
 	for _, option := range i.options {
-		fmtc.Printf("  {g}"+fmtStr+"{!} %s\n", option.name, option.desc)
+		fmtc.Printfn("  {g}"+fmtStr+"{!} %s", option.name, option.desc)
 	}
 
 	fmtc.NewLine()
@@ -1196,12 +1196,12 @@ func (i helpInfo) renderExamples() {
 
 	for index, example := range i.examples {
 		if example.command == "" {
-			fmtc.Printf("  rds %s\n", strings.Join([]string{i.command, example.arguments}, " "))
+			fmtc.Printfn("  rds %s", strings.Join([]string{i.command, example.arguments}, " "))
 		} else {
-			fmtc.Printf("  rds %s\n", strings.Join([]string{example.command, example.arguments}, " "))
+			fmtc.Printfn("  rds %s", strings.Join([]string{example.command, example.arguments}, " "))
 		}
 
-		fmtc.Printf("  {&}{s-}%s{!}\n", example.desc)
+		fmtc.Printfn("  {&}{s-}%s{!}", example.desc)
 
 		if index+1 != len(i.examples) {
 			fmtc.NewLine()

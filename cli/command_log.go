@@ -161,9 +161,9 @@ func printRDSLogLine(line string) {
 	}
 
 	if target != "" {
-		fmtc.Printf("{s-}%s{!} {s}%s{!} "+colorTag+"%s{!}\n", date, target, line)
+		fmtc.Printfn("{s-}%s{!} {s}%s{!} "+colorTag+"%s{!}", date, target, line)
 	} else {
-		fmtc.Printf("{s-}%s{!} "+colorTag+"%s{!}\n", date, line)
+		fmtc.Printfn("{s-}%s{!} "+colorTag+"%s{!}", date, line)
 	}
 }
 
@@ -232,8 +232,8 @@ func printRedisLogLine(line string) {
 		return
 	}
 
-	fmtc.Printf(
-		"{s-}[ %s/%s/%s %s | %s ]{!} "+colorTag+"%s{!}\n",
+	fmtc.Printfn(
+		"{s-}[ %s/%s/%s %s | %s ]{!} "+colorTag+"%s{!}",
 		year, month, day, hms, role, line[sepIndex+3:],
 	)
 }

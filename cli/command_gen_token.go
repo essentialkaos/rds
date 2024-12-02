@@ -24,7 +24,7 @@ func GenTokenCommand(args CommandArgs) int {
 
 	if !useRawOutput {
 		fmtutil.Separator(true)
-		fmtc.Printf("\n  {*}Token:{!} %s\n\n", token)
+		fmtc.Printfn("\n  {*}Token:{!} %s\n", token)
 		fmtutil.Separator(true)
 	} else {
 		fmt.Println(token)

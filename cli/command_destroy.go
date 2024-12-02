@@ -76,7 +76,7 @@ func DestroyCommand(args CommandArgs) int {
 	}
 
 	logger.Info(id, "Instance destroyed")
-	fmtc.Printf("{*}Done. Instance with ID %d successfully destroyed.{!}\n", id)
+	fmtc.Printfn("{*}Done. Instance with ID %d successfully destroyed.{!}", id)
 
 	err = SC.PropagateCommand(API.COMMAND_DESTROY, id, meta.UUID)
 

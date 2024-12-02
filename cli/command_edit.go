@@ -125,7 +125,7 @@ func EditCommand(args CommandArgs) int {
 		logger.Info(id, "Instance meta updated: %s", c)
 	}
 
-	fmtc.Printf("{g}Done. Data for instance with ID %d successfully updated.{!}\n", id)
+	fmtc.Printfn("{g}Done. Data for instance with ID %d successfully updated.{!}", id)
 
 	err = SC.PropagateCommand(API.COMMAND_EDIT, meta.ID, meta.UUID)
 

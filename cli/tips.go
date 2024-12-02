@@ -20,11 +20,11 @@ func showTip() bool {
 	protip.Probability = 0.1
 	protip.Options = append(protip.Options, panel.INDENT_OUTER)
 
-	fmtc.NameColor("exec", "{#110}")
-	fmtc.NameColor("more", "{s-}")
-	fmtc.NameColor("cmd", "{y}")
-	fmtc.NameColor("rcmd", "{#160}")
-	fmtc.NameColor("opt", "{g}")
+	fmtc.AddColor("exec", "{#110}")
+	fmtc.AddColor("more", "{s-}")
+	fmtc.AddColor("cmd", "{y}")
+	fmtc.AddColor("rcmd", "{#160}")
+	fmtc.AddColor("opt", "{g}")
 
 	protip.Add(
 		&protip.Tip{

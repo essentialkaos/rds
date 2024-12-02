@@ -111,9 +111,9 @@ func SentinelResetCommand(args CommandArgs) int {
 // SentinelStatusCommand is "sentinel-status" command handler
 func SentinelStatusCommand(args CommandArgs) int {
 	if CORE.IsSentinelActive() {
-		fmtc.Printf("Redis Sentinel is {g}works{!}\n")
+		fmtc.Printfn("Redis Sentinel is {g}works{!}")
 	} else {
-		fmtc.Printf("Redis Sentinel is {y}stopped{!}\n")
+		fmtc.Printfn("Redis Sentinel is {y}stopped{!}")
 	}
 
 	return EC_OK
@@ -172,7 +172,7 @@ func SentinelCheckCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	fmtc.Printf("{g}%s{!}\n", status)
+	fmtc.Printfn("{g}%s{!}", status)
 
 	return EC_OK
 }
@@ -214,7 +214,7 @@ func SentinelInfoCommand(args CommandArgs) int {
 	t := table.NewTable().SetSizes(23, 96)
 
 	t.Border()
-	fmtc.Printf("{*} %s{!}\n", "Master")
+	fmtc.Printfn("{*} %s{!}", "Master")
 	t.Border()
 
 	for _, item := range info.Master {
@@ -225,7 +225,7 @@ func SentinelInfoCommand(args CommandArgs) int {
 
 	if replicasCount != 0 {
 		t.Border()
-		fmtc.Printf("{*} %s{!} {s}(%d){!}\n", "Replicas", replicasCount)
+		fmtc.Printfn("{*} %s{!} {s}(%d){!}", "Replicas", replicasCount)
 		t.Border()
 
 		for index, replica := range info.Replicas {
@@ -243,7 +243,7 @@ func SentinelInfoCommand(args CommandArgs) int {
 
 	if sentinelsCount != 0 {
 		t.Border()
-		fmtc.Printf("{*} %s{!} {s}(%d){!}\n", "Sentinels", sentinelsCount)
+		fmtc.Printfn("{*} %s{!} {s}(%d){!}", "Sentinels", sentinelsCount)
 		t.Border()
 
 		for index, sentinel := range info.Sentinels {
@@ -290,7 +290,7 @@ func SentinelMasterCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	fmtc.Printf("Master IP is {*}%s{!}\n", ip)
+	fmtc.Printfn("Master IP is {*}%s{!}", ip)
 
 	return EC_OK
 }

@@ -322,13 +322,13 @@ func formatStrResp(r *redy.Resp, raw bool) string {
 		return str + "\n"
 	}
 
-	return fmtc.Sprintf("{y}\"%s\"{!}\n", str)
+	return fmtc.Sprintfn("{y}\"%s\"{!}", str)
 }
 
 // formatInt format integer response
 func formatIntResp(r *redy.Resp, raw bool) string {
 	i, _ := r.Int64()
-	return fmtc.Sprintf("{c}%d{!}\n", i)
+	return fmtc.Sprintfn("{c}%d{!}", i)
 }
 
 // formatErrorResp format error response
@@ -337,7 +337,7 @@ func formatErrorResp(r *redy.Resp, raw bool) string {
 		return r.Err.Error() + "\n"
 	}
 
-	return fmtc.Sprintf("{r}%s{!}\n", r.Err.Error())
+	return fmtc.Sprintfn("{r}%s{!}", r.Err.Error())
 }
 
 // formatNilResp format nil response
@@ -346,7 +346,7 @@ func formatNilResp(r *redy.Resp, raw bool) string {
 		return "(nil)\n"
 	}
 
-	return fmtc.Sprintf("{m}Nil{!}\n")
+	return fmtc.Sprintfn("{m}Nil{!}")
 }
 
 // formatArrayResp format array response
@@ -354,7 +354,7 @@ func formatArrayResp(r *redy.Resp, prefixSize int, raw bool) string {
 	items, err := r.Array()
 
 	if err != nil || len(items) == 0 {
-		return fmtc.Sprintf("{s}(empty list or set){!}\n")
+		return fmtc.Sprintfn("{s}(empty list or set){!}")
 	}
 
 	var result string
@@ -390,13 +390,13 @@ func formatArrayResp(r *redy.Resp, prefixSize int, raw bool) string {
 			result += fmtc.Sprintf(numFormat, index+1) + formatArrayResp(item, prefixSize+numSize+2, false)
 		case item.HasType(redy.STR):
 			v, _ := item.Str()
-			result += fmtc.Sprintf(numFormat+"{y}\"%s\"{!}\n", index+1, v)
+			result += fmtc.Sprintfn(numFormat+"{y}\"%s\"{!}", index+1, v)
 		case item.HasType(redy.INT):
 			v, _ := item.Int()
-			result += fmtc.Sprintf(numFormat+"{c}%d{!}\n", index+1, v)
+			result += fmtc.Sprintfn(numFormat+"{c}%d{!}", index+1, v)
 		default:
 			v, _ := item.Str()
-			result += fmtc.Sprintf(numFormat+"%s\n", index+1, v)
+			result += fmtc.Sprintfn(numFormat+"%s", index+1, v)
 		}
 	}
 

@@ -83,7 +83,7 @@ func printSettingsSection(section string) {
 	}
 
 	fmtutil.Separator(true)
-	fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section))
+	fmtc.Printfn(" ▾ {*}%s{!}", strings.ToUpper(section))
 	fmtutil.Separator(true)
 
 	for _, prop := range CORE.Config.Props(section) {
@@ -111,16 +111,16 @@ func printSettingsProperty(name, value string, hidden bool) {
 
 	case strings.HasPrefix(value, "/"):
 		if fsutil.IsExist(value) {
-			fmtc.Printf("%s {g}✔ {!}\n", value)
+			fmtc.Printfn("%s {g}✔ {!}", value)
 		} else {
-			fmtc.Printf("%s {r}✖ {!}\n", value)
+			fmtc.Printfn("%s {r}✖ {!}", value)
 		}
 
 	case name == "user":
 		if system.IsUserExist(value) {
-			fmtc.Printf("%s {g}✔ {!}\n", value)
+			fmtc.Printfn("%s {g}✔ {!}", value)
 		} else {
-			fmtc.Printf("%s {r}✖ {!}\n", value)
+			fmtc.Printfn("%s {r}✖ {!}", value)
 		}
 
 	case name == "virtual-ip":
@@ -129,9 +129,9 @@ func printSettingsProperty(name, value string, hidden bool) {
 			case CORE.KEEPALIVED_STATE_UNKNOWN:
 				fmtc.Println(value)
 			case CORE.KEEPALIVED_STATE_MASTER:
-				fmtc.Printf("%s {g}(master){!}\n", value)
+				fmtc.Printfn("%s {g}(master){!}", value)
 			case CORE.KEEPALIVED_STATE_BACKUP:
-				fmtc.Printf("%s {s}(backup){!}\n", value)
+				fmtc.Printfn("%s {s}(backup){!}", value)
 			}
 		} else {
 			fmtc.Println("{s-}[empty]{!}")

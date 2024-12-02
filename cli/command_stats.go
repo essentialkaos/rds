@@ -91,8 +91,8 @@ func renderStats(stats *CORE.Stats) {
 	fmtutil.Separator(true)
 
 	renderStatsValue("Total System Memory", stats.Memory.TotalSystemMemory, true)
-	fmtc.Printf(
-		" %-26s {s}|{!} %s {s-}(%s ~ %s){!}\n", "System Memory",
+	fmtc.Printfn(
+		" %-26s {s}|{!} %s {s-}(%s ~ %s){!}", "System Memory",
 		fmtutil.PrettyNum(stats.Memory.SystemMemory),
 		fmtutil.PrettySize(stats.Memory.SystemMemory),
 		fmtutil.PrettyPerc(mathutil.Perc(stats.Memory.SystemMemory, stats.Memory.TotalSystemMemory)),
@@ -101,15 +101,15 @@ func renderStats(stats *CORE.Stats) {
 	switch stats.Memory.IsSwapEnabled {
 	case true:
 		renderStatsValue("Total System Swap", stats.Memory.TotalSystemSwap, true)
-		fmtc.Printf(
-			" %-26s {s}|{!} %s {s-}(%s ~ %s){!}\n", "System Swap",
+		fmtc.Printfn(
+			" %-26s {s}|{!} %s {s-}(%s ~ %s){!}", "System Swap",
 			fmtutil.PrettyNum(stats.Memory.SystemSwap),
 			fmtutil.PrettySize(stats.Memory.SystemSwap),
 			fmtutil.PrettyPerc(mathutil.Perc(stats.Memory.SystemSwap, stats.Memory.TotalSystemSwap)),
 		)
 	default:
-		fmtc.Printf(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}\n", "Total System Swap")
-		fmtc.Printf(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}\n", "System Swap")
+		fmtc.Printfn(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}", "Total System Swap")
+		fmtc.Printfn(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}", "System Swap")
 	}
 
 	renderStatsValue("Used Memory", stats.Memory.UsedMemory, true)
@@ -120,7 +120,7 @@ func renderStats(stats *CORE.Stats) {
 	case true:
 		renderStatsValue("Used Swap", stats.Memory.UsedSwap, true)
 	default:
-		fmtc.Printf(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}\n", "Used Swap")
+		fmtc.Printfn(" %-26s {s}|{!} {s}—{!} {s-}(disabled){!}", "Used Swap")
 	}
 
 	fmtutil.Separator(true)
@@ -259,8 +259,8 @@ func renderStatsAsXMLValue(name string, value uint64) {
 // renderStatsValue print stats property for pretty output
 func renderStatsValue(name string, value uint64, isSize bool) {
 	if isSize {
-		fmtc.Printf(" %-26s {s}|{!} %s {s-}(%s){!}\n", name, fmtutil.PrettyNum(value), fmtutil.PrettySize(value))
+		fmtc.Printfn(" %-26s {s}|{!} %s {s-}(%s){!}", name, fmtutil.PrettyNum(value), fmtutil.PrettySize(value))
 	} else {
-		fmtc.Printf(" %-26s {s}|{!} %s\n", name, fmtutil.PrettyNum(value))
+		fmtc.Printfn(" %-26s {s}|{!} %s", name, fmtutil.PrettyNum(value))
 	}
 }
