@@ -55,7 +55,7 @@
 
   <text x="50%" y="24" text-anchor="middle"><tspan class="terminal">Terminal</tspan></text>
 
-  <text x="12" y="60"><tspan class="BB">Usage:</tspan> <tspan class="BB">rds</tspan> <tspan class="g">{options}</tspan> <tspan class="y">{command}</tspan></text>
+  <text x="12" y="60"><tspan class="BB">Usage:</tspan> <tspan class="BB" fill="#DC382C">rds</tspan> <tspan class="g">{options}</tspan> <tspan class="y">{command}</tspan></text>
   <text x="12" y="100"><tspan class="BB">Basic commands</tspan></text>
   <text x="12" y="140">  <tspan class="y">create</tspan> <tspan class="d">...................</tspan> Create new instance</text>
   <text x="12" y="160">  <tspan class="y">destroy</tspan> <tspan class="s">id</tspan> <tspan class="d">...............</tspan> Destroy <tspan class="s">(delete)</tspan> instance</text>
