@@ -637,7 +637,7 @@ func runCommand(args options.Arguments) {
 for {*_}ANY{!} command.
 
 {s}Maintenance mode is used as a protection when devops/sysadmins perform some dangerous{!}
-{s}actions like Redis update or node reconfiguration. Please be patient, it usually{!}
+{s}actions like server update or node reconfiguration. Please be patient, it usually{!}
 {s}doesn't take long.{!}`,
 		)
 	}
@@ -976,29 +976,29 @@ func showSmartUsage() {
 	info.AddGroup("Basic commands")
 
 	if isMaster {
-		info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
-		info.AddCommand(COMMAND_DESTROY, "Destroy {s}(delete){!} Redis instance", "id")
+		info.AddCommand(COMMAND_CREATE, "Create new instance")
+		info.AddCommand(COMMAND_DESTROY, "Destroy {s}(delete){!} instance", "id")
 		info.AddCommand(COMMAND_EDIT, "Edit metadata for instance", "id")
 	}
 
 	if isMaster || (isMinion && allowCommands) {
-		info.AddCommand(COMMAND_START, "Start Redis instance", "id")
-		info.AddCommand(COMMAND_STOP, "Stop Redis instance", "id", "?force")
-		info.AddCommand(COMMAND_RESTART, "Restart Redis instance", "id")
-		info.AddCommand(COMMAND_KILL, "Kill Redis instance", "id")
+		info.AddCommand(COMMAND_START, "Start instance", "id")
+		info.AddCommand(COMMAND_STOP, "Stop instance", "id", "?force")
+		info.AddCommand(COMMAND_RESTART, "Restart instance", "id")
+		info.AddCommand(COMMAND_KILL, "Kill instance", "id")
 	}
 
 	if !isSentinel {
-		info.AddCommand(COMMAND_STATUS, "Show current status of Redis instance", "id")
-		info.AddCommand(COMMAND_CLI, "Run CLI connected to Redis instance", "id:db", "?command")
+		info.AddCommand(COMMAND_STATUS, "Show current status of instance", "id")
+		info.AddCommand(COMMAND_CLI, "Run CLI connected to instance", "id:db", "?command")
 		info.AddCommand(COMMAND_CPU, "Calculate instance CPU usage", "id", "?period")
 		info.AddCommand(COMMAND_MEMORY, "Show instance memory usage", "id")
-		info.AddCommand(COMMAND_INFO, "Show system info about Redis instance", "id", "?section…")
+		info.AddCommand(COMMAND_INFO, "Show system info about instance", "id", "?section…")
 		info.AddCommand(COMMAND_CLIENTS, "Show list of connected clients", "id", "?filter")
-		info.AddCommand(COMMAND_TRACK, "Show interactive info about Redis instance", "id", "?interval")
-		info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?filter…")
-		info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter…")
-		info.AddCommand(COMMAND_LOG, "Show RDS or Redis instance logs", "source")
+		info.AddCommand(COMMAND_TRACK, "Show interactive info about instance", "id", "?interval")
+		info.AddCommand(COMMAND_CONF, "Show configuration of instance", "id", "?filter…")
+		info.AddCommand(COMMAND_LIST, "Show list of all instances", "?filter…")
+		info.AddCommand(COMMAND_LOG, "Show RDS or instance logs", "source")
 		info.AddCommand(COMMAND_STATS, "Show overall statistics")
 		info.AddCommand(COMMAND_STATS_COMMAND, "Show statistics based on the command type", "id")
 		info.AddCommand(COMMAND_STATS_LATENCY, "Show latency statistics based on the command type", "id")
@@ -1061,12 +1061,12 @@ func showSmartUsage() {
 		info.AddGroup("Sentinel commands")
 
 		if isMaster {
-			info.AddCommand(COMMAND_SENTINEL_START, "Start Redis Sentinel daemon")
-			info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Redis Sentinel daemon")
+			info.AddCommand(COMMAND_SENTINEL_START, "Start Sentinel daemon")
+			info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Sentinel daemon")
 		}
 
 		if !isSentinel {
-			info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
+			info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Sentinel daemon")
 
 			if CORE.IsSentinelActive() {
 				info.AddCommand(COMMAND_SENTINEL_INFO, "Show info from Sentinel for some instance", "id")
@@ -1086,10 +1086,10 @@ func showSmartUsage() {
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
 	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
-	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Redis and Sentinel templates")
+	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Server and Sentinel templates")
 
 	if isMaster {
-		info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support ({y}create{!})")
+		info.AddOption(OPT_SECURE, "Create secure instance with auth support ({y}create{!})")
 		info.AddOption(OPT_DISABLE_SAVES, "Disable saves for created instance ({y}create{!})")
 	}
 
@@ -1138,26 +1138,26 @@ func genUsage() *usage.Info {
 
 	info.AddGroup("Basic commands")
 
-	info.AddCommand(COMMAND_CREATE, "Create new Redis instance")
-	info.AddCommand(COMMAND_DESTROY, "Destroy {s}(delete){!} Redis instance", "id")
+	info.AddCommand(COMMAND_CREATE, "Create new instance")
+	info.AddCommand(COMMAND_DESTROY, "Destroy {s}(delete){!} instance", "id")
 	info.AddCommand(COMMAND_EDIT, "Edit metadata for instance", "id")
-	info.AddCommand(COMMAND_START, "Start Redis instance", "id")
-	info.AddCommand(COMMAND_STOP, "Stop Redis instance", "id", "?force")
-	info.AddCommand(COMMAND_RESTART, "Restart Redis instance", "id")
-	info.AddCommand(COMMAND_KILL, "Kill Redis instance", "id")
-	info.AddCommand(COMMAND_STATUS, "Show current status of Redis instance", "id")
-	info.AddCommand(COMMAND_CLI, "Run CLI connected to Redis instance", "id:db", "?command")
+	info.AddCommand(COMMAND_START, "Start instance", "id")
+	info.AddCommand(COMMAND_STOP, "Stop instance", "id", "?force")
+	info.AddCommand(COMMAND_RESTART, "Restart instance", "id")
+	info.AddCommand(COMMAND_KILL, "Kill instance", "id")
+	info.AddCommand(COMMAND_STATUS, "Show current status of instance", "id")
+	info.AddCommand(COMMAND_CLI, "Run CLI connected to instance", "id:db", "?command")
 	info.AddCommand(COMMAND_CPU, "Calculate instance CPU usage", "id", "?period")
 	info.AddCommand(COMMAND_MEMORY, "Show instance memory usage", "id")
-	info.AddCommand(COMMAND_INFO, "Show system info about Redis instance", "id", "?section…")
+	info.AddCommand(COMMAND_INFO, "Show system info about instance", "id", "?section…")
 	info.AddCommand(COMMAND_STATS_COMMAND, "Show statistics based on the command type", "id")
 	info.AddCommand(COMMAND_STATS_LATENCY, "Show latency statistics based on the command type", "id")
 	info.AddCommand(COMMAND_STATS_ERROR, "Show error statistics", "id")
 	info.AddCommand(COMMAND_CLIENTS, "Show list of connected clients", "id", "?filter")
-	info.AddCommand(COMMAND_TRACK, "Show interactive info about Redis instance", "id", "?interval")
-	info.AddCommand(COMMAND_CONF, "Show configuration of Redis instance", "id", "?filter…")
-	info.AddCommand(COMMAND_LIST, "Show list of all Redis instances", "?filter…")
-	info.AddCommand(COMMAND_LOG, "Show RDS or Redis instance logs", "source")
+	info.AddCommand(COMMAND_TRACK, "Show interactive info about instance", "id", "?interval")
+	info.AddCommand(COMMAND_CONF, "Show configuration of instance", "id", "?filter…")
+	info.AddCommand(COMMAND_LIST, "Show list of all instances", "?filter…")
+	info.AddCommand(COMMAND_LOG, "Show RDS or instance logs", "source")
 	info.AddCommand(COMMAND_STATS, "Show overall statistics")
 	info.AddCommand(COMMAND_TOP, "Show instances top", "?field", "?num")
 	info.AddCommand(COMMAND_TOP_DIFF, "Compare current and dumped top data", "file", "?field", "?num")
@@ -1197,9 +1197,9 @@ func genUsage() *usage.Info {
 
 	info.AddGroup("Sentinel commands")
 
-	info.AddCommand(COMMAND_SENTINEL_START, "Start Redis Sentinel daemon")
-	info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Redis Sentinel daemon")
-	info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Redis Sentinel daemon")
+	info.AddCommand(COMMAND_SENTINEL_START, "Start Sentinel daemon")
+	info.AddCommand(COMMAND_SENTINEL_STOP, "Stop Sentinel daemon")
+	info.AddCommand(COMMAND_SENTINEL_STATUS, "Show status of Sentinel daemon")
 	info.AddCommand(COMMAND_SENTINEL_INFO, "Show info from Sentinel for some instance", "id")
 	info.AddCommand(COMMAND_SENTINEL_MASTER, "Show IP of master instance", "id")
 	info.AddCommand(COMMAND_SENTINEL_CHECK, "Check Sentinel configuration", "id")
@@ -1211,9 +1211,9 @@ func genUsage() *usage.Info {
 	info.AddCommand(COMMAND_HELP, "Show command usage info", "command")
 	info.AddCommand(COMMAND_SETTINGS, "Show settings from global configuration file", "?section…")
 	info.AddCommand(COMMAND_GEN_TOKEN, "Generate authentication token for sync daemon")
-	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Redis and Sentinel templates")
+	info.AddCommand(COMMAND_VALIDATE_TEMPLATES, "Validate Server and Sentinel templates")
 
-	info.AddOption(OPT_SECURE, "Create secure Redis instance with auth support ({y}create{!})")
+	info.AddOption(OPT_SECURE, "Create secure instance with auth support ({y}create{!})")
 	info.AddOption(OPT_DISABLE_SAVES, "Disable saves for created instance ({y}create{!})")
 	info.AddOption(OPT_PRIVATE, "Force access to private data ({y}conf{!}/{y}cli{!}/{y}settings{!})")
 	info.AddOption(OPT_EXTRA, "Print extra info ({y}list{!})")

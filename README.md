@@ -10,7 +10,7 @@
 
 <p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#ci-status">CI Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
 
-`RDS` is a tool for Redis orchestration.
+`RDS` is a tool for [Valkey](https://github.com/valkey-io/valkey)/[Redis](https://github.com/redis/redis) orchestration.
 
 ### Usage demo
 

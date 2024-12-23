@@ -118,21 +118,21 @@ func getForceArg(a string) (bool, error) {
 	return false, errors.New(`You should use "force" or "true" as a flag of forced action`)
 }
 
-// isAllRedisCompatible checks if instances with given ID's are compatible with
+// isAllServersCompatible checks if instances with given ID's are compatible with
 // current Redis version
-func isAllRedisCompatible(ids []int) bool {
+func isAllServersCompatible(ids []int) bool {
 	if len(ids) == 0 {
 		return true
 	}
 
-	currentRedisVer, err := CORE.GetRedisVersion()
+	currentServerVer, err := CORE.GetServerVersion()
 
-	if err != nil || currentRedisVer.String() == "" {
+	if err != nil || currentServerVer.String() == "" {
 		return true
 	}
 
 	for _, id := range ids {
-		isCompatible, _, _ := isRedisCompatible(id, currentRedisVer)
+		isCompatible, _, _ := isServerCompatible(id, currentServerVer)
 
 		if !isCompatible {
 			return false
@@ -142,9 +142,9 @@ func isAllRedisCompatible(ids []int) bool {
 	return true
 }
 
-// isRedisCompatible checks if instance with given ID is compatible with given
-// Redis version
-func isRedisCompatible(id int, currentVersion version.Version) (bool, version.Version, version.Version) {
+// isServerCompatible checks if instance with given ID is compatible with given
+// Valkey/Redis version
+func isServerCompatible(id int, currentVersion version.Version) (bool, version.Version, version.Version) {
 	var err error
 
 	if !CORE.IsInstanceExist(id) {
@@ -152,7 +152,7 @@ func isRedisCompatible(id int, currentVersion version.Version) (bool, version.Ve
 	}
 
 	if currentVersion.IsZero() {
-		currentVersion, err = CORE.GetRedisVersion()
+		currentVersion, err = CORE.GetServerVersion()
 
 		if err != nil || currentVersion.IsZero() {
 			return true, version.Version{}, version.Version{}
@@ -430,7 +430,7 @@ func warnAboutUnsafeAction(id int, message string) bool {
 		return false
 	}
 
-	isCompatible, compatibleVer, currentVer := isRedisCompatible(id, version.Version{})
+	isCompatible, compatibleVer, currentVer := isServerCompatible(id, version.Version{})
 
 	for i := 0; i < 6; i++ {
 		switch i {

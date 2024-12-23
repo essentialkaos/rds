@@ -220,11 +220,11 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 		case "orphan":
 			fit = isInstanceOwnerExist(meta.Auth.User) == false
 		case "outdated":
-			currentRedisVer, _ := CORE.GetRedisVersion()
+			currentServerVer, _ := CORE.GetServerVersion()
 			if state.IsStopped() {
 				fit = false
-			} else if currentRedisVer.String() != "" && meta.Compatible != "" {
-				fit = currentRedisVer.String() != meta.Compatible
+			} else if currentServerVer.String() != "" && meta.Compatible != "" {
+				fit = currentServerVer.String() != meta.Compatible
 			}
 		case "standby":
 			fit = meta.Preferencies.ReplicationType == CORE.REPL_TYPE_STANDBY

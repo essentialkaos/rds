@@ -46,7 +46,7 @@ func RestartAllCommand(args CommandArgs) int {
 		return EC_WARN
 	}
 
-	if !isAllRedisCompatible(idList) {
+	if !isAllServersCompatible(idList) {
 		terminal.Warn("Some instances not checked for configuration compatibility with the newly installed version of Redis.")
 		terminal.Warn("We STRONGLY recommend restart instances one by one in this case.")
 

@@ -180,11 +180,11 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 		compatible = meta.Compatible
 	}
 
-	redisVersionInfo := ""
-	currentRedisVer, err := CORE.GetRedisVersion()
+	serverVersionInfo := ""
+	currentServerVer, err := CORE.GetServerVersion()
 
-	if err == nil && currentRedisVer.String() != "" {
-		redisVersionInfo = "(current: " + currentRedisVer.String() + ")"
+	if err == nil && currentServerVer.String() != "" {
+		serverVersionInfo = "(current: " + currentServerVer.String() + ")"
 	}
 
 	db := "0"
@@ -208,7 +208,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	t.Print("Created", timeutil.Format(created, "%Y/%m/%d %H:%M:%S"))
 	t.Print("Replication type", strutil.Q(string(meta.Preferencies.ReplicationType), "—"))
 	t.Print("URI", uri)
-	t.Print("Compatibility", compatible+" {s-}"+redisVersionInfo+"{!}")
+	t.Print("Compatibility", compatible+" {s-}"+serverVersionInfo+"{!}")
 
 	if !modTime.IsZero() {
 		t.Print("Dump size", fmtutil.PrettySize(size))

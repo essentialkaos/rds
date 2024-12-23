@@ -34,7 +34,7 @@ func Print(app, ver, gitRev string, gomod []byte) {
 		WithChecks(checkSystem()...).
 		WithChecks(checkSyncDaemon()).
 		WithChecks(checkKeepalived()).
-		WithApps(getRedisVersion()).
+		WithApps(getServerVersion()).
 		WithNetwork(network.Collect()).
 		WithResources(resources.Collect()).
 		WithKernel(kernel.Collect(
@@ -74,14 +74,14 @@ func checkKeepalived() support.Check {
 func checkSystem() []support.Check {
 	var chks []support.Check
 
-	currentRedisVer, err := CORE.GetRedisVersion()
+	currentRedisVer, err := CORE.GetServerVersion()
 
 	if err != nil {
-		chks = append(chks, support.Check{support.CHECK_ERROR, "Redis", "Can't check Redis version"})
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Server", "Can't check server version"})
 	}
 
 	if currentRedisVer.IsZero() {
-		chks = append(chks, support.Check{support.CHECK_ERROR, "Redis", "Can't extract or parse Redis version"})
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Server", "Can't extract or parse server version"})
 	}
 
 	status, err := CORE.GetSystemConfigurationStatus(true)
@@ -136,8 +136,8 @@ func checkSyncDaemon() support.Check {
 	return chk
 }
 
-// getRedisVersion returns current Redis version
-func getRedisVersion() support.App {
-	currentRedisVer, _ := CORE.GetRedisVersion()
-	return support.App{"Redis", currentRedisVer.String()}
+// getServerVersion returns current Redis version
+func getServerVersion() support.App {
+	currentVer, _ := CORE.GetServerVersion()
+	return support.App{"Server", currentVer.String()}
 }

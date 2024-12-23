@@ -185,6 +185,11 @@ const (
 )
 
 const (
+	BACKEND_REDIS  = "redis"
+	BACKEND_VALKEY = "valkey"
+)
+
+const (
 	SERVER_USER_ADMIN    = "admin"
 	SERVER_USER_SYNC     = "sync"
 	SERVER_USER_SERVICE  = "service"
@@ -299,7 +304,7 @@ type InstanceInfo struct {
 	State State         `json:"state"`
 }
 
-type RedisVersionInfo struct {
+type ServerVersionInfo struct {
 	CDate   int64  `json:"cdate"`
 	Version string `json:"version"`
 }
@@ -461,8 +466,8 @@ var User *system.User
 // metaCache is meta information cache
 var metaCache *MetaCache
 
-// redisVersion contains current Redis version
-var redisVersion version.Version
+// serverVersion contains current Redis version
+var serverVersion version.Version
 
 // supportedVersions is map with supported Redis versions
 var supportedVersions = map[string]bool{
@@ -877,7 +882,7 @@ func GetInstanceVersion(id int) version.Version {
 	}
 
 	if !state.IsWorks() {
-		currentRedisVer, _ := GetRedisVersion()
+		currentRedisVer, _ := GetServerVersion()
 		return currentRedisVer
 	}
 
@@ -1650,7 +1655,7 @@ func SentinelStart() []error {
 		return nil
 	}
 
-	currentRedisVer, err := GetRedisVersion()
+	currentRedisVer, err := GetServerVersion()
 
 	if err != nil {
 		return []error{fmt.Errorf("Can't get Redis Sentinel version: %w", err)}
@@ -2094,7 +2099,7 @@ func IsOutdated(id int) bool {
 		return false
 	}
 
-	currentRedisVer, err := GetRedisVersion()
+	currentRedisVer, err := GetServerVersion()
 
 	if err == nil && currentRedisVer.String() != "" && meta.Compatible != "" {
 		return meta.Compatible != currentRedisVer.String()
@@ -2142,20 +2147,20 @@ func GetSystemConfigurationStatus(force bool) (SystemStatus, error) {
 	return status, nil
 }
 
-// GetRedisVersion returns current installed Redis version
-func GetRedisVersion() (version.Version, error) {
-	if !redisVersion.IsZero() {
-		return redisVersion, nil
+// GetServerVersion returns current installed Redis version
+func GetServerVersion() (version.Version, error) {
+	if !serverVersion.IsZero() {
+		return serverVersion, nil
 	}
 
 	var err error
-	var info *RedisVersionInfo
+	var info *ServerVersionInfo
 
 	versionCacheFile := path.Join(Config.GetS(MAIN_DIR), SERVER_VERSION_DATA_FILE)
 	cacheExist := fsutil.IsExist(versionCacheFile)
 
 	if cacheExist {
-		info, err = getRedisVersionFromCache(versionCacheFile)
+		info, err = getServerVersionFromCache(versionCacheFile)
 
 		if err != nil {
 			cacheExist = false
@@ -2163,14 +2168,14 @@ func GetRedisVersion() (version.Version, error) {
 	}
 
 	if info == nil {
-		info, err = getRedisVersionFromBinary()
+		info, err = getServerVersionFromBinary()
 
 		if err != nil {
 			return version.Version{}, err
 		}
 	}
 
-	redisVersion, err = version.Parse(info.Version)
+	serverVersion, err = version.Parse(info.Version)
 
 	if err != nil {
 		return version.Version{}, err
@@ -2180,7 +2185,7 @@ func GetRedisVersion() (version.Version, error) {
 		jsonutil.Write(versionCacheFile, info, DEFAULT_FILE_PERMS)
 	}
 
-	return redisVersion, nil
+	return serverVersion, nil
 }
 
 // GetStats returns overall stats
@@ -2534,7 +2539,7 @@ func validateDependencies() errors.Errors {
 	}
 
 	if len(errs) == 0 {
-		currentRedisVer, err := GetRedisVersion()
+		currentRedisVer, err := GetServerVersion()
 
 		if err != nil {
 			errs = append(errs, fmt.Errorf("Can't get Redis version: %w", err))
@@ -2608,7 +2613,7 @@ func validateConfig(cfg *knf.Config) errors.Errors {
 		// BACKEND //
 
 		{BACKEND_NAME, knfv.Set, nil},
-		{BACKEND_NAME, knfv.SetToAny, []string{"redis", "valkey"}},
+		{BACKEND_NAME, knfv.SetToAny, []string{BACKEND_REDIS, BACKEND_VALKEY}},
 
 		// REDIS //
 
@@ -2660,13 +2665,11 @@ func validateConfig(cfg *knf.Config) errors.Errors {
 		{PATH_DATA_DIR, knff.Perms, "DRX"},
 		{PATH_PID_DIR, knff.Perms, "DRX"},
 		{PATH_LOG_DIR, knff.Perms, "DRX"},
-		{PATH_PID_DIR, knff.Owner, Config.GetS(SERVER_USER, "redis")},
+		{PATH_PID_DIR, knff.Owner, Config.GetS(SERVER_USER)},
 
 		// LOG //
 
-		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, []string{
-			"", "debug", "info", "warn", "error", "crit",
-		}},
+		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, log.LogLevels},
 	}
 
 	// REPLICATION //
@@ -2920,9 +2923,9 @@ func getMemoryUsageFromProcFS(id int) (uint64, uint64, uint64) {
 	return memInfo.VmHWM, memInfo.VmRSS, memInfo.VmSwap
 }
 
-// getRedisVersionFromCache read current redis version info from cache
-func getRedisVersionFromCache(cacheFile string) (*RedisVersionInfo, error) {
-	info := &RedisVersionInfo{}
+// getServerVersionFromCache read current redis version info from cache
+func getServerVersionFromCache(cacheFile string) (*ServerVersionInfo, error) {
+	info := &ServerVersionInfo{}
 	err := jsonutil.Read(cacheFile, info)
 
 	if err != nil {
@@ -2943,8 +2946,8 @@ func getRedisVersionFromCache(cacheFile string) (*RedisVersionInfo, error) {
 	return info, nil
 }
 
-// getRedisVersionFromBinary read redis version from redis version info output
-func getRedisVersionFromBinary() (*RedisVersionInfo, error) {
+// getServerVersionFromBinary read redis version from redis version info output
+func getServerVersionFromBinary() (*ServerVersionInfo, error) {
 	binary := Config.GetS(SERVER_BINARY)
 
 	if !fsutil.IsExecutable(binary) {
@@ -2969,7 +2972,7 @@ func getRedisVersionFromBinary() (*RedisVersionInfo, error) {
 		return nil, ErrCantReadRedisCreationDate
 	}
 
-	return &RedisVersionInfo{
+	return &ServerVersionInfo{
 		Version: strutil.Substr(verStr, 2, 99),
 		CDate:   cDate.Unix(),
 	}, nil
@@ -2983,7 +2986,7 @@ func updateCompatibilityInfo(id int) error {
 		return err
 	}
 
-	redisVersion, err := GetRedisVersion()
+	redisVersion, err := GetServerVersion()
 
 	if err != nil {
 		return fmt.Errorf("Can't update instance compatibility info: %w", err)
@@ -3068,7 +3071,7 @@ func generateSentinelConfig() error {
 		}
 	}
 
-	redisUser, err := system.LookupUser(Config.GetS(SERVER_USER))
+	serverUser, err := system.LookupUser(Config.GetS(SERVER_USER))
 
 	if err != nil {
 		return err
@@ -3102,31 +3105,31 @@ func generateSentinelConfig() error {
 	}
 
 	return errors.NewBundle().Add(
-		os.Chown(sentinelConfig, redisUser.UID, redisUser.GID),
-		os.Chown(sentinelLogFile, redisUser.UID, redisUser.GID),
+		os.Chown(sentinelConfig, serverUser.UID, serverUser.GID),
+		os.Chown(sentinelLogFile, serverUser.UID, serverUser.GID),
 	).Last()
 }
 
 // getConfigTemplateData reads configuration data from template
-// for currently installed Redis/Sentinel version
+// for currently installed Server/Sentinel version
 func getConfigTemplateData(source TemplateSource) (string, string, error) {
 	var err error
 	var templateFile, templateFilePath string
 
-	currentRedisVer, err := GetRedisVersion()
+	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
 		return "", "", fmt.Errorf("Can't get Redis version: %w", err)
 	}
 
-	majorRedisVer := fmt.Sprintf("%d.%d", currentRedisVer.Major(), currentRedisVer.Minor())
+	majorServerVer := fmt.Sprintf("%d.%d", currentServerVer.Major(), currentServerVer.Minor())
 
 	switch source {
 	case TEMPLATE_SOURCE_REDIS:
-		templateFile = "redis-" + majorRedisVer + ".conf"
+		templateFile = Config.GetS(BACKEND_NAME) + "-" + majorServerVer + ".conf"
 		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_SERVER), templateFile)
 	case TEMPLATE_SOURCE_SENTINEL:
-		templateFile = "sentinel-" + majorRedisVer + ".conf"
+		templateFile = Config.GetS(BACKEND_NAME) + "-" + majorServerVer + ".conf"
 		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_SENTINEL), templateFile)
 	default:
 		return "", "", ErrUnknownTemplateSource
@@ -3511,7 +3514,7 @@ func createConfigFromMeta(meta *InstanceMeta) *instanceConfigData {
 	if IsInstanceExist(meta.ID) {
 		result.Redis = GetInstanceVersion(meta.ID)
 	} else {
-		result.Redis, _ = GetRedisVersion()
+		result.Redis, _ = GetServerVersion()
 	}
 
 	if IsMinion() && meta.Preferencies.ReplicationType.IsReplica() &&
