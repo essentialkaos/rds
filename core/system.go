@@ -80,7 +80,7 @@ func isSystemHasLimitsIssues() (bool, error) {
 		return false, fmt.Errorf("%s can't be executed", BIN_RUNUSER)
 	}
 
-	user := Config.GetS(REDIS_USER)
+	user := Config.GetS(SERVER_USER)
 	cmd := exec.Command(BIN_RUNUSER, "-s", "/bin/bash", user, "-c", "ulimit -n")
 	output, err := cmd.Output()
 
