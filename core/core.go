@@ -137,7 +137,7 @@ const (
 	MAIN_STRICT_SECURE               = "main:strict-secure"
 	MAIN_HOSTNAME                    = "main:hostname"
 
-	LOG_LEVEL = "log:level"
+	BACKEND_NAME = "backend:name"
 
 	REDIS_BINARY           = "redis:binary"
 	REDIS_USER             = "redis:user"
@@ -158,6 +158,8 @@ const (
 
 	TEMPLATES_REDIS    = "templates:redis"
 	TEMPLATES_SENTINEL = "templates:sentinel"
+
+	LOG_LEVEL = "log:level"
 
 	PATH_META_DIR   = "path:meta-dir"
 	PATH_CONFIG_DIR = "path:config-dir"
@@ -2592,6 +2594,11 @@ func validateConfig(c *knf.Config) []error {
 		{DELAY_STOP, knfv.Less, MAX_STOP_DELAY},
 		{DELAY_START, knfv.Greater, MIN_START_DELAY},
 		{DELAY_START, knfv.Less, MAX_START_DELAY},
+
+		// BACKEND //
+
+		{BACKEND_NAME, knfv.Set, nil},
+		{BACKEND_NAME, knfv.SetToAny, []string{"redis", "valkey"}},
 
 		// REDIS //
 

@@ -28,8 +28,8 @@ func Print(app, ver, gitRev string, gomod []byte) {
 	support.Collect(app, ver).
 		WithRevision(gitRev).
 		WithDeps(deps.Extract(gomod)).
-		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72,redis74")).
-		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli,redis74-cli")).
+		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72,redis74,valkey,valkey72")).
+		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli,redis74-cli,valkey-cli,valkey72-cli")).
 		WithPackages(pkgs.Collect("rds", "rds-sync", "systemd", "tuned")).
 		WithChecks(checkSystem()...).
 		WithChecks(checkSyncDaemon()).
