@@ -182,6 +182,11 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Tue Dec 24 2024 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
+- Added Valkey support
+- Dependencies update
+- Code refactoring
+
 * Fri Nov 01 2024 Anton Novojilov <andy@essentialkaos.com> - 1.11.2-0
 - [cli|sync] Fixed bug with daemonizing Redis server
 - Dependencies update
