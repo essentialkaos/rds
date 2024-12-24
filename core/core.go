@@ -675,7 +675,7 @@ func ReadSUAuth() (*SuperuserAuth, error) {
 }
 
 // ValidateTemplates validates templates for Redis and Sentinel
-func ValidateTemplates() []error {
+func ValidateTemplates() errors.Errors {
 	var errs errors.Bundle
 
 	meta, err := NewInstanceMeta("test", "test")
@@ -1280,11 +1280,11 @@ func GetInstanceConfigChanges(id int) ([]REDIS.ConfigPropDiff, error) {
 }
 
 // ReloadInstanceConfig reload instance config
-func ReloadInstanceConfig(id int) []error {
+func ReloadInstanceConfig(id int) errors.Errors {
 	diff, err := GetInstanceConfigChanges(id)
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
 	if len(diff) == 0 {
@@ -1655,9 +1655,9 @@ func DestroyInstance(id int) error {
 }
 
 // SentinelStart start (run) Sentinel daemon
-func SentinelStart() []error {
+func SentinelStart() errors.Errors {
 	if !IsSentinel() && !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
-		return []error{ErrIncompatibleFailover}
+		return errors.Errors{ErrIncompatibleFailover}
 	}
 
 	if IsSentinelActive() {
@@ -1667,11 +1667,11 @@ func SentinelStart() []error {
 	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
-		return []error{fmt.Errorf("Can't get Sentinel version: %w", err)}
+		return errors.Errors{fmt.Errorf("Can't get Sentinel version: %w", err)}
 	}
 
 	if currentServerVer.String() == "" || currentServerVer.Major() < MIN_SENTINEL_VERSION {
-		return []error{ErrSentinelWrongVersion}
+		return errors.Errors{ErrSentinelWrongVersion}
 	}
 
 	sentinelConfigDir := path.Join(Config.GetS(PATH_CONFIG_DIR), "sentinel")
@@ -1680,7 +1680,7 @@ func SentinelStart() []error {
 		err = createSentinelConfigDir(sentinelConfigDir)
 
 		if err != nil {
-			return []error{fmt.Errorf("Can't create directory for Sentinel configuration: %w", err)}
+			return errors.Errors{fmt.Errorf("Can't create directory for Sentinel configuration: %w", err)}
 		}
 	}
 
@@ -1689,7 +1689,7 @@ func SentinelStart() []error {
 	err = generateSentinelConfig()
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
 	sentinelLogFile := path.Join(Config.GetS(PATH_LOG_DIR), "sentinel.log")
@@ -1697,7 +1697,7 @@ func SentinelStart() []error {
 	err = ensurePermissionsForStart()
 
 	if err != nil {
-		return []error{fmt.Errorf("Can't set permissions required for instance start: %w", err)}
+		return errors.Errors{fmt.Errorf("Can't set permissions required for instance start: %w", err)}
 	}
 
 	err = runAsUser(
@@ -1709,11 +1709,11 @@ func SentinelStart() []error {
 	)
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
 	if !isProcStarted(PID_SENTINEL, Config.GetI(DELAY_START)) {
-		return []error{ErrSentinelCantStart}
+		return errors.Errors{ErrSentinelCantStart}
 	}
 
 	return addAllReplicasToSentinelMonitoring()
@@ -3223,12 +3223,12 @@ func generateConfigFromTemplate(source TemplateSource, data any) ([]byte, error)
 }
 
 // addAllReplicasToSentinelMonitoring adds all relicas to Sentinel monitoring
-func addAllReplicasToSentinelMonitoring() []error {
+func addAllReplicasToSentinelMonitoring() errors.Errors {
 	if !HasInstances() {
 		return nil
 	}
 
-	var errs []error
+	var errs errors.Errors
 
 	for _, id := range GetInstanceIDList() {
 		state, err := GetInstanceState(id, false)
@@ -3596,14 +3596,14 @@ func createConfigFromMeta(meta *InstanceMeta) *instanceConfigData {
 }
 
 // applyChangedConfigProps apply changed config props
-func applyChangedConfigProps(id int, diff []REDIS.ConfigPropDiff) []error {
+func applyChangedConfigProps(id int, diff []REDIS.ConfigPropDiff) errors.Errors {
 	meta, err := GetInstanceMeta(id)
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
-	var errs []error
+	var errs errors.Errors
 
 	req := &REDIS.Request{
 		Port:    GetInstancePort(id),
