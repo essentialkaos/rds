@@ -98,7 +98,7 @@ func checkSystem() []support.Check {
 	}
 
 	if status.HasKernelIssues {
-		chks = append(chks, support.Check{support.CHECK_ERROR, "Kernel", "Kernel is not properly configured for Redis"})
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Kernel", "Kernel is not properly configured"})
 	} else {
 		chks = append(chks, support.Check{support.CHECK_OK, "Kernel", "No issues"})
 	}

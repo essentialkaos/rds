@@ -1,4 +1,4 @@
-# Tuning for RDS and Redis
+# Tuning for RDS and Redis/Valkey
 vm.overcommit_memory = 1
 vm.swappiness = 10
 net.ipv4.tcp_tw_reuse = 1

@@ -246,7 +246,7 @@ const (
 type TemplateSource string
 
 const (
-	TEMPLATE_SOURCE_REDIS    TemplateSource = "redis.conf"
+	TEMPLATE_SOURCE_SERVER   TemplateSource = "server.conf"
 	TEMPLATE_SOURCE_SENTINEL TemplateSource = "sentinel.conf"
 )
 
@@ -420,37 +420,37 @@ type sentinelConfigData struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var (
-	ErrUnprivileged              = errors.New("RDS requires root privileges")
-	ErrSUAuthAlreadyExist        = errors.New("Superuser credentials already generated")
-	ErrSUAuthIsEmpty             = errors.New("Superuser auth data can't be empty")
-	ErrSUAuthNoData              = errors.New("Superuser auth data doesn't exist")
-	ErrCantDiffConfigs           = errors.New("Instance should works for configs comparison")
-	ErrEmptyIDDBPair             = errors.New("ID/DB value is empty")
-	ErrCantReadPID               = errors.New("Can't read PID from PID file")
-	ErrStateFileNotDefined       = errors.New("You must define path to states file")
-	ErrInstanceStillWorks        = errors.New("Instance still works")
-	ErrSentinelRoleSetNotAllowed = errors.New("This node must have master role for switching instance role")
-	ErrSentinelWrongInstanceRole = errors.New("Instance must have a replica role")
-	ErrIncompatibleFailover      = errors.New("Action can't be done due to incompatibility with failover method defined in the configuration file")
-	ErrSentinelWrongVersion      = errors.New("Sentinel monitoring requires Redis 5 or greater")
-	ErrSentinelCantStart         = errors.New("Can't start Sentinel process")
-	ErrSentinelCantStop          = errors.New("Can't stop Sentinel process")
-	ErrSentinelIsStopped         = errors.New("Sentinel is stopped")
-	ErrSentinelCantSetRole       = errors.New("Can't set instance role - instance still have slave (replica) role")
-	ErrMetaIsNil                 = errors.New("Meta struct is nil")
-	ErrMetaNoID                  = errors.New("Meta must have valid ID")
-	ErrMetaNoDesc                = errors.New("Meta must have valid description")
-	ErrMetaNoAuth                = errors.New("Meta doesn't have auth info")
-	ErrMetaNoPrefs               = errors.New("Meta doesn't have instance preferencies")
-	ErrMetaNoConfigInfo          = errors.New("Meta doesn't have info about Redis configuration file")
-	ErrMetaInvalidVersion        = errors.New("Meta must have valid version")
-	ErrInvalidRedisVersionCache  = errors.New("Cache is invalid")
-	ErrCantParseRedisVersion     = errors.New("Can't parse version of redis-server")
-	ErrCantReadRedisCreationDate = errors.New("Can't read creation date of redis-server file")
-	ErrCantReadDaemonizeOption   = errors.New("Can't read 'daemonize' option value from instance configuration file")
-	ErrCantDaemonizeInstance     = errors.New("Impossible to run instance - 'daemonize' property set to 'no' in configuration file")
-	ErrUnknownReplicationType    = errors.New("Unsupported replication type")
-	ErrUnknownTemplateSource     = errors.New("Unknown template source")
+	ErrUnprivileged               = errors.New("RDS requires root privileges")
+	ErrSUAuthAlreadyExist         = errors.New("Superuser credentials already generated")
+	ErrSUAuthIsEmpty              = errors.New("Superuser auth data can't be empty")
+	ErrSUAuthNoData               = errors.New("Superuser auth data doesn't exist")
+	ErrCantDiffConfigs            = errors.New("Instance should works for configs comparison")
+	ErrEmptyIDDBPair              = errors.New("ID/DB value is empty")
+	ErrCantReadPID                = errors.New("Can't read PID from PID file")
+	ErrStateFileNotDefined        = errors.New("You must define path to states file")
+	ErrInstanceStillWorks         = errors.New("Instance still works")
+	ErrSentinelRoleSetNotAllowed  = errors.New("This node must have master role for switching instance role")
+	ErrSentinelWrongInstanceRole  = errors.New("Instance must have a replica role")
+	ErrIncompatibleFailover       = errors.New("Action can't be done due to incompatibility with failover method defined in the configuration file")
+	ErrSentinelWrongVersion       = errors.New("Sentinel monitoring requires Redis 5 or greater")
+	ErrSentinelCantStart          = errors.New("Can't start Sentinel process")
+	ErrSentinelCantStop           = errors.New("Can't stop Sentinel process")
+	ErrSentinelIsStopped          = errors.New("Sentinel is stopped")
+	ErrSentinelCantSetRole        = errors.New("Can't set instance role - instance still have slave (replica) role")
+	ErrMetaIsNil                  = errors.New("Meta struct is nil")
+	ErrMetaNoID                   = errors.New("Meta must have valid ID")
+	ErrMetaNoDesc                 = errors.New("Meta must have valid description")
+	ErrMetaNoAuth                 = errors.New("Meta doesn't have auth info")
+	ErrMetaNoPrefs                = errors.New("Meta doesn't have instance preferencies")
+	ErrMetaNoConfigInfo           = errors.New("Meta doesn't have info about Redis configuration file")
+	ErrMetaInvalidVersion         = errors.New("Meta must have valid version")
+	ErrInvalidRedisVersionCache   = errors.New("Cache is invalid")
+	ErrCantParseServerVersion     = errors.New("Can't parse version of server binary")
+	ErrCantReadServerCreationDate = errors.New("Can't read creation date of server binary")
+	ErrCantReadDaemonizeOption    = errors.New("Can't read 'daemonize' option value from instance configuration file")
+	ErrCantDaemonizeInstance      = errors.New("Impossible to run instance - 'daemonize' property set to 'no' in configuration file")
+	ErrUnknownReplicationType     = errors.New("Unsupported replication type")
+	ErrUnknownTemplateSource      = errors.New("Unknown template source")
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -466,18 +466,19 @@ var User *system.User
 // metaCache is meta information cache
 var metaCache *MetaCache
 
-// serverVersion contains current Redis version
-var serverVersion version.Version
+// serverVersionCache contains current server version
+var serverVersionCache version.Version
 
 // serverUserCache is server user info cache
 var serverUserCache *system.User
 
-// supportedVersions is map with supported Redis versions
+// supportedVersions is map with supported server versions
 var supportedVersions = map[string]bool{
-	"6.2": true,
-	"7.0": true,
-	"7.2": true,
-	"7.4": true,
+	"redis-6.2":  true,
+	"redis-7.0":  true,
+	"redis-7.2":  true,
+	"redis-7.4":  true,
+	"valkey-7.2": true,
 }
 
 // tagRegex is regex pattern for tag validation
@@ -684,7 +685,7 @@ func ValidateTemplates() errors.Errors {
 		errs.Add(fmt.Errorf("Can't generate instance meta for validation: %w", err))
 	} else {
 		_, err = generateConfigFromTemplate(
-			TEMPLATE_SOURCE_REDIS,
+			TEMPLATE_SOURCE_SERVER,
 			createConfigFromMeta(meta),
 		)
 
@@ -1045,7 +1046,7 @@ func CreateInstance(meta *InstanceMeta) error {
 	return nil
 }
 
-// RegenerateInstanceConfig regenerate redis config file for given instance
+// RegenerateInstanceConfig regenerates configuration file for given instance
 func RegenerateInstanceConfig(id int) error {
 	var err error
 
@@ -2181,8 +2182,8 @@ func GetServerUser() (*system.User, error) {
 
 // GetServerVersion returns current installed server version
 func GetServerVersion() (version.Version, error) {
-	if !serverVersion.IsZero() {
-		return serverVersion, nil
+	if !serverVersionCache.IsZero() {
+		return serverVersionCache, nil
 	}
 
 	var err error
@@ -2207,7 +2208,7 @@ func GetServerVersion() (version.Version, error) {
 		}
 	}
 
-	serverVersion, err = version.Parse(info.Version)
+	serverVersionCache, err = version.Parse(info.Version)
 
 	if err != nil {
 		return version.Version{}, err
@@ -2217,7 +2218,7 @@ func GetServerVersion() (version.Version, error) {
 		jsonutil.Write(versionCacheFile, info, DEFAULT_FILE_PERMS)
 	}
 
-	return serverVersion, nil
+	return serverVersionCache, nil
 }
 
 // GetStats returns overall stats
@@ -2592,15 +2593,16 @@ func validateDependencies() errors.Errors {
 	}
 
 	if len(errs) == 0 {
-		currentRedisVer, err := GetServerVersion()
+		serverVer, err := GetServerVersion()
 
 		if err != nil {
-			errs = append(errs, fmt.Errorf("Can't get Redis version: %w", err))
+			errs = append(errs, fmt.Errorf("Can't get server version: %w", err))
 		} else {
-			majorRedisVer := fmt.Sprintf("%d.%d", currentRedisVer.Major(), currentRedisVer.Minor())
+			majorServerVer := fmt.Sprintf("%d.%d", serverVer.Major(), serverVer.Minor())
+			versionFull := fmt.Sprintf("%s-%s", Config.GetS(BACKEND_NAME), majorServerVer)
 
-			if !supportedVersions[majorRedisVer] {
-				errs = append(errs, fmt.Errorf("Redis %s is not supported", currentRedisVer))
+			if !supportedVersions[versionFull] {
+				errs = append(errs, fmt.Errorf("Version %s is not supported", serverVer))
 			}
 		}
 	}
@@ -2616,7 +2618,7 @@ func loadConfig(configFile string) errors.Errors {
 		return errors.Errors{err}
 	}
 
-	errs := validateConfig(Config)
+	errs := validateConfig(cfg)
 
 	if !errs.IsEmpty() {
 		return errs
@@ -2631,9 +2633,7 @@ func loadConfig(configFile string) errors.Errors {
 	cfg.Alias("redis:ionice-classdata", SERVER_IONICE_CLASSDATA)
 	cfg.Alias("templates:redis", TEMPLATES_SERVER)
 
-	if Config != nil {
-		Config = cfg
-	}
+	Config = cfg
 
 	return nil
 }
@@ -2718,7 +2718,6 @@ func validateConfig(cfg *knf.Config) errors.Errors {
 		{PATH_DATA_DIR, knff.Perms, "DRX"},
 		{PATH_PID_DIR, knff.Perms, "DRX"},
 		{PATH_LOG_DIR, knff.Perms, "DRX"},
-		{PATH_PID_DIR, knff.Owner, Config.GetS(SERVER_USER)},
 
 		// LOG //
 
@@ -2807,7 +2806,7 @@ func saveInstanceMeta(meta *InstanceMeta) error {
 // createInstanceConfig create redis config from template
 func createInstanceConfig(meta *InstanceMeta) error {
 	cfg := createConfigFromMeta(meta)
-	confData, err := generateConfigFromTemplate(TEMPLATE_SOURCE_REDIS, cfg)
+	confData, err := generateConfigFromTemplate(TEMPLATE_SOURCE_SERVER, cfg)
 
 	if err != nil {
 		return err
@@ -3009,16 +3008,27 @@ func getServerVersionFromBinary() (*ServerVersionInfo, error) {
 		return nil, err
 	}
 
-	verStr := strutil.ReadField(string(out), 2, false, ' ')
+	var verStr string
 
-	if verStr == "" || !strings.HasPrefix(verStr, "v=") {
-		return nil, ErrCantParseRedisVersion
+	versionInfo := string(out)
+
+	for i := 0; i < 6; i++ {
+		v := strutil.ReadField(versionInfo, i, false, ' ')
+
+		if strings.HasPrefix(v, "v=") {
+			verStr = v
+			break
+		}
+	}
+
+	if verStr == "" {
+		return nil, ErrCantParseServerVersion
 	}
 
 	cDate, err := fsutil.GetCTime(binary)
 
 	if err != nil {
-		return nil, ErrCantReadRedisCreationDate
+		return nil, ErrCantReadServerCreationDate
 	}
 
 	return &ServerVersionInfo{
@@ -3027,7 +3037,7 @@ func getServerVersionFromBinary() (*ServerVersionInfo, error) {
 	}, nil
 }
 
-// updateCompatibilityInfo update compatible redis version info in instance meta
+// updateCompatibilityInfo update compatible server version info in instance meta
 func updateCompatibilityInfo(id int) error {
 	meta, err := GetInstanceMeta(id)
 
@@ -3035,7 +3045,7 @@ func updateCompatibilityInfo(id int) error {
 		return err
 	}
 
-	redisVersion, err := GetServerVersion()
+	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
 		return fmt.Errorf("Can't update instance compatibility info: %w", err)
@@ -3044,13 +3054,13 @@ func updateCompatibilityInfo(id int) error {
 	switch {
 	case err != nil:
 		return err
-	case meta.Compatible == redisVersion.String():
+	case meta.Compatible == currentServerVer.String():
 		return nil
-	case redisVersion.String() == "":
+	case currentServerVer.String() == "":
 		return nil
 	}
 
-	meta.Compatible = redisVersion.String()
+	meta.Compatible = currentServerVer.String()
 
 	metaCache.Set(meta.ID, meta)
 
@@ -3168,13 +3178,13 @@ func getConfigTemplateData(source TemplateSource) (string, string, error) {
 	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
-		return "", "", fmt.Errorf("Can't get Redis version: %w", err)
+		return "", "", fmt.Errorf("Can't get server version: %w", err)
 	}
 
 	majorServerVer := fmt.Sprintf("%d.%d", currentServerVer.Major(), currentServerVer.Minor())
 
 	switch source {
-	case TEMPLATE_SOURCE_REDIS:
+	case TEMPLATE_SOURCE_SERVER:
 		templateFile = Config.GetS(BACKEND_NAME) + "-" + majorServerVer + ".conf"
 		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_SERVER), templateFile)
 	case TEMPLATE_SOURCE_SENTINEL:
@@ -3404,7 +3414,7 @@ func configureCPUScheduler(id, instancePID int) error {
 		return nil
 	}
 
-	pids, err := getRedisTreePIDs(id, instancePID)
+	pids, err := getServerTreePIDs(id, instancePID)
 
 	if err != nil {
 		return err
@@ -3429,7 +3439,7 @@ func configureIOScheduler(id, instancePID int) error {
 		return nil
 	}
 
-	pids, err := getRedisTreePIDs(id, instancePID)
+	pids, err := getServerTreePIDs(id, instancePID)
 
 	if err != nil {
 		return err
@@ -3449,18 +3459,19 @@ func configureIOScheduler(id, instancePID int) error {
 	return nil
 }
 
-// getRedisTreePIDs returns all PIDs of Redis instance
-func getRedisTreePIDs(id, instancePID int) ([]int, error) {
+// getServerTreePIDs returns all PIDs of instance
+func getServerTreePIDs(id, instancePID int) ([]int, error) {
 	tree, err := process.GetTree(instancePID)
 
 	if err != nil {
-		return nil, fmt.Errorf("Can't find Redis instance PIDs for instance with ID %d: %w", id, err)
+		return nil, fmt.Errorf("Can't find instance PIDs for instance with ID %d: %w", id, err)
 	}
 
 	pids := []int{instancePID}
 
 	for _, proc := range tree.Children {
-		if strings.Contains(proc.Command, "redis-server") {
+		if strings.Contains(proc.Command, "redis-server") ||
+			strings.Contains(proc.Command, "valkey-server") {
 			pids = append(pids, proc.PID)
 		}
 	}
