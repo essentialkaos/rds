@@ -54,8 +54,8 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// VERSION is current core version
-const VERSION = "A2"
+// VERSION is current RDS core version
+const VERSION = "B1"
 
 // META_VERSION is current meta version
 const META_VERSION = 1
@@ -385,7 +385,7 @@ type Stats struct {
 
 // aligo:ignore
 type instanceConfigData struct {
-	Redis            version.Version
+	Server           version.Version
 	RDS              *instanceConfigRDSData
 	ID               int
 	AdminPassword    string
@@ -468,6 +468,9 @@ var metaCache *MetaCache
 
 // serverVersion contains current Redis version
 var serverVersion version.Version
+
+// serverUserCache is server user info cache
+var serverUserCache *system.User
 
 // supportedVersions is map with supported Redis versions
 var supportedVersions = map[string]bool{
@@ -1056,7 +1059,7 @@ func RegenerateInstanceConfig(id int) error {
 		return err
 	}
 
-	redisUser, err := system.LookupUser(Config.GetS(SERVER_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
@@ -1069,17 +1072,17 @@ func RegenerateInstanceConfig(id int) error {
 	}
 
 	errs := errors.NewBundle().Add(
-		os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID),
-		os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID),
-		os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID),
+		os.Chown(GetInstanceLogDirPath(id), serverUser.UID, serverUser.GID),
+		os.Chown(GetInstanceDataDirPath(id), serverUser.UID, serverUser.GID),
+		os.Chown(GetInstanceConfigFilePath(id), serverUser.UID, serverUser.GID),
 	)
 
 	if fsutil.IsExist(GetInstanceLogFilePath(id)) {
-		errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
+		errs.Add(os.Chown(GetInstanceLogFilePath(id), serverUser.UID, serverUser.GID))
 	}
 
 	if !errs.IsEmpty() {
-		return errs.Last()
+		return errs.First()
 	}
 
 	metaCache.Set(id, meta)
@@ -1434,7 +1437,13 @@ func StartInstance(id int, controlLoading bool) error {
 		return fmt.Errorf("Instance with ID %d doesn't exist", id)
 	}
 
-	err := runAsUser(
+	err := ensurePermissionsForStart()
+
+	if err != nil {
+		return fmt.Errorf("Can't set permissions required for instance start: %w", err)
+	}
+
+	err = runAsUser(
 		Config.GetS(SERVER_USER),
 		GetInstanceLogFilePath(id),
 		Config.GetS(SERVER_BINARY),
@@ -1655,13 +1664,13 @@ func SentinelStart() []error {
 		return nil
 	}
 
-	currentRedisVer, err := GetServerVersion()
+	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
-		return []error{fmt.Errorf("Can't get Redis Sentinel version: %w", err)}
+		return []error{fmt.Errorf("Can't get Sentinel version: %w", err)}
 	}
 
-	if currentRedisVer.String() == "" || currentRedisVer.Major() < MIN_SENTINEL_VERSION {
+	if currentServerVer.String() == "" || currentServerVer.Major() < MIN_SENTINEL_VERSION {
 		return []error{ErrSentinelWrongVersion}
 	}
 
@@ -1684,6 +1693,12 @@ func SentinelStart() []error {
 	}
 
 	sentinelLogFile := path.Join(Config.GetS(PATH_LOG_DIR), "sentinel.log")
+
+	err = ensurePermissionsForStart()
+
+	if err != nil {
+		return []error{fmt.Errorf("Can't set permissions required for instance start: %w", err)}
+	}
 
 	err = runAsUser(
 		Config.GetS(SERVER_USER),
@@ -2099,10 +2114,10 @@ func IsOutdated(id int) bool {
 		return false
 	}
 
-	currentRedisVer, err := GetServerVersion()
+	currentServerVer, err := GetServerVersion()
 
-	if err == nil && currentRedisVer.String() != "" && meta.Compatible != "" {
-		return meta.Compatible != currentRedisVer.String()
+	if err == nil && currentServerVer.String() != "" && meta.Compatible != "" {
+		return meta.Compatible != currentServerVer.String()
 	}
 
 	return false
@@ -2147,7 +2162,24 @@ func GetSystemConfigurationStatus(force bool) (SystemStatus, error) {
 	return status, nil
 }
 
-// GetServerVersion returns current installed Redis version
+// GetServerUser returns server user
+func GetServerUser() (*system.User, error) {
+	if serverUserCache != nil {
+		return serverUserCache, nil
+	}
+
+	var err error
+
+	serverUserCache, err = system.LookupUser(Config.GetS(SERVER_USER))
+
+	if err != nil {
+		return nil, fmt.Errorf("Can't get user %q info: %w")
+	}
+
+	return serverUserCache, nil
+}
+
+// GetServerVersion returns current installed server version
 func GetServerVersion() (version.Version, error) {
 	if !serverVersion.IsZero() {
 		return serverVersion, nil
@@ -2411,12 +2443,12 @@ func (p *instanceConfigData) PidFile() string {
 	return GetInstancePIDFilePath(p.ID)
 }
 
-// MasterHost returns redis master host (IP)
+// MasterHost returns instance master host (IP)
 func (p *instanceConfigData) MasterHost() string {
 	return Config.GetS(REPLICATION_MASTER_IP)
 }
 
-// MasterPort returns redis master port
+// MasterPort returns instance master port
 func (p *instanceConfigData) MasterPort() int {
 	return GetInstancePort(p.ID)
 }
@@ -2447,42 +2479,63 @@ func (c *instanceConfigData) Storage(key string) string {
 	return c.storage[key]
 }
 
-// Version returns struct with Redis version info
+// Version returns struct with server version info
 func (c *instanceConfigData) Version() version.Version {
-	return c.Redis
+	return c.Server
 }
 
-// RedisVersionLess returns true if instance Redis version is less than given
+// RedisVersionLess returns true if instance server version is less than given
+//
+// Deprecated: Use ServerVersionLess instead
 func (c *instanceConfigData) RedisVersionLess(v string) bool {
+	return c.ServerVersionLess(v)
+}
+
+// ServerVersionLess returns true if instance server version is less than given
+func (c *instanceConfigData) ServerVersionLess(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
 		return false
 	}
 
-	return c.Redis.Less(ver)
+	return c.Server.Less(ver)
 }
 
-// RedisVersionGreater returns true if instance Redis version is greater than given
+// RedisVersionGreater returns true if instance server version is greater than given
+//
+// Deprecated: Use ServerVersionGreater instead
 func (c *instanceConfigData) RedisVersionGreater(v string) bool {
-	ver, err := version.Parse(v)
-
-	if err != nil {
-		return false
-	}
-
-	return c.Redis.Greater(ver)
+	return c.ServerVersionGreater(v)
 }
 
-// RedisVersionEquals returns true if instance Redis version is equal to given
-func (c *instanceConfigData) RedisVersionEquals(v string) bool {
+// ServerVersionGreater returns true if instance server version is greater than given
+func (c *instanceConfigData) ServerVersionGreater(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
 		return false
 	}
 
-	return c.Redis.Equal(ver)
+	return c.Server.Greater(ver)
+}
+
+// RedisVersionEquals returns true if instance server version is equal to given
+//
+// Deprecated: Use ServerVersionEquals instead
+func (c *instanceConfigData) RedisVersionEquals(v string) bool {
+	return c.ServerVersionEquals(v)
+}
+
+// ServerVersionEquals returns true if instance Redis version is equal to given
+func (c *instanceConfigData) ServerVersionEquals(v string) bool {
+	ver, err := version.Parse(v)
+
+	if err != nil {
+		return false
+	}
+
+	return c.Server.Equal(ver)
 }
 
 // AdminPasswordHash returns SHA-256 hash for admin user password
@@ -2701,20 +2754,16 @@ func validateConfig(cfg *knf.Config) errors.Errors {
 
 // createInstanceData create all required files and directories for instance
 func createInstanceData(meta *InstanceMeta) error {
-	var err error
-
-	redisUser, err := system.LookupUser(Config.GetS(SERVER_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
 	}
 
-	var (
-		logDir   = GetInstanceLogDirPath(meta.ID)
-		logFile  = GetInstanceLogFilePath(meta.ID)
-		dataDir  = GetInstanceDataDirPath(meta.ID)
-		confFile = GetInstanceConfigFilePath(meta.ID)
-	)
+	logDir := GetInstanceLogDirPath(meta.ID)
+	logFile := GetInstanceLogFilePath(meta.ID)
+	dataDir := GetInstanceDataDirPath(meta.ID)
+	confFile := GetInstanceConfigFilePath(meta.ID)
 
 	err = os.MkdirAll(logDir, 0755)
 
@@ -2743,10 +2792,10 @@ func createInstanceData(meta *InstanceMeta) error {
 	}
 
 	return errors.NewBundle().Add(
-		os.Chown(logDir, redisUser.UID, redisUser.GID),
-		os.Chown(dataDir, redisUser.UID, redisUser.GID),
-		os.Chown(logFile, redisUser.UID, redisUser.GID),
-		os.Chown(confFile, redisUser.UID, redisUser.GID),
+		os.Chown(logDir, serverUser.UID, serverUser.GID),
+		os.Chown(dataDir, serverUser.UID, serverUser.GID),
+		os.Chown(logFile, serverUser.UID, serverUser.GID),
+		os.Chown(confFile, serverUser.UID, serverUser.GID),
 	).Last()
 }
 
@@ -3038,7 +3087,7 @@ func updateConfigInfo(id int) error {
 
 // createSentinelConfigDir creates directory for Sentinel configuration
 func createSentinelConfigDir(dir string) error {
-	redisUser, err := system.LookupUser(Config.GetS(SERVER_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
@@ -3050,7 +3099,7 @@ func createSentinelConfigDir(dir string) error {
 		return err
 	}
 
-	return os.Chown(dir, redisUser.UID, redisUser.GID)
+	return os.Chown(dir, serverUser.UID, serverUser.GID)
 }
 
 // generateSentinelConfig creates and generates Sentinel configuration
@@ -3071,7 +3120,7 @@ func generateSentinelConfig() error {
 		}
 	}
 
-	serverUser, err := system.LookupUser(Config.GetS(SERVER_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
@@ -3269,10 +3318,31 @@ func isInstanceFullyStarted(id int) bool {
 	return false
 }
 
+// ensurePermissionsForStart checks and changes permissions on directories used by instance
+//
+// Now that we support Valkey and Redis, we don't know which user needs to own the directory
+// with the PIDs. So before starting the instance, we make sure that this directory is owned
+// by the user defined in the configuration file.
+func ensurePermissionsForStart() error {
+	serverUser, err := GetServerUser()
+
+	if err != nil {
+		return err
+	}
+
+	err = os.Chown(Config.GetS(PATH_PID_DIR), serverUser.UID, serverUser.GID)
+
+	if err != nil {
+		return fmt.Errorf("Can't change owner of PIDs directory: %w", err)
+	}
+
+	return nil
+}
+
 // runAsUser run binary as defined user
 func runAsUser(user, logFile string, args ...string) error {
 	if !fsutil.IsRegular(BIN_RUNUSER) {
-		return fmt.Errorf("%s is not found on this system", BIN_RUNUSER)
+		return fmt.Errorf("User %s is not found on this system", BIN_RUNUSER)
 	}
 
 	if !fsutil.IsExecutable(BIN_RUNUSER) {
@@ -3512,9 +3582,9 @@ func createConfigFromMeta(meta *InstanceMeta) *instanceConfigData {
 	}
 
 	if IsInstanceExist(meta.ID) {
-		result.Redis = GetInstanceVersion(meta.ID)
+		result.Server = GetInstanceVersion(meta.ID)
 	} else {
-		result.Redis, _ = GetServerVersion()
+		result.Server, _ = GetServerVersion()
 	}
 
 	if IsMinion() && meta.Preferencies.ReplicationType.IsReplica() &&

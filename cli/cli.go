@@ -46,7 +46,7 @@ import (
 
 const (
 	APP  = "RDS"
-	VER  = "1.12.0"
+	VER  = "2.0.0"
 	DESC = "Tool for Redis orchestration"
 )
 
