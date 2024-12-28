@@ -2721,7 +2721,7 @@ func validateConfig(cfg *knf.Config) errors.Errors {
 
 		// LOG //
 
-		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, log.LogLevels},
+		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, log.Levels()},
 	}
 
 	// REPLICATION //
