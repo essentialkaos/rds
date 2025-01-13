@@ -21,7 +21,7 @@
 > [!IMPORTANT]
 > We highly recommend you checkout [Requirements](https://github.com/essentialkaos/rds/wiki/Requirements) before RDS installation. It can save you from useless work.
 
-#### From [ESSENTIAL KAOS DNF Repository](https://pkgs.kaos.st)
+#### From [ESSENTIAL KAOS Repository](https://pkgs.kaos.st)
 
 ```bash
 sudo dnf install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
@@ -30,9 +30,13 @@ sudo dnf install rds rds-sync redis70
 
 Run `sudo rds go` command and follow the instructions. Check out the [FAQ section](https://kaos.sh/rds/w/FAQ) of our wiki for common questions about using RDS.
 
-<details><summary><b>About Redis versions</b></summary><p>
+<details><summary><b>About Valkey/Redis versions</b></summary><p>
 
-RDS supports the next versions of Redis and Sentinel:
+RDS supports the next versions of [Valkey](https://github.com/valkey-io/valkey):
+
+* `7.2.x` **← ʀᴇᴄᴏᴍᴍᴇɴᴅᴇᴅ**
+
+RDS supports the next versions of [Redis](https://github.com/redis/redis):
 
 * `6.2.x`
 * `7.0.x`
@@ -41,8 +45,11 @@ RDS supports the next versions of Redis and Sentinel:
 
 RDS packages do not have Redis as a dependency, so you can install it from any source (_package, sources, prebuilt binaries…_).
 
-[ESSENTIAL KAOS YUM/DNF Repository](https://pkgs.kaos.st) provides pinned (_pinned to a specific version, for example, 7.2.x_) and unpinned versions of the Redis package:
+[ESSENTIAL KAOS Repository](https://pkgs.kaos.st) provides pinned (_pinned to a specific version, for example, 7.2.x_) and unpinned versions of the Valkey/Redis packages:
 
+* `valkey`
+* `valkey72` **← ʀᴇᴄᴏᴍᴍᴇɴᴅᴇᴅ**
+* `valkey80`
 * `redis`
 * `redis62`
 * `redis70`
