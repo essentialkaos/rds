@@ -900,7 +900,7 @@ func getURL(method API.Method) string {
 func sendRequest(method API.Method, reqData, respData any) error {
 	resp, err := req.Request{
 		URL:         getURL(method),
-		Headers:     API.GetAuthHeader(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)),
+		Auth:        req.AuthBearer{CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)},
 		ContentType: req.CONTENT_TYPE_JSON,
 		Body:        reqData,
 		AutoDiscard: true,

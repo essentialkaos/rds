@@ -8,8 +8,6 @@ package api
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
-	"github.com/essentialkaos/ek/v13/req"
-
 	CORE "github.com/essentialkaos/rds/core"
 )
 
@@ -151,13 +149,15 @@ type HelloResponse struct {
 	Version       string              `json:"version"`
 	CID           string              `json:"cid"`
 	Auth          *CORE.SuperuserAuth `json:"auth"`
+	Instances     uint16              `json:"instances_num"`
+	MemoryUsage   uint64              `json:"mem_usage"`
 	SentinelWorks bool                `json:"sentinel_works"`
 }
 
 type InfoRequest struct {
 	CID  string `json:"cid"`
 	ID   int    `json:"id"`
-	UUID string `json:"UUID"`
+	UUID string `json:"uuid"`
 }
 
 type InfoResponse struct {
@@ -194,15 +194,6 @@ type StatsResponse struct {
 
 type ByeRequest struct {
 	CID string `json:"cid"`
-}
-
-// ////////////////////////////////////////////////////////////////////////////////// //
-
-// GetAuthHeader return API authentication header
-func GetAuthHeader(token string) req.Headers {
-	return req.Headers{
-		"Authorization": "Bearer " + token,
-	}
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
