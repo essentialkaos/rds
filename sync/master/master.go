@@ -231,6 +231,8 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		CID:           genCID(),
 		SentinelWorks: CORE.IsSentinelActive(),
 		Auth:          auth,
+		InstancesNum:  len(CORE.GetInstanceIDList()),
+		MemoryUsage:   calculateMemUsage(),
 	}
 
 	if coreCompat == API.CORE_COMPAT_PARTIAL {
@@ -1159,4 +1161,16 @@ func renderClientInfo(client *ClientInfo) string {
 		"Role: %s | Version: %s | Hostname: %s | IP: %s",
 		client.Role, client.Version, client.Hostname, client.IP,
 	)
+}
+
+// calculateMemUsage calculates total memory usage by all instances
+func calculateMemUsage() uint64 {
+	var total uint64
+
+	for _, id := range CORE.GetInstanceIDList() {
+		rss, swap, _ := CORE.GetInstanceMemUsage(id)
+		total += rss + swap
+	}
+
+	return total
 }

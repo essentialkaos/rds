@@ -149,7 +149,7 @@ type HelloResponse struct {
 	Version       string              `json:"version"`
 	CID           string              `json:"cid"`
 	Auth          *CORE.SuperuserAuth `json:"auth"`
-	Instances     uint16              `json:"instances_num"`
+	InstancesNum  int                 `json:"instances_num"`
 	MemoryUsage   uint64              `json:"mem_usage"`
 	SentinelWorks bool                `json:"sentinel_works"`
 }
