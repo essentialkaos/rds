@@ -1368,6 +1368,27 @@ func GetInstanceInfo(id int, timeout time.Duration, all bool) (*REDIS.Info, erro
 	)
 }
 
+// GetInstanceMemUsage returns RSS and swap memory usage
+func GetInstanceMemUsage(id int) (uint64, uint64, error) {
+	state, err := GetInstanceState(id, false)
+
+	if err != nil {
+		return 0, 0, err
+	}
+
+	if !state.IsWorks() {
+		return 0, 0, fmt.Errorf("Can't get instance memory usage: instance doesn't stopped or dead")
+	}
+
+	_, rss, swap, err := getMemoryUsageFromProcFS(id)
+
+	if err != nil {
+		return 0, 0, fmt.Errorf("Can't get instance memory usage: %w", err)
+	}
+
+	return rss, swap, nil
+}
+
 // ExecCommand executes Redis command on given instance
 func ExecCommand(id int, req *REDIS.Request) (*REDIS.Resp, error) {
 	if !IsInstanceExist(id) {
@@ -2281,7 +2302,7 @@ func GetStats() *Stats {
 			stats.Instances.Outdated++
 		}
 
-		hwm, rss, swap := getMemoryUsageFromProcFS(id)
+		hwm, rss, swap, _ := getMemoryUsageFromProcFS(id)
 
 		stats.Memory.UsedSwap += swap
 
@@ -2961,14 +2982,14 @@ func isInstanceSavingData(id int) bool {
 }
 
 // getMemoryUsageFromProcFS returns mem usage from procfs
-func getMemoryUsageFromProcFS(id int) (uint64, uint64, uint64) {
+func getMemoryUsageFromProcFS(id int) (uint64, uint64, uint64, error) {
 	memInfo, err := process.GetMemInfo(GetInstancePID(id))
 
 	if err != nil {
-		return 0, 0, 0
+		return 0, 0, 0, err
 	}
 
-	return memInfo.VmHWM, memInfo.VmRSS, memInfo.VmSwap
+	return memInfo.VmHWM, memInfo.VmRSS, memInfo.VmSwap, nil
 }
 
 // getServerVersionFromCache read current redis version info from cache

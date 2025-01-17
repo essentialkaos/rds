@@ -19,7 +19,6 @@ import (
 	"github.com/essentialkaos/ek/v13/mathutil"
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/pager"
-	"github.com/essentialkaos/ek/v13/system/process"
 	"github.com/essentialkaos/ek/v13/terminal"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -267,19 +266,13 @@ func getInstanceMemoryUsageWithColor(id int, state CORE.State) string {
 		return "{s-}∙∙∙∙∙∙∙∙{!}"
 	}
 
-	pid := CORE.GetInstancePID(id)
-
-	if pid == -1 {
-		return "{y}????????{!}"
-	}
-
-	usage, err := process.GetMemInfo(pid)
+	rss, swap, err := CORE.GetInstanceMemUsage(id)
 
 	if err != nil {
 		return "{y}????????{!}"
 	}
 
-	return fmtutil.PrettySize(usage.VmRSS)
+	return fmtutil.PrettySize(rss + swap)
 }
 
 // isMetaContainsTag return true if instance has given tag
