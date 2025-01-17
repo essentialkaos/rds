@@ -184,6 +184,7 @@ systemctl daemon-reload &>/dev/null || :
 %changelog
 * Tue Dec 24 2024 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
 - Added Valkey support
+- Improved syncing process
 - Dependencies update
 - Code refactoring
 
