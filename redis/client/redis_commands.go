@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/essentialkaos/ek/v13/strutil"
+
 	"github.com/essentialkaos/redy/v4"
 )
 
@@ -476,9 +478,9 @@ func updateCommandsSupport(client *redy.Client) error {
 		}
 
 		if len(commandInfo) != 0 {
-			for _, ci := range getCommands() {
-				if ci.Name == strings.ToUpper(commandInfo[0]) {
-					ci.IsSupported = true
+			for _, cmd := range getCommands() {
+				if strutil.ReadField(cmd.Name, 0, false, ' ') == strings.ToUpper(commandInfo[0]) {
+					cmd.IsSupported = true
 				}
 			}
 		}
