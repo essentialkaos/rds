@@ -941,7 +941,7 @@ func checkForRequiredMemoryToSync(instanceNum int, memoryUsage uint64) bool {
 
 	if usageRatio >= 0.9 {
 		log.Crit(
-			"System has no enough free memory (%s is reqired, %s is free) to sync",
+			"System has no enough free memory (%s is required, %s is free) to sync",
 			fmtutil.PrettySize(memoryUsage), fmtutil.PrettySize(systemMem.MemFree),
 		)
 		return false
@@ -949,7 +949,7 @@ func checkForRequiredMemoryToSync(instanceNum int, memoryUsage uint64) bool {
 
 	if usageRatio >= 0.55 {
 		log.Warn(
-			"System has dangerously low amount of free memory (%s is reqired, %s is free) to sync, keep an eye on it.",
+			"System has dangerously low amount of free memory (%s is required, %s is free) to sync, keep an eye on it.",
 			fmtutil.PrettySize(memoryUsage), fmtutil.PrettySize(systemMem.MemFree),
 		)
 	}
