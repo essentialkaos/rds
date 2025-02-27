@@ -174,7 +174,7 @@ func helpCommandDestroy() {
 func helpCommandEdit() {
 	helpInfo{
 		command: COMMAND_EDIT,
-		desc:    "This command allows you to change some information about the instance. At the moment you can change the owner, description and password.",
+		desc:    "This command allows you to change some information about the instance. Currently you can change the owner, description, password and replication method. Note that this command doesn't affect the instance configuration, so if your configuration template depends on the replication type, you will need to regenerate and reload the new instance configuration.",
 		arguments: []helpInfoArgument{
 			{"id", "Instance unique ID", false},
 		},
