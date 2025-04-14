@@ -70,7 +70,7 @@ RDS packages do not have Redis as a dependency, so you can install it from any s
 
 ### Contributing
 
-Before contributing to this project please read our [Contributing Guidelines](https://github.com/essentialkaos/contributing-guidelines#contributing-guidelines).
+Before contributing to this project please read our [Contributing Guidelines](https://github.com/essentialkaos/.github/blob/master/CONTRIBUTING.md).
 
 ### License
 
