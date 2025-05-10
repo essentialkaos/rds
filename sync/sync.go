@@ -260,15 +260,15 @@ func checkSystemConfiguration() error {
 	}
 
 	if status.HasTHPIssues {
-		return fmt.Errorf("You should disable THP (Transparent Huge Pages) on this system.")
+		return fmt.Errorf("You should disable THP (Transparent Huge Pages) on this system")
 	}
 
 	if status.HasLimitsIssues {
-		return fmt.Errorf("You should increase the maximum number of open file descriptors for the Redis user.")
+		return fmt.Errorf("You should increase the maximum number of open file descriptors for the Redis user")
 	}
 
 	if status.HasKernelIssues {
-		return fmt.Errorf("You should set vm.overcommit_memory setting and increase net.core.somaxconn setting in your sysctl configuration file.")
+		return fmt.Errorf("You should set vm.overcommit_memory setting and increase net.core.somaxconn setting in your sysctl configuration file")
 	}
 
 	if status.HasFSIssues {
@@ -295,7 +295,7 @@ func validateConfig() error {
 		}
 	}
 
-	if !CORE.Config.HasProp(CORE.REPLICATION_AUTH_TOKEN) {
+	if !CORE.Config.Has(CORE.REPLICATION_AUTH_TOKEN) {
 		return fmt.Errorf("Configuration error: Auth token not defined in %s", CORE.REPLICATION_AUTH_TOKEN)
 	}
 

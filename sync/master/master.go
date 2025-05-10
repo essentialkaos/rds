@@ -1060,11 +1060,7 @@ func cleanupQueue() {
 	now := time.Now().UnixNano()
 	mts := now - (DELAY_DEAD * 1_000_000_000)
 
-	for {
-		if len(items) == 0 {
-			break
-		}
-
+	for len(items) != 0 {
 		item := items[0]
 
 		if item.Timestamp < mts {

@@ -1032,9 +1032,10 @@ func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueIte
 	initList := make(map[string]uint8)
 
 	for _, item = range items {
-		if item.Command == API.COMMAND_CREATE {
+		switch item.Command {
+		case API.COMMAND_CREATE:
 			initList[item.InstanceUUID] = 1
-		} else if item.Command == API.COMMAND_DESTROY {
+		case API.COMMAND_DESTROY:
 			if initList[item.InstanceUUID] == 1 {
 				initList[item.InstanceUUID] = 2
 				log.Warn("(%3d) The instance was created but later was destroyed. All actions with the instance will be skipped.", item.InstanceID)
@@ -1324,7 +1325,7 @@ func isMetaEqual(m1, m2 *CORE.InstanceMeta) bool {
 		m1.Auth.User != m2.Auth.User,
 		m1.Auth.Pepper != m2.Auth.Pepper,
 		m1.Auth.Hash != m2.Auth.Hash,
-		isMapsEqual(m1.Storage, m2.Storage) == false,
+		!isMapsEqual(m1.Storage, m2.Storage),
 		strings.Join(m1.Tags, " ") != strings.Join(m2.Tags, " "):
 		return false
 	}

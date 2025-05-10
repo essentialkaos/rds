@@ -687,9 +687,10 @@ func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueIte
 	initList := make(map[string]uint8)
 
 	for _, item = range items {
-		if item.Command == API.COMMAND_CREATE {
+		switch item.Command {
+		case API.COMMAND_CREATE:
 			initList[item.InstanceUUID] = 1
-		} else if item.Command == API.COMMAND_DESTROY {
+		case API.COMMAND_DESTROY:
 			if initList[item.InstanceUUID] == 1 {
 				initList[item.InstanceUUID] = 2
 				log.Warn("(%3d) Instance was created but later was destroyed. All actions for instance will be skipped.", item.InstanceID)
