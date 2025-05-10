@@ -13,7 +13,7 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.st/rds-100a.gif)](#usage-demo)
+https://github.com/essentialkaos/rds/assets/182020/61e2ddfa-a921-4669-af88-8d815b35d210
 
 ### Installation
 
