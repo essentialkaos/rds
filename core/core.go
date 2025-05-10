@@ -2195,7 +2195,7 @@ func GetServerUser() (*system.User, error) {
 	serverUserCache, err = system.LookupUser(Config.GetS(SERVER_USER))
 
 	if err != nil {
-		return nil, fmt.Errorf("Can't get user %q info: %w")
+		return nil, fmt.Errorf("Can't get user %q info: %w", err)
 	}
 
 	return serverUserCache, nil
@@ -3298,14 +3298,14 @@ func addAllReplicasToSentinelMonitoring() errors.Errors {
 // this file is works
 func isProcStarted(pidFile string, delay int) bool {
 	cmdStart := time.Now()
-	delaySec := time.Second * time.Duration(delay)
+	delayDur := time.Second * time.Duration(delay)
 
 	for range time.NewTicker(time.Second).C {
 		if pid.IsWorks(pidFile) {
 			return true
 		}
 
-		if time.Since(cmdStart) >= delaySec {
+		if time.Since(cmdStart) >= delayDur {
 			break
 		}
 	}
@@ -3317,14 +3317,14 @@ func isProcStarted(pidFile string, delay int) bool {
 // works
 func isProcStopped(appPID, delay int) bool {
 	cmdStart := time.Now()
-	delaySec := time.Second * time.Duration(delay)
+	delayDur := time.Second * time.Duration(delay)
 
 	for range time.NewTicker(time.Second).C {
 		if !pid.IsProcessWorks(appPID) {
 			return true
 		}
 
-		if time.Since(cmdStart) >= delaySec {
+		if time.Since(cmdStart) >= delayDur {
 			break
 		}
 	}
