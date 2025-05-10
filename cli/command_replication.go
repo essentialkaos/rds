@@ -203,11 +203,11 @@ func hasSentinelNodes(clients []*API.ClientInfo) bool {
 func formatReplicationErrorMessage(format string) string {
 	switch format {
 	case FORMAT_TEXT:
-		return fmt.Sprint("")
+		return ""
 	case FORMAT_JSON:
-		return fmt.Sprint("{}\n")
+		return "{}\n"
 	case FORMAT_XML:
-		return fmt.Sprint("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<replication></replication>\n")
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<replication></replication>\n"
 	}
 
 	return ""

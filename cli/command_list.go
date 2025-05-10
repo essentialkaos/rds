@@ -217,7 +217,7 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 		case "with-errors":
 			fit = state.IsWorks() && state.WithErrors()
 		case "orphan":
-			fit = isInstanceOwnerExist(meta.Auth.User) == false
+			fit = !isInstanceOwnerExist(meta.Auth.User)
 		case "outdated":
 			currentServerVer, _ := CORE.GetServerVersion()
 			if state.IsStopped() {
