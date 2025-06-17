@@ -59,13 +59,13 @@ func StatusCommand(args CommandArgs) int {
 			case info != nil && info.Get("persistence", "rdb_bgsave_in_progress") == "1":
 				fmtc.Printfn(
 					"Instance {*}%d{!} is {g}works{!} and {g*}saving data{!} {s-}(started %s ago){!}",
-					id, timeutil.PrettyDuration(info.GetI("persistence", "rdb_current_bgsave_time_sec")),
+					id, timeutil.Pretty(info.GetI("persistence", "rdb_current_bgsave_time_sec")),
 				)
 
 			case info != nil && info.Get("persistence", "aof_rewrite_in_progress") == "1":
 				fmtc.Printfn(
 					"Instance {*}%d{!} is {g}works{!} and {g*}saving data{!} {s-}(started %s ago){!}",
-					id, timeutil.PrettyDuration(info.GetI("persistence", "aof_current_rewrite_time_sec")),
+					id, timeutil.Pretty(info.GetI("persistence", "aof_current_rewrite_time_sec")),
 				)
 
 			default:

@@ -16,7 +16,6 @@ import (
 	"github.com/essentialkaos/ek/v13/fmtc"
 	"github.com/essentialkaos/ek/v13/fmtutil"
 	"github.com/essentialkaos/ek/v13/fsutil"
-	"github.com/essentialkaos/ek/v13/mathutil"
 	"github.com/essentialkaos/ek/v13/path"
 	"github.com/essentialkaos/ek/v13/strutil"
 	"github.com/essentialkaos/ek/v13/terminal"
@@ -97,7 +96,7 @@ func readLogFile(logFile string, isRedisLog bool) error {
 	fs := fsutil.GetSize(logFile)
 
 	if fs > 0 {
-		fd.Seek(-1*mathutil.Min(fs, 4096), 2)
+		fd.Seek(-1*min(fs, 4096), 2)
 	}
 
 	lastPrint := time.Now()

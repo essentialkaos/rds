@@ -66,7 +66,7 @@ func UptimeCommand(args CommandArgs) int {
 			modTime, _ := fsutil.GetMTime(pidFile)
 
 			if !modTime.IsZero() {
-				uptime = timeutil.MiniDuration(time.Since(modTime))
+				uptime = timeutil.Pretty(time.Since(modTime)).Mini()
 			}
 		}
 

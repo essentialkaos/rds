@@ -124,8 +124,8 @@ func printClientsInfo(clientsData, filter string) {
 			fmtutil.PrettyNum(sub),
 			fmtutil.PrettyNum(psub),
 			info["events"],
-			timeutil.PrettyDurationSimple(age),
-			timeutil.PrettyDurationSimple(idle),
+			timeutil.Pretty(age).Mini(),
+			timeutil.Pretty(idle).Mini(),
 			cmd,
 		)
 	}

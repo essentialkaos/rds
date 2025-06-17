@@ -126,7 +126,7 @@ func printSyncClientInfo(t *table.Table, client *API.ClientInfo, suppliantCID st
 	lag := "{s-}—{!}"
 
 	if client.LastSyncLag > 0 {
-		lag = timeutil.MiniDuration(timeutil.SecondsToDuration(client.LastSeenLag))
+		lag = timeutil.Pretty(timeutil.SecondsToDuration(client.LastSeenLag)).Mini()
 	}
 
 	t.Print(
