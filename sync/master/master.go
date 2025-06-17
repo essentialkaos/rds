@@ -1115,7 +1115,7 @@ func checkClientsStatus() {
 		case API.STATE_DEAD:
 			log.Warn(
 				"Client with CID %s (%s) unregistered: client inactive more than %s",
-				client.CID, renderClientInfo(client), timeutil.PrettyDuration(DELAY_DEAD),
+				client.CID, renderClientInfo(client), timeutil.Pretty(DELAY_DEAD),
 			)
 
 			delete(clients, client.CID)
