@@ -180,12 +180,12 @@ func getSyncClientHost(hostname, ip string) string {
 }
 
 // getSyncClientRole returns client role for command output
-func getSyncClientRole(typ string, isSuppliant bool) string {
+func getSyncClientRole(role string, isSuppliant bool) string {
 	if !isSuppliant {
-		return typ
+		return role
 	}
 
-	return "{s}•{!} " + typ
+	return "{s}•{!} " + role
 }
 
 // hasSentinelNodes returns true if given slice contains sentinel node
