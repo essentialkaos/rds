@@ -2192,10 +2192,11 @@ func GetServerUser() (*system.User, error) {
 
 	var err error
 
-	serverUserCache, err = system.LookupUser(Config.GetS(SERVER_USER))
+	serverUser := Config.GetS(SERVER_USER)
+	serverUserCache, err = system.LookupUser(serverUser)
 
 	if err != nil {
-		return nil, fmt.Errorf("Can't get user %q info: %w", err)
+		return nil, fmt.Errorf("Can't get user %q info: %w", serverUser, err)
 	}
 
 	return serverUserCache, nil
