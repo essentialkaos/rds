@@ -3,7 +3,7 @@ module github.com/essentialkaos/rds
 go 1.23.8
 
 require (
-	github.com/essentialkaos/ek/v13 v13.31.0
+	github.com/essentialkaos/ek/v13 v13.31.1
 	github.com/essentialkaos/go-linenoise/v3 v3.7.0
 	github.com/essentialkaos/redy/v4 v4.4.1
 )
