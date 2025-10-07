@@ -1190,7 +1190,7 @@ func changeInstanceReplicationType(id int, replType CORE.ReplicationType) error 
 	return err
 }
 
-// chengeInstanceToReplica changes instance replication type to "replica"
+// changeInstanceToReplica changes instance replication type to "replica"
 func changeInstanceToReplica(id int) error {
 	masterHost := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
 	masterPort := strconv.Itoa(CORE.GetInstancePort(id))
@@ -1209,7 +1209,7 @@ func changeInstanceToReplica(id int) error {
 	return err
 }
 
-// chengeInstanceToStadby changes instance replication type to "standby"
+// changeInstanceToStadby changes instance replication type to "standby"
 func changeInstanceToStadby(id int) error {
 	resp, err := CORE.ExecCommand(id, &REDIS.Request{
 		Command: []string{"REPLICAOF", "NO", "ONE"},
