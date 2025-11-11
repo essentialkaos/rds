@@ -1,6 +1,6 @@
 module github.com/essentialkaos/rds
 
-go 1.24.6
+go 1.24.9
 
 require (
 	github.com/essentialkaos/ek/v13 v13.36.0
