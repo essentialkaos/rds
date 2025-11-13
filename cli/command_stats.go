@@ -31,7 +31,7 @@ func StatsCommand(args CommandArgs) int {
 		case FORMAT_JSON:
 			fmt.Println("{}")
 		case FORMAT_XML:
-			fmt.Sprintln(`<?xml version="1.0" encoding="UTF-8" ?>\n<stats></stats>`)
+			fmt.Println(`<?xml version="1.0" encoding="UTF-8" ?>\n<stats></stats>`)
 		default:
 			terminal.Warn("No instances are created")
 		}
