@@ -682,7 +682,7 @@ func ValidateTemplates() errors.Errors {
 	meta, err := NewInstanceMeta("test", "test")
 
 	if err != nil {
-		errs.Add(fmt.Errorf("Can't generate instance meta for validation: %w", err))
+		errs.Addf("Can't generate instance meta for validation: %w", err)
 	} else {
 		_, err = generateConfigFromTemplate(
 			TEMPLATE_SOURCE_SERVER,
