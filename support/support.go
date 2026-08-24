@@ -2,7 +2,7 @@ package support
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -28,13 +28,13 @@ func Print(app, ver, gitRev string, gomod []byte) {
 	support.Collect(app, ver).
 		WithRevision(gitRev).
 		WithDeps(deps.Extract(gomod)).
-		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72,redis74")).
-		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli,redis74-cli")).
+		WithPackages(pkgs.Collect("redis,redis62,redis70,redis72,redis74,valkey,valkey72")).
+		WithPackages(pkgs.Collect("redis-cli,redis62-cli,redis70-cli,redis72-cli,redis74-cli,valkey-cli,valkey72-cli")).
 		WithPackages(pkgs.Collect("rds", "rds-sync", "systemd", "tuned")).
 		WithChecks(checkSystem()...).
 		WithChecks(checkSyncDaemon()).
 		WithChecks(checkKeepalived()).
-		WithApps(getRedisVersion()).
+		WithApps(getServerVersion()).
 		WithNetwork(network.Collect()).
 		WithResources(resources.Collect()).
 		WithKernel(kernel.Collect(
@@ -74,14 +74,14 @@ func checkKeepalived() support.Check {
 func checkSystem() []support.Check {
 	var chks []support.Check
 
-	currentRedisVer, err := CORE.GetRedisVersion()
+	currentRedisVer, err := CORE.GetServerVersion()
 
 	if err != nil {
-		chks = append(chks, support.Check{support.CHECK_ERROR, "Redis", "Can't check Redis version"})
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Server", "Can't check server version"})
 	}
 
 	if currentRedisVer.IsZero() {
-		chks = append(chks, support.Check{support.CHECK_ERROR, "Redis", "Can't extract or parse Redis version"})
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Server", "Can't extract or parse server version"})
 	}
 
 	status, err := CORE.GetSystemConfigurationStatus(true)
@@ -98,7 +98,7 @@ func checkSystem() []support.Check {
 	}
 
 	if status.HasKernelIssues {
-		chks = append(chks, support.Check{support.CHECK_ERROR, "Kernel", "Kernel is not properly configured for Redis"})
+		chks = append(chks, support.Check{support.CHECK_ERROR, "Kernel", "Kernel is not properly configured"})
 	} else {
 		chks = append(chks, support.Check{support.CHECK_OK, "Kernel", "No issues"})
 	}
@@ -136,8 +136,8 @@ func checkSyncDaemon() support.Check {
 	return chk
 }
 
-// getRedisVersion returns current Redis version
-func getRedisVersion() support.App {
-	currentRedisVer, _ := CORE.GetRedisVersion()
-	return support.App{"Redis", currentRedisVer.String()}
+// getServerVersion returns current Redis version
+func getServerVersion() support.App {
+	currentVer, _ := CORE.GetServerVersion()
+	return support.App{"Server", currentVer.String()}
 }

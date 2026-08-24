@@ -44,13 +44,18 @@
   # Hostname used for URL generation
   hostname:
 
-[redis]
+[backend]
 
-  # Path to Redis server binary
-  binary: /usr/bin/redis-server
+  # Name of backed redis/valkey…
+  name: redis
 
-  # Redis user
-  user: redis
+[server]
+
+  # Path to Valkey/Redis server binary
+  binary: /usr/bin/{backend:name}-server
+
+  # Valkey/Redis user
+  user: {backend:name}
 
   # Start port (must be greater than 1024 and same for master and minions)
   start-port: 63000
@@ -58,7 +63,7 @@
   # Force to save dump even if no save points are configured (true by default)
   save-on-stop: true
 
-  # Scheduling priority for Redis (from -20 for most favorable scheduling
+  # Scheduling priority for Valkey/Redis (from -20 for most favorable scheduling
   # to 19 for least favorable)
   nice:
 
@@ -71,7 +76,7 @@
 [sentinel]
 
   # Path to Sentinel binary
-  binary: /usr/bin/redis-sentinel
+  binary: /usr/bin/{backend:name}-sentinel
 
   # The port that this Sentinel instance will run on
   port: 63999
@@ -97,7 +102,7 @@
 [templates]
 
   # Path to directory with Redis configuration files templates
-  redis: {main:dir}/templates/redis
+  server: {main:dir}/templates/server
 
   # Path to directory with Sentinel configuration files templates
   sentinel: {main:dir}/templates/sentinel

@@ -2,7 +2,7 @@ package core
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -80,7 +80,7 @@ func isSystemHasLimitsIssues() (bool, error) {
 		return false, fmt.Errorf("%s can't be executed", BIN_RUNUSER)
 	}
 
-	user := Config.GetS(REDIS_USER)
+	user := Config.GetS(SERVER_USER)
 	cmd := exec.Command(BIN_RUNUSER, "-s", "/bin/bash", user, "-c", "ulimit -n")
 	output, err := cmd.Output()
 

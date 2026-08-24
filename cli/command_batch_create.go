@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -10,7 +10,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -140,21 +139,13 @@ func readInstanceList(file string) ([]*instanceBasicInfo, error) {
 
 	defer fd.Close()
 
-	r := csv.NewReader(fd)
+	r := csv.NewReader(fd, ';')
 
-	for {
-		row, err := r.Read()
-
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-
+	for line, row := range r.Seq {
 		err = validateInstanceListRow(row)
 
 		if err != nil {
-			return nil, fmt.Errorf("Can't parse row %d: %v", r.Line(), err)
+			return nil, fmt.Errorf("Can't parse row %d: %v", line, err)
 		}
 
 		result = append(result, &instanceBasicInfo{
@@ -164,6 +155,10 @@ func readInstanceList(file string) ([]*instanceBasicInfo, error) {
 			ServicePassword:  row.Get(3),
 			Desc:             row.Get(4),
 		})
+	}
+
+	if r.Error() != nil {
+		return nil, r.Error()
 	}
 
 	return result, nil

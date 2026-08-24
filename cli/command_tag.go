@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -62,7 +62,7 @@ func TagAddCommand(args CommandArgs) int {
 	}
 
 	// We use renderTags function from listing
-	fmtc.Printf("Tag "+renderTags(tag)+" added to instance %d\n", id)
+	fmtc.Printfn("Tag "+renderTags(tag)+" added to instance %d", id)
 
 	logger.Info(id, "Tag %q added", tag)
 
@@ -114,7 +114,7 @@ func TagRemoveCommand(args CommandArgs) int {
 		return EC_ERROR
 	}
 
-	fmtc.Printf("{g}Tag \"%s\" removed from instance %d{!}\n", tagName, id)
+	fmtc.Printfn("{g}Tag \"%s\" removed from instance %d{!}", tagName, id)
 
 	logger.Info(id, "Tag %q removed", tagName)
 

@@ -2,7 +2,7 @@ package minion
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -21,6 +21,7 @@ import (
 	"github.com/essentialkaos/ek/v13/mathutil"
 	"github.com/essentialkaos/ek/v13/pluralize"
 	"github.com/essentialkaos/ek/v13/req"
+	"github.com/essentialkaos/ek/v13/system"
 	"github.com/essentialkaos/ek/v13/timeutil"
 	"github.com/essentialkaos/ek/v13/version"
 
@@ -140,17 +141,21 @@ func sendHelloCommand() bool {
 		return false
 	}
 
+	if !checkForRequiredMemoryToSync(helloResponse.InstancesNum, helloResponse.MemoryUsage) {
+		return false
+	}
+
 	switch AUXI.GetCoreCompatibility(helloResponse.Version) {
 	case API.CORE_COMPAT_PARTIAL:
-		log.Warn("This client might be incompatible with master node")
+		log.Warn("This minion node might be incompatible with master node")
 	case API.CORE_COMPAT_ERROR:
-		log.Crit("This client is not compatible with master node")
+		log.Crit("This minion node is not compatible with master node")
 		return false
 	}
 
 	cid = helloResponse.CID
 
-	log.Info("Master (%s) return CID %s for this client", helloResponse.Version, cid)
+	log.Info("Master (%s) return CID %s for this minion node", helloResponse.Version, cid)
 
 	sentinelWorks = helloResponse.SentinelWorks
 
@@ -900,7 +905,7 @@ func getURL(method API.Method) string {
 func sendRequest(method API.Method, reqData, respData any) error {
 	resp, err := req.Request{
 		URL:         getURL(method),
-		Headers:     API.GetAuthHeader(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)),
+		Auth:        req.AuthBearer{CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)},
 		ContentType: req.CONTENT_TYPE_JSON,
 		Body:        reqData,
 		AutoDiscard: true,
@@ -921,6 +926,35 @@ func sendRequest(method API.Method, reqData, respData any) error {
 	}
 
 	return nil
+}
+
+// checkForRequiredMemoryToSync checks if system has enough memory to sync
+func checkForRequiredMemoryToSync(instanceNum int, memoryUsage uint64) bool {
+	systemMem, err := system.GetMemUsage()
+
+	if err != nil {
+		log.Error("Can't check system memory usage for sync: %v", err)
+		return true
+	}
+
+	usageRatio := float64(memoryUsage) / float64(systemMem.MemFree)
+
+	if usageRatio >= 0.9 {
+		log.Crit(
+			"System has no enough free memory (%s is required, %s is free) to sync",
+			fmtutil.PrettySize(memoryUsage), fmtutil.PrettySize(systemMem.MemFree),
+		)
+		return false
+	}
+
+	if usageRatio >= 0.55 {
+		log.Warn(
+			"System has dangerously low amount of free memory (%s is required, %s is free) to sync, keep an eye on it.",
+			fmtutil.PrettySize(memoryUsage), fmtutil.PrettySize(systemMem.MemFree),
+		)
+	}
+
+	return true
 }
 
 // syncSentinelState syncs state of Sentinel with master
@@ -998,9 +1032,10 @@ func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueIte
 	initList := make(map[string]uint8)
 
 	for _, item = range items {
-		if item.Command == API.COMMAND_CREATE {
+		switch item.Command {
+		case API.COMMAND_CREATE:
 			initList[item.InstanceUUID] = 1
-		} else if item.Command == API.COMMAND_DESTROY {
+		case API.COMMAND_DESTROY:
 			if initList[item.InstanceUUID] == 1 {
 				initList[item.InstanceUUID] = 2
 				log.Warn("(%3d) The instance was created but later was destroyed. All actions with the instance will be skipped.", item.InstanceID)
@@ -1155,7 +1190,7 @@ func changeInstanceReplicationType(id int, replType CORE.ReplicationType) error 
 	return err
 }
 
-// chengeInstanceToReplica changes instance replication type to "replica"
+// changeInstanceToReplica changes instance replication type to "replica"
 func changeInstanceToReplica(id int) error {
 	masterHost := CORE.Config.GetS(CORE.REPLICATION_MASTER_IP)
 	masterPort := strconv.Itoa(CORE.GetInstancePort(id))
@@ -1174,7 +1209,7 @@ func changeInstanceToReplica(id int) error {
 	return err
 }
 
-// chengeInstanceToStadby changes instance replication type to "standby"
+// changeInstanceToStadby changes instance replication type to "standby"
 func changeInstanceToStadby(id int) error {
 	resp, err := CORE.ExecCommand(id, &REDIS.Request{
 		Command: []string{"REPLICAOF", "NO", "ONE"},
@@ -1290,7 +1325,7 @@ func isMetaEqual(m1, m2 *CORE.InstanceMeta) bool {
 		m1.Auth.User != m2.Auth.User,
 		m1.Auth.Pepper != m2.Auth.Pepper,
 		m1.Auth.Hash != m2.Auth.Hash,
-		isMapsEqual(m1.Storage, m2.Storage) == false,
+		!isMapsEqual(m1.Storage, m2.Storage),
 		strings.Join(m1.Tags, " ") != strings.Join(m2.Tags, " "):
 		return false
 	}

@@ -2,7 +2,7 @@ package core
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -54,8 +54,8 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// VERSION is current core version
-const VERSION = "A2"
+// VERSION is current RDS core version
+const VERSION = "B1"
 
 // META_VERSION is current meta version
 const META_VERSION = 1
@@ -109,10 +109,10 @@ const (
 )
 
 const (
-	SU_DATA_FILE            = "su.dat"
-	REDIS_VERSION_DATA_FILE = "redis.dat"
-	STATES_DATA_FILE        = "states.dat"
-	IDS_DATA_FILE           = "ids.dat"
+	SU_DATA_FILE             = "su.dat"
+	SERVER_VERSION_DATA_FILE = "server.dat"
+	STATES_DATA_FILE         = "states.dat"
+	IDS_DATA_FILE            = "ids.dat"
 )
 
 const (
@@ -137,15 +137,15 @@ const (
 	MAIN_STRICT_SECURE               = "main:strict-secure"
 	MAIN_HOSTNAME                    = "main:hostname"
 
-	LOG_LEVEL = "log:level"
+	BACKEND_NAME = "backend:name"
 
-	REDIS_BINARY           = "redis:binary"
-	REDIS_USER             = "redis:user"
-	REDIS_START_PORT       = "redis:start-port"
-	REDIS_SAVE_ON_STOP     = "redis:save-on-stop"
-	REDIS_NICE             = "redis:nice"
-	REDIS_IONICE_CLASS     = "redis:ionice-class"
-	REDIS_IONICE_CLASSDATA = "redis:ionice-classdata"
+	SERVER_BINARY           = "server:binary"
+	SERVER_USER             = "server:user"
+	SERVER_START_PORT       = "server:start-port"
+	SERVER_SAVE_ON_STOP     = "server:save-on-stop"
+	SERVER_NICE             = "server:nice"
+	SERVER_IONICE_CLASS     = "server:ionice-class"
+	SERVER_IONICE_CLASSDATA = "server:ionice-classdata"
 
 	SENTINEL_BINARY           = "sentinel:binary"
 	SENTINEL_PORT             = "sentinel:port"
@@ -156,8 +156,10 @@ const (
 
 	KEEPALIVED_VIRTUAL_IP = "keepalived:virtual-ip"
 
-	TEMPLATES_REDIS    = "templates:redis"
+	TEMPLATES_SERVER   = "templates:server"
 	TEMPLATES_SENTINEL = "templates:sentinel"
+
+	LOG_LEVEL = "log:level"
 
 	PATH_META_DIR   = "path:meta-dir"
 	PATH_CONFIG_DIR = "path:config-dir"
@@ -183,10 +185,15 @@ const (
 )
 
 const (
-	REDIS_USER_ADMIN    = "admin"
-	REDIS_USER_SYNC     = "sync"
-	REDIS_USER_SERVICE  = "service"
-	REDIS_USER_SENTINEL = "sentinel"
+	BACKEND_REDIS  = "redis"
+	BACKEND_VALKEY = "valkey"
+)
+
+const (
+	SERVER_USER_ADMIN    = "admin"
+	SERVER_USER_SYNC     = "sync"
+	SERVER_USER_SERVICE  = "service"
+	SERVER_USER_SENTINEL = "sentinel"
 )
 
 // DEFAULT_FILE_PERMS is default permissions for files created by core
@@ -239,7 +246,7 @@ const (
 type TemplateSource string
 
 const (
-	TEMPLATE_SOURCE_REDIS    TemplateSource = "redis.conf"
+	TEMPLATE_SOURCE_SERVER   TemplateSource = "server.conf"
 	TEMPLATE_SOURCE_SENTINEL TemplateSource = "sentinel.conf"
 )
 
@@ -297,7 +304,7 @@ type InstanceInfo struct {
 	State State         `json:"state"`
 }
 
-type RedisVersionInfo struct {
+type ServerVersionInfo struct {
 	CDate   int64  `json:"cdate"`
 	Version string `json:"version"`
 }
@@ -378,7 +385,7 @@ type Stats struct {
 
 // aligo:ignore
 type instanceConfigData struct {
-	Redis            version.Version
+	Server           version.Version
 	RDS              *instanceConfigRDSData
 	ID               int
 	AdminPassword    string
@@ -413,37 +420,37 @@ type sentinelConfigData struct {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 var (
-	ErrUnprivileged              = errors.New("RDS requires root privileges")
-	ErrSUAuthAlreadyExist        = errors.New("Superuser credentials already generated")
-	ErrSUAuthIsEmpty             = errors.New("Superuser auth data can't be empty")
-	ErrSUAuthNoData              = errors.New("Superuser auth data doesn't exist")
-	ErrCantDiffConfigs           = errors.New("Instance should works for configs comparison")
-	ErrEmptyIDDBPair             = errors.New("ID/DB value is empty")
-	ErrCantReadPID               = errors.New("Can't read PID from PID file")
-	ErrStateFileNotDefined       = errors.New("You must define path to states file")
-	ErrInstanceStillWorks        = errors.New("Instance still works")
-	ErrSentinelRoleSetNotAllowed = errors.New("This node must have master role for switching instance role")
-	ErrSentinelWrongInstanceRole = errors.New("Instance must have a replica role")
-	ErrIncompatibleFailover      = errors.New("Action can't be done due to incompatibility with failover method defined in the configuration file")
-	ErrSentinelWrongVersion      = errors.New("Sentinel monitoring requires Redis 5 or greater")
-	ErrSentinelCantStart         = errors.New("Can't start Sentinel process")
-	ErrSentinelCantStop          = errors.New("Can't stop Sentinel process")
-	ErrSentinelIsStopped         = errors.New("Sentinel is stopped")
-	ErrSentinelCantSetRole       = errors.New("Can't set instance role - instance still have slave (replica) role")
-	ErrMetaIsNil                 = errors.New("Meta struct is nil")
-	ErrMetaNoID                  = errors.New("Meta must have valid ID")
-	ErrMetaNoDesc                = errors.New("Meta must have valid description")
-	ErrMetaNoAuth                = errors.New("Meta doesn't have auth info")
-	ErrMetaNoPrefs               = errors.New("Meta doesn't have instance preferencies")
-	ErrMetaNoConfigInfo          = errors.New("Meta doesn't have info about Redis configuration file")
-	ErrMetaInvalidVersion        = errors.New("Meta must have valid version")
-	ErrInvalidRedisVersionCache  = errors.New("Cache is invalid")
-	ErrCantParseRedisVersion     = errors.New("Can't parse version of redis-server")
-	ErrCantReadRedisCreationDate = errors.New("Can't read creation date of redis-server file")
-	ErrCantReadDaemonizeOption   = errors.New("Can't read 'daemonize' option value from instance configuration file")
-	ErrCantDaemonizeInstance     = errors.New("Impossible to run instance - 'daemonize' property set to 'no' in configuration file")
-	ErrUnknownReplicationType    = errors.New("Unsupported replication type")
-	ErrUnknownTemplateSource     = errors.New("Unknown template source")
+	ErrUnprivileged               = errors.New("RDS requires root privileges")
+	ErrSUAuthAlreadyExist         = errors.New("Superuser credentials already generated")
+	ErrSUAuthIsEmpty              = errors.New("Superuser auth data can't be empty")
+	ErrSUAuthNoData               = errors.New("Superuser auth data doesn't exist")
+	ErrCantDiffConfigs            = errors.New("Instance should works for configs comparison")
+	ErrEmptyIDDBPair              = errors.New("ID/DB value is empty")
+	ErrCantReadPID                = errors.New("Can't read PID from PID file")
+	ErrStateFileNotDefined        = errors.New("You must define path to states file")
+	ErrInstanceStillWorks         = errors.New("Instance still works")
+	ErrSentinelRoleSetNotAllowed  = errors.New("This node must have master role for switching instance role")
+	ErrSentinelWrongInstanceRole  = errors.New("Instance must have a replica role")
+	ErrIncompatibleFailover       = errors.New("Action can't be done due to incompatibility with failover method defined in the configuration file")
+	ErrSentinelWrongVersion       = errors.New("Sentinel monitoring requires Redis 5 or greater")
+	ErrSentinelCantStart          = errors.New("Can't start Sentinel process")
+	ErrSentinelCantStop           = errors.New("Can't stop Sentinel process")
+	ErrSentinelIsStopped          = errors.New("Sentinel is stopped")
+	ErrSentinelCantSetRole        = errors.New("Can't set instance role - instance still have slave (replica) role")
+	ErrMetaIsNil                  = errors.New("Meta struct is nil")
+	ErrMetaNoID                   = errors.New("Meta must have valid ID")
+	ErrMetaNoDesc                 = errors.New("Meta must have valid description")
+	ErrMetaNoAuth                 = errors.New("Meta doesn't have auth info")
+	ErrMetaNoPrefs                = errors.New("Meta doesn't have instance preferencies")
+	ErrMetaNoConfigInfo           = errors.New("Meta doesn't have info about Redis configuration file")
+	ErrMetaInvalidVersion         = errors.New("Meta must have valid version")
+	ErrInvalidRedisVersionCache   = errors.New("Cache is invalid")
+	ErrCantParseServerVersion     = errors.New("Can't parse version of server binary")
+	ErrCantReadServerCreationDate = errors.New("Can't read creation date of server binary")
+	ErrCantReadDaemonizeOption    = errors.New("Can't read 'daemonize' option value from instance configuration file")
+	ErrCantDaemonizeInstance      = errors.New("Impossible to run instance - 'daemonize' property set to 'no' in configuration file")
+	ErrUnknownReplicationType     = errors.New("Unsupported replication type")
+	ErrUnknownTemplateSource      = errors.New("Unknown template source")
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -459,18 +466,19 @@ var User *system.User
 // metaCache is meta information cache
 var metaCache *MetaCache
 
-// globalConfig is path to configuration file
-var globalConfig string
+// serverVersionCache contains current server version
+var serverVersionCache version.Version
 
-// redisVersion contains current Redis version
-var redisVersion version.Version
+// serverUserCache is server user info cache
+var serverUserCache *system.User
 
-// supportedVersions is map with supported Redis versions
+// supportedVersions is map with supported server versions
 var supportedVersions = map[string]bool{
-	"6.2": true,
-	"7.0": true,
-	"7.2": true,
-	"7.4": true,
+	"redis-6.2":  true,
+	"redis-7.0":  true,
+	"redis-7.2":  true,
+	"redis-7.4":  true,
+	"valkey-7.2": true,
 }
 
 // tagRegex is regex pattern for tag validation
@@ -548,29 +556,22 @@ func (s State) WithErrors() bool {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Init starts initialization routine
-func Init(conf string) []error {
+func Init(configFile string) errors.Errors {
 	var err error
 
 	User, err = system.CurrentUser()
 
 	if err != nil {
-		return []error{fmt.Errorf("Can't get current user info: %w", err)}
+		return errors.Errors{fmt.Errorf("Can't get current user info: %w", err)}
 	}
 
 	if User.UID != 0 {
-		return []error{ErrUnprivileged}
+		return errors.Errors{ErrUnprivileged}
 	}
 
-	globalConfig = conf
-	Config, err = knf.Read(globalConfig)
+	errs := loadConfig(configFile)
 
-	if err != nil {
-		return []error{err}
-	}
-
-	errs := validateConfig(Config)
-
-	if len(errs) != 0 {
+	if !errs.IsEmpty() {
 		return errs
 	}
 
@@ -588,22 +589,12 @@ func Init(conf string) []error {
 }
 
 // ReloadConfig reloads RDS configuration
-func ReloadConfig() []error {
-	newConfig, err := knf.Read(globalConfig)
-
-	if err != nil {
-		return []error{err}
+func ReloadConfig() errors.Errors {
+	if Config == nil {
+		return errors.Errors{fmt.Errorf("There is no configuration to reload")}
 	}
 
-	errs := validateConfig(newConfig)
-
-	if len(errs) != 0 {
-		return errs
-	}
-
-	Config = newConfig
-
-	return nil
+	return loadConfig(Config.File())
 }
 
 // SetLogOutput setup log output
@@ -685,16 +676,16 @@ func ReadSUAuth() (*SuperuserAuth, error) {
 }
 
 // ValidateTemplates validates templates for Redis and Sentinel
-func ValidateTemplates() []error {
+func ValidateTemplates() errors.Errors {
 	var errs errors.Bundle
 
 	meta, err := NewInstanceMeta("test", "test")
 
 	if err != nil {
-		errs.Add(fmt.Errorf("Can't generate instance meta for validation: %w", err))
+		errs.Addf("Can't generate instance meta for validation: %w", err)
 	} else {
 		_, err = generateConfigFromTemplate(
-			TEMPLATE_SOURCE_REDIS,
+			TEMPLATE_SOURCE_SERVER,
 			createConfigFromMeta(meta),
 		)
 
@@ -753,7 +744,7 @@ func GetStatesFilePath() string {
 
 // GetInstancePort returns port used by redis for given instance
 func GetInstancePort(id int) int {
-	return Config.GetI(REDIS_START_PORT) + id
+	return Config.GetI(SERVER_START_PORT) + id
 }
 
 // IsMaster returns true if role of current RDS node has role "master"
@@ -895,7 +886,7 @@ func GetInstanceVersion(id int) version.Version {
 	}
 
 	if !state.IsWorks() {
-		currentRedisVer, _ := GetRedisVersion()
+		currentRedisVer, _ := GetServerVersion()
 		return currentRedisVer
 	}
 
@@ -1055,7 +1046,7 @@ func CreateInstance(meta *InstanceMeta) error {
 	return nil
 }
 
-// RegenerateInstanceConfig regenerate redis config file for given instance
+// RegenerateInstanceConfig regenerates configuration file for given instance
 func RegenerateInstanceConfig(id int) error {
 	var err error
 
@@ -1069,7 +1060,7 @@ func RegenerateInstanceConfig(id int) error {
 		return err
 	}
 
-	redisUser, err := system.LookupUser(Config.GetS(REDIS_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
@@ -1082,17 +1073,17 @@ func RegenerateInstanceConfig(id int) error {
 	}
 
 	errs := errors.NewBundle().Add(
-		os.Chown(GetInstanceLogDirPath(id), redisUser.UID, redisUser.GID),
-		os.Chown(GetInstanceDataDirPath(id), redisUser.UID, redisUser.GID),
-		os.Chown(GetInstanceConfigFilePath(id), redisUser.UID, redisUser.GID),
+		os.Chown(GetInstanceLogDirPath(id), serverUser.UID, serverUser.GID),
+		os.Chown(GetInstanceDataDirPath(id), serverUser.UID, serverUser.GID),
+		os.Chown(GetInstanceConfigFilePath(id), serverUser.UID, serverUser.GID),
 	)
 
 	if fsutil.IsExist(GetInstanceLogFilePath(id)) {
-		errs.Add(os.Chown(GetInstanceLogFilePath(id), redisUser.UID, redisUser.GID))
+		errs.Add(os.Chown(GetInstanceLogFilePath(id), serverUser.UID, serverUser.GID))
 	}
 
 	if !errs.IsEmpty() {
-		return errs.Last()
+		return errs.First()
 	}
 
 	metaCache.Set(id, meta)
@@ -1251,7 +1242,7 @@ func GetInstanceConfig(id int, timeout time.Duration) (*REDIS.Config, error) {
 		&REDIS.Request{
 			Command: []string{"CONFIG", "GET", "*"},
 			Port:    GetInstancePort(id),
-			Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+			Auth:    REDIS.Auth{SERVER_USER_ADMIN, meta.Preferencies.AdminPassword},
 			Timeout: timeout,
 		},
 	)
@@ -1290,11 +1281,11 @@ func GetInstanceConfigChanges(id int) ([]REDIS.ConfigPropDiff, error) {
 }
 
 // ReloadInstanceConfig reload instance config
-func ReloadInstanceConfig(id int) []error {
+func ReloadInstanceConfig(id int) errors.Errors {
 	diff, err := GetInstanceConfigChanges(id)
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
 	if len(diff) == 0 {
@@ -1371,10 +1362,31 @@ func GetInstanceInfo(id int, timeout time.Duration, all bool) (*REDIS.Info, erro
 		&REDIS.Request{
 			Command: command,
 			Port:    GetInstancePort(id),
-			Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+			Auth:    REDIS.Auth{SERVER_USER_ADMIN, meta.Preferencies.AdminPassword},
 			Timeout: timeout,
 		},
 	)
+}
+
+// GetInstanceMemUsage returns RSS and swap memory usage
+func GetInstanceMemUsage(id int) (uint64, uint64, error) {
+	state, err := GetInstanceState(id, false)
+
+	if err != nil {
+		return 0, 0, err
+	}
+
+	if !state.IsWorks() {
+		return 0, 0, fmt.Errorf("Can't get instance memory usage: instance doesn't stopped or dead")
+	}
+
+	_, rss, swap, err := getMemoryUsageFromProcFS(id)
+
+	if err != nil {
+		return 0, 0, fmt.Errorf("Can't get instance memory usage: %w", err)
+	}
+
+	return rss, swap, nil
 }
 
 // ExecCommand executes Redis command on given instance
@@ -1447,10 +1459,16 @@ func StartInstance(id int, controlLoading bool) error {
 		return fmt.Errorf("Instance with ID %d doesn't exist", id)
 	}
 
-	err := runAsUser(
-		Config.GetS(REDIS_USER),
+	err := ensurePermissionsForStart()
+
+	if err != nil {
+		return fmt.Errorf("Can't set permissions required for instance start: %w", err)
+	}
+
+	err = runAsUser(
+		Config.GetS(SERVER_USER),
 		GetInstanceLogFilePath(id),
-		Config.GetS(REDIS_BINARY),
+		Config.GetS(SERVER_BINARY),
 		GetInstanceConfigFilePath(id),
 		"--daemonize", "yes", // Always daemonize server
 	)
@@ -1659,23 +1677,23 @@ func DestroyInstance(id int) error {
 }
 
 // SentinelStart start (run) Sentinel daemon
-func SentinelStart() []error {
+func SentinelStart() errors.Errors {
 	if !IsSentinel() && !IsFailoverMethod(FAILOVER_METHOD_SENTINEL) {
-		return []error{ErrIncompatibleFailover}
+		return errors.Errors{ErrIncompatibleFailover}
 	}
 
 	if IsSentinelActive() {
 		return nil
 	}
 
-	currentRedisVer, err := GetRedisVersion()
+	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
-		return []error{fmt.Errorf("Can't get Redis Sentinel version: %w", err)}
+		return errors.Errors{fmt.Errorf("Can't get Sentinel version: %w", err)}
 	}
 
-	if currentRedisVer.String() == "" || currentRedisVer.Major() < MIN_SENTINEL_VERSION {
-		return []error{ErrSentinelWrongVersion}
+	if currentServerVer.String() == "" || currentServerVer.Major() < MIN_SENTINEL_VERSION {
+		return errors.Errors{ErrSentinelWrongVersion}
 	}
 
 	sentinelConfigDir := path.Join(Config.GetS(PATH_CONFIG_DIR), "sentinel")
@@ -1684,7 +1702,7 @@ func SentinelStart() []error {
 		err = createSentinelConfigDir(sentinelConfigDir)
 
 		if err != nil {
-			return []error{fmt.Errorf("Can't create directory for Sentinel configuration: %w", err)}
+			return errors.Errors{fmt.Errorf("Can't create directory for Sentinel configuration: %w", err)}
 		}
 	}
 
@@ -1693,13 +1711,19 @@ func SentinelStart() []error {
 	err = generateSentinelConfig()
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
 	sentinelLogFile := path.Join(Config.GetS(PATH_LOG_DIR), "sentinel.log")
 
+	err = ensurePermissionsForStart()
+
+	if err != nil {
+		return errors.Errors{fmt.Errorf("Can't set permissions required for instance start: %w", err)}
+	}
+
 	err = runAsUser(
-		Config.GetS(REDIS_USER),
+		Config.GetS(SERVER_USER),
 		sentinelLogFile,
 		Config.GetS(SENTINEL_BINARY),
 		sentinelConfig,
@@ -1707,11 +1731,11 @@ func SentinelStart() []error {
 	)
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
 	if !isProcStarted(PID_SENTINEL, Config.GetI(DELAY_START)) {
-		return []error{ErrSentinelCantStart}
+		return errors.Errors{ErrSentinelCantStart}
 	}
 
 	return addAllReplicasToSentinelMonitoring()
@@ -1810,7 +1834,7 @@ func SentinelStartMonitoring(id int) error {
 		IP:   Config.GetS(REPLICATION_MASTER_IP, netutil.GetIP()),
 		Port: GetInstancePort(id),
 
-		Auth: SENTINEL.Auth{REDIS_USER_SENTINEL, meta.Preferencies.SentinelPassword},
+		Auth: SENTINEL.Auth{SERVER_USER_SENTINEL, meta.Preferencies.SentinelPassword},
 
 		Quorum:                Config.GetI(SENTINEL_QUORUM, 3),
 		DownAfterMilliseconds: Config.GetI(SENTINEL_DOWN_AFTER, 10000),
@@ -2112,10 +2136,10 @@ func IsOutdated(id int) bool {
 		return false
 	}
 
-	currentRedisVer, err := GetRedisVersion()
+	currentServerVer, err := GetServerVersion()
 
-	if err == nil && currentRedisVer.String() != "" && meta.Compatible != "" {
-		return meta.Compatible != currentRedisVer.String()
+	if err == nil && currentServerVer.String() != "" && meta.Compatible != "" {
+		return meta.Compatible != currentServerVer.String()
 	}
 
 	return false
@@ -2160,20 +2184,38 @@ func GetSystemConfigurationStatus(force bool) (SystemStatus, error) {
 	return status, nil
 }
 
-// GetRedisVersion returns current installed Redis version
-func GetRedisVersion() (version.Version, error) {
-	if !redisVersion.IsZero() {
-		return redisVersion, nil
+// GetServerUser returns server user
+func GetServerUser() (*system.User, error) {
+	if serverUserCache != nil {
+		return serverUserCache, nil
 	}
 
 	var err error
-	var info *RedisVersionInfo
 
-	versionCacheFile := path.Join(Config.GetS(MAIN_DIR), REDIS_VERSION_DATA_FILE)
+	serverUser := Config.GetS(SERVER_USER)
+	serverUserCache, err = system.LookupUser(serverUser)
+
+	if err != nil {
+		return nil, fmt.Errorf("Can't get user %q info: %w", serverUser, err)
+	}
+
+	return serverUserCache, nil
+}
+
+// GetServerVersion returns current installed server version
+func GetServerVersion() (version.Version, error) {
+	if !serverVersionCache.IsZero() {
+		return serverVersionCache, nil
+	}
+
+	var err error
+	var info *ServerVersionInfo
+
+	versionCacheFile := path.Join(Config.GetS(MAIN_DIR), SERVER_VERSION_DATA_FILE)
 	cacheExist := fsutil.IsExist(versionCacheFile)
 
 	if cacheExist {
-		info, err = getRedisVersionFromCache(versionCacheFile)
+		info, err = getServerVersionFromCache(versionCacheFile)
 
 		if err != nil {
 			cacheExist = false
@@ -2181,14 +2223,14 @@ func GetRedisVersion() (version.Version, error) {
 	}
 
 	if info == nil {
-		info, err = getRedisVersionFromBinary()
+		info, err = getServerVersionFromBinary()
 
 		if err != nil {
 			return version.Version{}, err
 		}
 	}
 
-	redisVersion, err = version.Parse(info.Version)
+	serverVersionCache, err = version.Parse(info.Version)
 
 	if err != nil {
 		return version.Version{}, err
@@ -2198,7 +2240,7 @@ func GetRedisVersion() (version.Version, error) {
 		jsonutil.Write(versionCacheFile, info, DEFAULT_FILE_PERMS)
 	}
 
-	return redisVersion, nil
+	return serverVersionCache, nil
 }
 
 // GetStats returns overall stats
@@ -2261,7 +2303,7 @@ func GetStats() *Stats {
 			stats.Instances.Outdated++
 		}
 
-		hwm, rss, swap := getMemoryUsageFromProcFS(id)
+		hwm, rss, swap, _ := getMemoryUsageFromProcFS(id)
 
 		stats.Memory.UsedSwap += swap
 
@@ -2424,12 +2466,12 @@ func (p *instanceConfigData) PidFile() string {
 	return GetInstancePIDFilePath(p.ID)
 }
 
-// MasterHost returns redis master host (IP)
+// MasterHost returns instance master host (IP)
 func (p *instanceConfigData) MasterHost() string {
 	return Config.GetS(REPLICATION_MASTER_IP)
 }
 
-// MasterPort returns redis master port
+// MasterPort returns instance master port
 func (p *instanceConfigData) MasterPort() int {
 	return GetInstancePort(p.ID)
 }
@@ -2460,42 +2502,63 @@ func (c *instanceConfigData) Storage(key string) string {
 	return c.storage[key]
 }
 
-// Version returns struct with Redis version info
+// Version returns struct with server version info
 func (c *instanceConfigData) Version() version.Version {
-	return c.Redis
+	return c.Server
 }
 
-// RedisVersionLess returns true if instance Redis version is less than given
+// RedisVersionLess returns true if instance server version is less than given
+//
+// Deprecated: Use ServerVersionLess instead
 func (c *instanceConfigData) RedisVersionLess(v string) bool {
+	return c.ServerVersionLess(v)
+}
+
+// ServerVersionLess returns true if instance server version is less than given
+func (c *instanceConfigData) ServerVersionLess(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
 		return false
 	}
 
-	return c.Redis.Less(ver)
+	return c.Server.Less(ver)
 }
 
-// RedisVersionGreater returns true if instance Redis version is greater than given
+// RedisVersionGreater returns true if instance server version is greater than given
+//
+// Deprecated: Use ServerVersionGreater instead
 func (c *instanceConfigData) RedisVersionGreater(v string) bool {
-	ver, err := version.Parse(v)
-
-	if err != nil {
-		return false
-	}
-
-	return c.Redis.Greater(ver)
+	return c.ServerVersionGreater(v)
 }
 
-// RedisVersionEquals returns true if instance Redis version is equal to given
-func (c *instanceConfigData) RedisVersionEquals(v string) bool {
+// ServerVersionGreater returns true if instance server version is greater than given
+func (c *instanceConfigData) ServerVersionGreater(v string) bool {
 	ver, err := version.Parse(v)
 
 	if err != nil {
 		return false
 	}
 
-	return c.Redis.Equal(ver)
+	return c.Server.Greater(ver)
+}
+
+// RedisVersionEquals returns true if instance server version is equal to given
+//
+// Deprecated: Use ServerVersionEquals instead
+func (c *instanceConfigData) RedisVersionEquals(v string) bool {
+	return c.ServerVersionEquals(v)
+}
+
+// ServerVersionEquals returns true if instance Redis version is equal to given
+func (c *instanceConfigData) ServerVersionEquals(v string) bool {
+	ver, err := version.Parse(v)
+
+	if err != nil {
+		return false
+	}
+
+	return c.Server.Equal(ver)
 }
 
 // AdminPasswordHash returns SHA-256 hash for admin user password
@@ -2521,17 +2584,17 @@ func (c *instanceConfigData) ServicePasswordHash() string {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // validateDependencies checks dependencies
-func validateDependencies() []error {
+func validateDependencies() errors.Errors {
 	var err error
-	var errs []error
+	var errs errors.Errors
 
-	if !fsutil.IsExist(Config.GetS(REDIS_BINARY)) {
+	if !fsutil.IsExist(Config.GetS(SERVER_BINARY)) {
 		errs = append(errs, fmt.Errorf(
 			"Redis is not installed (missing binary %s)",
-			Config.GetS(REDIS_BINARY)),
+			Config.GetS(SERVER_BINARY)),
 		)
 	} else {
-		err = fsutil.ValidatePerms("FRX", Config.GetS(REDIS_BINARY))
+		err = fsutil.ValidatePerms("FRX", Config.GetS(SERVER_BINARY))
 
 		if err != nil {
 			errs = append(errs, fmt.Errorf("Wrong permissions on Redis binary: %w", err))
@@ -2552,15 +2615,16 @@ func validateDependencies() []error {
 	}
 
 	if len(errs) == 0 {
-		currentRedisVer, err := GetRedisVersion()
+		serverVer, err := GetServerVersion()
 
 		if err != nil {
-			errs = append(errs, fmt.Errorf("Can't get Redis version: %w", err))
+			errs = append(errs, fmt.Errorf("Can't get server version: %w", err))
 		} else {
-			majorRedisVer := fmt.Sprintf("%d.%d", currentRedisVer.Major(), currentRedisVer.Minor())
+			majorServerVer := fmt.Sprintf("%d.%d", serverVer.Major(), serverVer.Minor())
+			versionFull := fmt.Sprintf("%s-%s", Config.GetS(BACKEND_NAME), majorServerVer)
 
-			if !supportedVersions[majorRedisVer] {
-				errs = append(errs, fmt.Errorf("Redis %s is not supported", currentRedisVer))
+			if !supportedVersions[versionFull] {
+				errs = append(errs, fmt.Errorf("Version %s is not supported", serverVer))
 			}
 		}
 	}
@@ -2568,8 +2632,36 @@ func validateDependencies() []error {
 	return errs
 }
 
+// loadConfig loads and validates configuration file
+func loadConfig(configFile string) errors.Errors {
+	cfg, err := knf.Read(configFile)
+
+	if err != nil {
+		return errors.Errors{err}
+	}
+
+	errs := validateConfig(cfg)
+
+	if !errs.IsEmpty() {
+		return errs
+	}
+
+	cfg.Alias("redis:binary", SERVER_BINARY)
+	cfg.Alias("redis:user", SERVER_USER)
+	cfg.Alias("redis:start-port", SERVER_START_PORT)
+	cfg.Alias("redis:save-on-stop", SERVER_SAVE_ON_STOP)
+	cfg.Alias("redis:nice", SERVER_NICE)
+	cfg.Alias("redis:ionice-class", SERVER_IONICE_CLASS)
+	cfg.Alias("redis:ionice-classdata", SERVER_IONICE_CLASSDATA)
+	cfg.Alias("templates:redis", TEMPLATES_SERVER)
+
+	Config = cfg
+
+	return nil
+}
+
 // validateConfig validate config values
-func validateConfig(c *knf.Config) []error {
+func validateConfig(cfg *knf.Config) errors.Errors {
 	validators := knf.Validators{
 		{MAIN_MAX_INSTANCES, knfv.Set, nil},
 		{MAIN_WARN_USED_MEMORY, knfv.Set, nil},
@@ -2593,21 +2685,26 @@ func validateConfig(c *knf.Config) []error {
 		{DELAY_START, knfv.Greater, MIN_START_DELAY},
 		{DELAY_START, knfv.Less, MAX_START_DELAY},
 
+		// BACKEND //
+
+		{BACKEND_NAME, knfv.Set, nil},
+		{BACKEND_NAME, knfv.SetToAny, []string{BACKEND_REDIS, BACKEND_VALKEY}},
+
 		// REDIS //
 
-		{REDIS_BINARY, knfv.Set, nil},
-		{REDIS_USER, knfv.Set, nil},
-		{REDIS_USER, knfs.User, nil},
-		{REDIS_START_PORT, knfv.Set, nil},
-		{REDIS_START_PORT, knfn.Port, nil},
-		{REDIS_START_PORT, knfv.Greater, MIN_PORT},
-		{REDIS_START_PORT, knfv.Less, MAX_PORT},
-		{REDIS_NICE, knfv.Greater, MIN_NICE},
-		{REDIS_NICE, knfv.Less, MAX_NICE},
-		{REDIS_IONICE_CLASS, knfv.Greater, MIN_IONICE_CLASS},
-		{REDIS_IONICE_CLASS, knfv.Less, MAX_IONICE_CLASS},
-		{REDIS_IONICE_CLASSDATA, knfv.Greater, MIN_IONICE_CLASSDATA},
-		{REDIS_IONICE_CLASSDATA, knfv.Less, MAX_IONICE_CLASSDATA},
+		{SERVER_BINARY, knfv.Set, nil},
+		{SERVER_USER, knfv.Set, nil},
+		{SERVER_USER, knfs.User, nil},
+		{SERVER_START_PORT, knfv.Set, nil},
+		{SERVER_START_PORT, knfn.Port, nil},
+		{SERVER_START_PORT, knfv.Greater, MIN_PORT},
+		{SERVER_START_PORT, knfv.Less, MAX_PORT},
+		{SERVER_NICE, knfv.Greater, MIN_NICE},
+		{SERVER_NICE, knfv.Less, MAX_NICE},
+		{SERVER_IONICE_CLASS, knfv.Greater, MIN_IONICE_CLASS},
+		{SERVER_IONICE_CLASS, knfv.Less, MAX_IONICE_CLASS},
+		{SERVER_IONICE_CLASSDATA, knfv.Greater, MIN_IONICE_CLASSDATA},
+		{SERVER_IONICE_CLASSDATA, knfv.Less, MAX_IONICE_CLASSDATA},
 
 		// SENTINEL //
 
@@ -2626,9 +2723,9 @@ func validateConfig(c *knf.Config) []error {
 
 		// TEMPLATES //
 
-		{TEMPLATES_REDIS, knfv.Set, nil},
+		{TEMPLATES_SERVER, knfv.Set, nil},
 		{TEMPLATES_SENTINEL, knfv.Set, nil},
-		{TEMPLATES_REDIS, knff.Perms, "DRX"},
+		{TEMPLATES_SERVER, knff.Perms, "DRX"},
 		{TEMPLATES_SENTINEL, knff.Perms, "DRX"},
 
 		// PATHS //
@@ -2643,19 +2740,16 @@ func validateConfig(c *knf.Config) []error {
 		{PATH_DATA_DIR, knff.Perms, "DRX"},
 		{PATH_PID_DIR, knff.Perms, "DRX"},
 		{PATH_LOG_DIR, knff.Perms, "DRX"},
-		{PATH_PID_DIR, knff.Owner, Config.GetS(REDIS_USER, "redis")},
 
 		// LOG //
 
-		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, []string{
-			"", "debug", "info", "warn", "error", "crit",
-		}},
+		{LOG_LEVEL, knfv.SetToAnyIgnoreCase, log.Levels()},
 	}
 
 	// REPLICATION //
 
 	validators.AddIf(
-		c.GetS(REPLICATION_ROLE) != "",
+		cfg.GetS(REPLICATION_ROLE) != "",
 		knf.Validators{
 			{REPLICATION_MASTER_IP, knfn.IP, nil},
 			{REPLICATION_MASTER_PORT, knfv.Set, nil},
@@ -2676,25 +2770,21 @@ func validateConfig(c *knf.Config) []error {
 		},
 	)
 
-	return c.Validate(validators)
+	return cfg.Validate(validators)
 }
 
 // createInstanceData create all required files and directories for instance
 func createInstanceData(meta *InstanceMeta) error {
-	var err error
-
-	redisUser, err := system.LookupUser(Config.GetS(REDIS_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
 	}
 
-	var (
-		logDir   = GetInstanceLogDirPath(meta.ID)
-		logFile  = GetInstanceLogFilePath(meta.ID)
-		dataDir  = GetInstanceDataDirPath(meta.ID)
-		confFile = GetInstanceConfigFilePath(meta.ID)
-	)
+	logDir := GetInstanceLogDirPath(meta.ID)
+	logFile := GetInstanceLogFilePath(meta.ID)
+	dataDir := GetInstanceDataDirPath(meta.ID)
+	confFile := GetInstanceConfigFilePath(meta.ID)
 
 	err = os.MkdirAll(logDir, 0755)
 
@@ -2723,10 +2813,10 @@ func createInstanceData(meta *InstanceMeta) error {
 	}
 
 	return errors.NewBundle().Add(
-		os.Chown(logDir, redisUser.UID, redisUser.GID),
-		os.Chown(dataDir, redisUser.UID, redisUser.GID),
-		os.Chown(logFile, redisUser.UID, redisUser.GID),
-		os.Chown(confFile, redisUser.UID, redisUser.GID),
+		os.Chown(logDir, serverUser.UID, serverUser.GID),
+		os.Chown(dataDir, serverUser.UID, serverUser.GID),
+		os.Chown(logFile, serverUser.UID, serverUser.GID),
+		os.Chown(confFile, serverUser.UID, serverUser.GID),
 	).Last()
 }
 
@@ -2738,7 +2828,7 @@ func saveInstanceMeta(meta *InstanceMeta) error {
 // createInstanceConfig create redis config from template
 func createInstanceConfig(meta *InstanceMeta) error {
 	cfg := createConfigFromMeta(meta)
-	confData, err := generateConfigFromTemplate(TEMPLATE_SOURCE_REDIS, cfg)
+	confData, err := generateConfigFromTemplate(TEMPLATE_SOURCE_SERVER, cfg)
 
 	if err != nil {
 		return err
@@ -2893,26 +2983,26 @@ func isInstanceSavingData(id int) bool {
 }
 
 // getMemoryUsageFromProcFS returns mem usage from procfs
-func getMemoryUsageFromProcFS(id int) (uint64, uint64, uint64) {
+func getMemoryUsageFromProcFS(id int) (uint64, uint64, uint64, error) {
 	memInfo, err := process.GetMemInfo(GetInstancePID(id))
 
 	if err != nil {
-		return 0, 0, 0
+		return 0, 0, 0, err
 	}
 
-	return memInfo.VmHWM, memInfo.VmRSS, memInfo.VmSwap
+	return memInfo.VmHWM, memInfo.VmRSS, memInfo.VmSwap, nil
 }
 
-// getRedisVersionFromCache read current redis version info from cache
-func getRedisVersionFromCache(cacheFile string) (*RedisVersionInfo, error) {
-	info := &RedisVersionInfo{}
+// getServerVersionFromCache read current redis version info from cache
+func getServerVersionFromCache(cacheFile string) (*ServerVersionInfo, error) {
+	info := &ServerVersionInfo{}
 	err := jsonutil.Read(cacheFile, info)
 
 	if err != nil {
 		return nil, err
 	}
 
-	binary := Config.GetS(REDIS_BINARY)
+	binary := Config.GetS(SERVER_BINARY)
 	cDate, err := fsutil.GetCTime(binary)
 
 	if err != nil {
@@ -2926,9 +3016,9 @@ func getRedisVersionFromCache(cacheFile string) (*RedisVersionInfo, error) {
 	return info, nil
 }
 
-// getRedisVersionFromBinary read redis version from redis version info output
-func getRedisVersionFromBinary() (*RedisVersionInfo, error) {
-	binary := Config.GetS(REDIS_BINARY)
+// getServerVersionFromBinary read redis version from redis version info output
+func getServerVersionFromBinary() (*ServerVersionInfo, error) {
+	binary := Config.GetS(SERVER_BINARY)
 
 	if !fsutil.IsExecutable(binary) {
 		return nil, fmt.Errorf("File %s is not an executable binary", binary)
@@ -2940,25 +3030,36 @@ func getRedisVersionFromBinary() (*RedisVersionInfo, error) {
 		return nil, err
 	}
 
-	verStr := strutil.ReadField(string(out), 2, false, ' ')
+	var verStr string
 
-	if verStr == "" || !strings.HasPrefix(verStr, "v=") {
-		return nil, ErrCantParseRedisVersion
+	versionInfo := string(out)
+
+	for i := 0; i < 6; i++ {
+		v := strutil.ReadField(versionInfo, i, false, ' ')
+
+		if strings.HasPrefix(v, "v=") {
+			verStr = v
+			break
+		}
+	}
+
+	if verStr == "" {
+		return nil, ErrCantParseServerVersion
 	}
 
 	cDate, err := fsutil.GetCTime(binary)
 
 	if err != nil {
-		return nil, ErrCantReadRedisCreationDate
+		return nil, ErrCantReadServerCreationDate
 	}
 
-	return &RedisVersionInfo{
+	return &ServerVersionInfo{
 		Version: strutil.Substr(verStr, 2, 99),
 		CDate:   cDate.Unix(),
 	}, nil
 }
 
-// updateCompatibilityInfo update compatible redis version info in instance meta
+// updateCompatibilityInfo update compatible server version info in instance meta
 func updateCompatibilityInfo(id int) error {
 	meta, err := GetInstanceMeta(id)
 
@@ -2966,7 +3067,7 @@ func updateCompatibilityInfo(id int) error {
 		return err
 	}
 
-	redisVersion, err := GetRedisVersion()
+	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
 		return fmt.Errorf("Can't update instance compatibility info: %w", err)
@@ -2975,13 +3076,13 @@ func updateCompatibilityInfo(id int) error {
 	switch {
 	case err != nil:
 		return err
-	case meta.Compatible == redisVersion.String():
+	case meta.Compatible == currentServerVer.String():
 		return nil
-	case redisVersion.String() == "":
+	case currentServerVer.String() == "":
 		return nil
 	}
 
-	meta.Compatible = redisVersion.String()
+	meta.Compatible = currentServerVer.String()
 
 	metaCache.Set(meta.ID, meta)
 
@@ -3018,7 +3119,7 @@ func updateConfigInfo(id int) error {
 
 // createSentinelConfigDir creates directory for Sentinel configuration
 func createSentinelConfigDir(dir string) error {
-	redisUser, err := system.LookupUser(Config.GetS(REDIS_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
@@ -3030,7 +3131,7 @@ func createSentinelConfigDir(dir string) error {
 		return err
 	}
 
-	return os.Chown(dir, redisUser.UID, redisUser.GID)
+	return os.Chown(dir, serverUser.UID, serverUser.GID)
 }
 
 // generateSentinelConfig creates and generates Sentinel configuration
@@ -3051,7 +3152,7 @@ func generateSentinelConfig() error {
 		}
 	}
 
-	redisUser, err := system.LookupUser(Config.GetS(REDIS_USER))
+	serverUser, err := GetServerUser()
 
 	if err != nil {
 		return err
@@ -3085,31 +3186,31 @@ func generateSentinelConfig() error {
 	}
 
 	return errors.NewBundle().Add(
-		os.Chown(sentinelConfig, redisUser.UID, redisUser.GID),
-		os.Chown(sentinelLogFile, redisUser.UID, redisUser.GID),
+		os.Chown(sentinelConfig, serverUser.UID, serverUser.GID),
+		os.Chown(sentinelLogFile, serverUser.UID, serverUser.GID),
 	).Last()
 }
 
 // getConfigTemplateData reads configuration data from template
-// for currently installed Redis/Sentinel version
+// for currently installed Server/Sentinel version
 func getConfigTemplateData(source TemplateSource) (string, string, error) {
 	var err error
 	var templateFile, templateFilePath string
 
-	currentRedisVer, err := GetRedisVersion()
+	currentServerVer, err := GetServerVersion()
 
 	if err != nil {
-		return "", "", fmt.Errorf("Can't get Redis version: %w", err)
+		return "", "", fmt.Errorf("Can't get server version: %w", err)
 	}
 
-	majorRedisVer := fmt.Sprintf("%d.%d", currentRedisVer.Major(), currentRedisVer.Minor())
+	majorServerVer := fmt.Sprintf("%d.%d", currentServerVer.Major(), currentServerVer.Minor())
 
 	switch source {
-	case TEMPLATE_SOURCE_REDIS:
-		templateFile = "redis-" + majorRedisVer + ".conf"
-		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_REDIS), templateFile)
+	case TEMPLATE_SOURCE_SERVER:
+		templateFile = Config.GetS(BACKEND_NAME) + "-" + majorServerVer + ".conf"
+		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_SERVER), templateFile)
 	case TEMPLATE_SOURCE_SENTINEL:
-		templateFile = "sentinel-" + majorRedisVer + ".conf"
+		templateFile = Config.GetS(BACKEND_NAME) + "-" + majorServerVer + ".conf"
 		templateFilePath, err = path.JoinSecure(Config.GetS(TEMPLATES_SENTINEL), templateFile)
 	default:
 		return "", "", ErrUnknownTemplateSource
@@ -3154,12 +3255,12 @@ func generateConfigFromTemplate(source TemplateSource, data any) ([]byte, error)
 }
 
 // addAllReplicasToSentinelMonitoring adds all relicas to Sentinel monitoring
-func addAllReplicasToSentinelMonitoring() []error {
+func addAllReplicasToSentinelMonitoring() errors.Errors {
 	if !HasInstances() {
 		return nil
 	}
 
-	var errs []error
+	var errs errors.Errors
 
 	for _, id := range GetInstanceIDList() {
 		state, err := GetInstanceState(id, false)
@@ -3198,14 +3299,14 @@ func addAllReplicasToSentinelMonitoring() []error {
 // this file is works
 func isProcStarted(pidFile string, delay int) bool {
 	cmdStart := time.Now()
-	delaySec := time.Second * time.Duration(delay)
+	delayDur := time.Second * time.Duration(delay)
 
 	for range time.NewTicker(time.Second).C {
 		if pid.IsWorks(pidFile) {
 			return true
 		}
 
-		if time.Since(cmdStart) >= delaySec {
+		if time.Since(cmdStart) >= delayDur {
 			break
 		}
 	}
@@ -3217,14 +3318,14 @@ func isProcStarted(pidFile string, delay int) bool {
 // works
 func isProcStopped(appPID, delay int) bool {
 	cmdStart := time.Now()
-	delaySec := time.Second * time.Duration(delay)
+	delayDur := time.Second * time.Duration(delay)
 
 	for range time.NewTicker(time.Second).C {
 		if !pid.IsProcessWorks(appPID) {
 			return true
 		}
 
-		if time.Since(cmdStart) >= delaySec {
+		if time.Since(cmdStart) >= delayDur {
 			break
 		}
 	}
@@ -3249,10 +3350,31 @@ func isInstanceFullyStarted(id int) bool {
 	return false
 }
 
+// ensurePermissionsForStart checks and changes permissions on directories used by instance
+//
+// Now that we support Valkey and Redis, we don't know which user needs to own the directory
+// with the PIDs. So before starting the instance, we make sure that this directory is owned
+// by the user defined in the configuration file.
+func ensurePermissionsForStart() error {
+	serverUser, err := GetServerUser()
+
+	if err != nil {
+		return err
+	}
+
+	err = os.Chown(Config.GetS(PATH_PID_DIR), serverUser.UID, serverUser.GID)
+
+	if err != nil {
+		return fmt.Errorf("Can't change owner of PIDs directory: %w", err)
+	}
+
+	return nil
+}
+
 // runAsUser run binary as defined user
 func runAsUser(user, logFile string, args ...string) error {
 	if !fsutil.IsRegular(BIN_RUNUSER) {
-		return fmt.Errorf("%s is not found on this system", BIN_RUNUSER)
+		return fmt.Errorf("User %s is not found on this system", BIN_RUNUSER)
 	}
 
 	if !fsutil.IsExecutable(BIN_RUNUSER) {
@@ -3310,17 +3432,17 @@ func configureSchedulers(id int) error {
 
 // configureCPUScheduler configures CPU scheduler (nice)
 func configureCPUScheduler(id, instancePID int) error {
-	if Config.GetI(REDIS_NICE) == 0 {
+	if Config.GetI(SERVER_NICE) == 0 {
 		return nil
 	}
 
-	pids, err := getRedisTreePIDs(id, instancePID)
+	pids, err := getServerTreePIDs(id, instancePID)
 
 	if err != nil {
 		return err
 	}
 
-	niceness := Config.GetI(REDIS_NICE)
+	niceness := Config.GetI(SERVER_NICE)
 
 	for _, ppid := range pids {
 		err = process.SetCPUPriority(ppid, niceness)
@@ -3335,18 +3457,18 @@ func configureCPUScheduler(id, instancePID int) error {
 
 // configureIOScheduler configures IO scheduler (ionice)
 func configureIOScheduler(id, instancePID int) error {
-	if Config.GetI(REDIS_IONICE_CLASS) == 0 && Config.GetI(REDIS_IONICE_CLASSDATA) == 0 {
+	if Config.GetI(SERVER_IONICE_CLASS) == 0 && Config.GetI(SERVER_IONICE_CLASSDATA) == 0 {
 		return nil
 	}
 
-	pids, err := getRedisTreePIDs(id, instancePID)
+	pids, err := getServerTreePIDs(id, instancePID)
 
 	if err != nil {
 		return err
 	}
 
-	class := Config.GetI(REDIS_IONICE_CLASS)
-	classdata := Config.GetI(REDIS_IONICE_CLASSDATA)
+	class := Config.GetI(SERVER_IONICE_CLASS)
+	classdata := Config.GetI(SERVER_IONICE_CLASSDATA)
 
 	for _, ppid := range pids {
 		err = process.SetIOPriority(ppid, class, classdata)
@@ -3359,18 +3481,19 @@ func configureIOScheduler(id, instancePID int) error {
 	return nil
 }
 
-// getRedisTreePIDs returns all PIDs of Redis instance
-func getRedisTreePIDs(id, instancePID int) ([]int, error) {
+// getServerTreePIDs returns all PIDs of instance
+func getServerTreePIDs(id, instancePID int) ([]int, error) {
 	tree, err := process.GetTree(instancePID)
 
 	if err != nil {
-		return nil, fmt.Errorf("Can't find Redis instance PIDs for instance with ID %d: %w", id, err)
+		return nil, fmt.Errorf("Can't find instance PIDs for instance with ID %d: %w", id, err)
 	}
 
 	pids := []int{instancePID}
 
 	for _, proc := range tree.Children {
-		if strings.Contains(proc.Command, "redis-server") {
+		if strings.Contains(proc.Command, "redis-server") ||
+			strings.Contains(proc.Command, "valkey-server") {
 			pids = append(pids, proc.PID)
 		}
 	}
@@ -3388,7 +3511,7 @@ func runSentinelFailoverSwitch(id int, priority string) error {
 
 	req := &REDIS.Request{
 		Port:    GetInstancePort(id),
-		Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Auth:    REDIS.Auth{SERVER_USER_ADMIN, meta.Preferencies.AdminPassword},
 		Timeout: time.Second,
 	}
 
@@ -3492,9 +3615,9 @@ func createConfigFromMeta(meta *InstanceMeta) *instanceConfigData {
 	}
 
 	if IsInstanceExist(meta.ID) {
-		result.Redis = GetInstanceVersion(meta.ID)
+		result.Server = GetInstanceVersion(meta.ID)
 	} else {
-		result.Redis, _ = GetRedisVersion()
+		result.Server, _ = GetServerVersion()
 	}
 
 	if IsMinion() && meta.Preferencies.ReplicationType.IsReplica() &&
@@ -3506,18 +3629,18 @@ func createConfigFromMeta(meta *InstanceMeta) *instanceConfigData {
 }
 
 // applyChangedConfigProps apply changed config props
-func applyChangedConfigProps(id int, diff []REDIS.ConfigPropDiff) []error {
+func applyChangedConfigProps(id int, diff []REDIS.ConfigPropDiff) errors.Errors {
 	meta, err := GetInstanceMeta(id)
 
 	if err != nil {
-		return []error{err}
+		return errors.Errors{err}
 	}
 
-	var errs []error
+	var errs errors.Errors
 
 	req := &REDIS.Request{
 		Port:    GetInstancePort(id),
-		Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Auth:    REDIS.Auth{SERVER_USER_ADMIN, meta.Preferencies.AdminPassword},
 		Timeout: time.Second,
 	}
 
@@ -3564,11 +3687,11 @@ func execShutdownCommand(id int) error {
 	// and we don't want to wait for a response
 	req := &REDIS.Request{
 		Command: []string{"SHUTDOWN"},
-		Auth:    REDIS.Auth{REDIS_USER_ADMIN, meta.Preferencies.AdminPassword},
+		Auth:    REDIS.Auth{SERVER_USER_ADMIN, meta.Preferencies.AdminPassword},
 		Timeout: time.Second * 1,
 	}
 
-	if knf.GetB(REDIS_SAVE_ON_STOP, true) && !meta.Preferencies.IsSaveDisabled {
+	if knf.GetB(SERVER_SAVE_ON_STOP, true) && !meta.Preferencies.IsSaveDisabled {
 		req.Command = append(req.Command, "SAVE")
 	}
 

@@ -2,7 +2,7 @@ package sentinel
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -687,9 +687,10 @@ func removeConflictActions(items []*API.CommandQueueItem) []*API.CommandQueueIte
 	initList := make(map[string]uint8)
 
 	for _, item = range items {
-		if item.Command == API.COMMAND_CREATE {
+		switch item.Command {
+		case API.COMMAND_CREATE:
 			initList[item.InstanceUUID] = 1
-		} else if item.Command == API.COMMAND_DESTROY {
+		case API.COMMAND_DESTROY:
 			if initList[item.InstanceUUID] == 1 {
 				initList[item.InstanceUUID] = 2
 				log.Warn("(%3d) Instance was created but later was destroyed. All actions for instance will be skipped.", item.InstanceID)
@@ -734,7 +735,7 @@ func getURL(method API.Method) string {
 func sendRequest(method API.Method, reqData, respData any) error {
 	resp, err := req.Request{
 		URL:         getURL(method),
-		Headers:     API.GetAuthHeader(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)),
+		Auth:        req.AuthBearer{CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)},
 		ContentType: req.CONTENT_TYPE_JSON,
 		Body:        reqData,
 		AutoDiscard: true,

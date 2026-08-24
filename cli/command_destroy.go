@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -76,7 +76,7 @@ func DestroyCommand(args CommandArgs) int {
 	}
 
 	logger.Info(id, "Instance destroyed")
-	fmtc.Printf("{*}Done. Instance with ID %d successfully destroyed.{!}\n", id)
+	fmtc.Printfn("{*}Done. Instance with ID %d successfully destroyed.{!}", id)
 
 	err = SC.PropagateCommand(API.COMMAND_DESTROY, id, meta.UUID)
 

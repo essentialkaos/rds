@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -14,7 +14,6 @@ import (
 
 	"github.com/essentialkaos/ek/v13/fmtutil"
 	"github.com/essentialkaos/ek/v13/fmtutil/table"
-	"github.com/essentialkaos/ek/v13/mathutil"
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/pager"
 	"github.com/essentialkaos/ek/v13/strutil"
@@ -84,7 +83,7 @@ func printCommandStatsInfo(info *REDIS.Info) {
 		cmdName = strings.ReplaceAll(cmdName, "|", " ")
 		cmdStats := parseFieldsLine(section.Values[v], ',')
 		cmdTotalUs, _ := strconv.Atoi(cmdStats["usec"])
-		cmdTotal := time.Microsecond * time.Duration(mathutil.Max(cmdTotalUs, 1))
+		cmdTotal := time.Microsecond * time.Duration(max(cmdTotalUs, 1))
 		cmdCallUs, _ := strconv.ParseFloat(cmdStats["usec_per_call"], 64)
 		cmdCall := time.Duration(float64(time.Microsecond) * cmdCallUs)
 		cmdCalls, _ := strconv.Atoi(cmdStats["calls"])
@@ -94,8 +93,8 @@ func printCommandStatsInfo(info *REDIS.Info) {
 		t.Add(
 			cmdName,
 			fmtutil.PrettyNum(cmdCalls),
-			timeutil.MiniDuration(cmdTotal),
-			timeutil.MiniDuration(cmdCall),
+			timeutil.Pretty(cmdTotal).Mini(),
+			timeutil.Pretty(cmdCall).Mini(),
 			fmtutil.PrettyNum(cmdRejected),
 			fmtutil.PrettyNum(cmdFailed),
 		)

@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -66,7 +66,7 @@ func UptimeCommand(args CommandArgs) int {
 			modTime, _ := fsutil.GetMTime(pidFile)
 
 			if !modTime.IsZero() {
-				uptime = timeutil.MiniDuration(time.Since(modTime))
+				uptime = timeutil.Pretty(time.Since(modTime)).Mini()
 			}
 		}
 

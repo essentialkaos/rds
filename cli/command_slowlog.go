@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -157,7 +157,7 @@ func slowlogReset(id int) int {
 	}
 
 	logger.Info(id, "Slow log reset")
-	fmtc.Printf("{g}Slow log successfully cleared for instance %d{!}\n", id)
+	fmtc.Printfn("{g}Slow log successfully cleared for instance %d{!}", id)
 
 	return EC_OK
 }

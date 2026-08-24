@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -49,7 +49,7 @@ func StopAllCommand(args CommandArgs) int {
 		return EC_WARN
 	}
 
-	if !isAllRedisCompatible(idList) {
+	if !isAllServersCompatible(idList) {
 		terminal.Warn("Some instances not checked for configuration compatibility with the newly installed version of Redis.")
 		terminal.Warn("We STRONGLY recommend stop instances one by one in this case.")
 

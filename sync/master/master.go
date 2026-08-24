@@ -2,7 +2,7 @@ package sync
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -231,6 +231,8 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		CID:           genCID(),
 		SentinelWorks: CORE.IsSentinelActive(),
 		Auth:          auth,
+		InstancesNum:  len(CORE.GetInstanceIDList()),
+		MemoryUsage:   calculateMemUsage(),
 	}
 
 	if coreCompat == API.CORE_COMPAT_PARTIAL {
@@ -1058,11 +1060,7 @@ func cleanupQueue() {
 	now := time.Now().UnixNano()
 	mts := now - (DELAY_DEAD * 1_000_000_000)
 
-	for {
-		if len(items) == 0 {
-			break
-		}
-
+	for len(items) != 0 {
 		item := items[0]
 
 		if item.Timestamp < mts {
@@ -1117,7 +1115,7 @@ func checkClientsStatus() {
 		case API.STATE_DEAD:
 			log.Warn(
 				"Client with CID %s (%s) unregistered: client inactive more than %s",
-				client.CID, renderClientInfo(client), timeutil.PrettyDuration(DELAY_DEAD),
+				client.CID, renderClientInfo(client), timeutil.Pretty(DELAY_DEAD),
 			)
 
 			delete(clients, client.CID)
@@ -1159,4 +1157,16 @@ func renderClientInfo(client *ClientInfo) string {
 		"Role: %s | Version: %s | Hostname: %s | IP: %s",
 		client.Role, client.Version, client.Hostname, client.IP,
 	)
+}
+
+// calculateMemUsage calculates total memory usage by all instances
+func calculateMemUsage() uint64 {
+	var total uint64
+
+	for _, id := range CORE.GetInstanceIDList() {
+		rss, swap, _ := CORE.GetInstanceMemUsage(id)
+		total += rss + swap
+	}
+
+	return total
 }

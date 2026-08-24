@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -180,11 +180,11 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 		compatible = meta.Compatible
 	}
 
-	redisVersionInfo := ""
-	currentRedisVer, err := CORE.GetRedisVersion()
+	serverVersionInfo := ""
+	currentServerVer, err := CORE.GetServerVersion()
 
-	if err == nil && currentRedisVer.String() != "" {
-		redisVersionInfo = "(current: " + currentRedisVer.String() + ")"
+	if err == nil && currentServerVer.String() != "" {
+		serverVersionInfo = "(current: " + currentServerVer.String() + ")"
 	}
 
 	db := "0"
@@ -208,7 +208,7 @@ func showInstanceBasicInfo(t *table.Table, id int, info *REDIS.Info, state CORE.
 	t.Print("Created", timeutil.Format(created, "%Y/%m/%d %H:%M:%S"))
 	t.Print("Replication type", strutil.Q(string(meta.Preferencies.ReplicationType), "—"))
 	t.Print("URI", uri)
-	t.Print("Compatibility", compatible+" {s-}"+redisVersionInfo+"{!}")
+	t.Print("Compatibility", compatible+" {s-}"+serverVersionInfo+"{!}")
 
 	if !modTime.IsZero() {
 		t.Print("Dump size", fmtutil.PrettySize(size))
@@ -250,7 +250,7 @@ func renderInfoData(t *table.Table, info *REDIS.Info, sections []string) {
 		}
 
 		t.Border()
-		fmtc.Printf(" ▾ {*}%s{!}\n", strings.ToUpper(section.Header))
+		fmtc.Printfn(" ▾ {*}%s{!}", strings.ToUpper(section.Header))
 		t.Border()
 
 		for _, v := range section.Fields {

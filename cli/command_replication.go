@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -126,7 +126,7 @@ func printSyncClientInfo(t *table.Table, client *API.ClientInfo, suppliantCID st
 	lag := "{s-}—{!}"
 
 	if client.LastSyncLag > 0 {
-		lag = timeutil.MiniDuration(timeutil.SecondsToDuration(client.LastSeenLag))
+		lag = timeutil.Pretty(timeutil.SecondsToDuration(client.LastSeenLag)).Mini()
 	}
 
 	t.Print(
@@ -180,12 +180,12 @@ func getSyncClientHost(hostname, ip string) string {
 }
 
 // getSyncClientRole returns client role for command output
-func getSyncClientRole(typ string, isSuppliant bool) string {
+func getSyncClientRole(role string, isSuppliant bool) string {
 	if !isSuppliant {
-		return typ
+		return role
 	}
 
-	return "{s}•{!} " + typ
+	return "{s}•{!} " + role
 }
 
 // hasSentinelNodes returns true if given slice contains sentinel node
@@ -203,11 +203,11 @@ func hasSentinelNodes(clients []*API.ClientInfo) bool {
 func formatReplicationErrorMessage(format string) string {
 	switch format {
 	case FORMAT_TEXT:
-		return fmt.Sprint("")
+		return ""
 	case FORMAT_JSON:
-		return fmt.Sprint("{}\n")
+		return "{}\n"
 	case FORMAT_XML:
-		return fmt.Sprint("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<replication></replication>\n")
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<replication></replication>\n"
 	}
 
 	return ""

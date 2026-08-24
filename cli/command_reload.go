@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -200,8 +200,8 @@ func renderConfigsDiff(diff []REDIS.ConfigPropDiff) {
 	t := table.NewTable().SetHeaders("PROPERTY", "VALUE CHANGE")
 
 	for _, info := range diff {
-		switch {
-		case info.FileValue == "\"\"":
+		switch info.FileValue {
+		case "\"\"":
 			t.Add(info.PropName, fmt.Sprintf("\"%s\" → \"\"", info.MemValue))
 		default:
 			t.Add(info.PropName, fmt.Sprintf("\"%s\" → \"%s\"", info.MemValue, info.FileValue))

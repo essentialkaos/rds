@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -75,10 +75,10 @@ func CliCommand(args CommandArgs) int {
 	}
 
 	if options.GetB(OPT_PRIVATE) {
-		cliCfg.User = CORE.REDIS_USER_ADMIN
+		cliCfg.User = CORE.SERVER_USER_ADMIN
 		cliCfg.Password = meta.Preferencies.AdminPassword
 	} else if meta.Preferencies.ServicePassword != "" {
-		cliCfg.User = CORE.REDIS_USER_SERVICE
+		cliCfg.User = CORE.SERVER_USER_SERVICE
 		cliCfg.Password = meta.Preferencies.ServicePassword
 	}
 

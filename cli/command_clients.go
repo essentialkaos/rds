@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -54,7 +54,7 @@ func ClientsCommand(args CommandArgs) int {
 		Command: []string{"CLIENT", "LIST", "TYPE", "NORMAL"},
 		Port:    CORE.GetInstancePort(id),
 		Auth: REDIS.Auth{
-			User:     CORE.REDIS_USER_ADMIN,
+			User:     CORE.SERVER_USER_ADMIN,
 			Password: meta.Preferencies.AdminPassword,
 		},
 		Timeout: time.Second,
@@ -124,8 +124,8 @@ func printClientsInfo(clientsData, filter string) {
 			fmtutil.PrettyNum(sub),
 			fmtutil.PrettyNum(psub),
 			info["events"],
-			timeutil.PrettyDurationSimple(age),
-			timeutil.PrettyDurationSimple(idle),
+			timeutil.Pretty(age).Mini(),
+			timeutil.Pretty(idle).Mini(),
 			cmd,
 		)
 	}

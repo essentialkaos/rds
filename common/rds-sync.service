@@ -5,7 +5,7 @@ Requires=network.target remote-fs.target
 After=network.target remote-fs.target
 
 [Service]
-ExecStart=/usr/bin/rds-sync --no-color
+ExecStart=/usr/bin/rds-sync
 ExecReload=kill -HUP $MAINPID
 KillMode=process
 SyslogIdentifier=rds-sync

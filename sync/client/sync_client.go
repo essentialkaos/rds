@@ -2,7 +2,7 @@ package client
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -28,7 +28,7 @@ func PropagateCommand(command API.MasterCommand, id int, uuid string) error {
 
 	resp, err := req.Request{
 		URL:         getURL(API.METHOD_PUSH),
-		Headers:     API.GetAuthHeader(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)),
+		Auth:        req.AuthBearer{CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)},
 		ContentType: req.CONTENT_TYPE_JSON,
 		AutoDiscard: true,
 		Body: &API.PushRequest{
@@ -66,8 +66,8 @@ func GetReplicationInfo() (*API.ReplicationInfo, error) {
 	var err error
 
 	resp, err := req.Request{
-		Headers:     API.GetAuthHeader(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)),
 		URL:         getURL(API.METHOD_REPLICATION),
+		Auth:        req.AuthBearer{CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)},
 		AutoDiscard: true,
 	}.Get()
 
@@ -98,8 +98,8 @@ func GetStatsInfo() (*API.StatsInfo, error) {
 	var err error
 
 	resp, err := req.Request{
-		Headers:     API.GetAuthHeader(CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)),
 		URL:         getURL(API.METHOD_STATS),
+		Auth:        req.AuthBearer{CORE.Config.GetS(CORE.REPLICATION_AUTH_TOKEN)},
 		AutoDiscard: true,
 	}.Get()
 

@@ -1,4 +1,6 @@
-# Tuning for RDS and Redis
+# Tuning for RDS and Redis/Valkey
 
 redis    soft  nofile    10240
 redis    hard  nofile    10240
+valkey   soft  nofile    10240
+valkey   hard  nofile    10240

@@ -10,7 +10,7 @@
 
 Summary:        Redis orchestration tool
 Name:           rds
-Version:        1.11.2
+Version:        2.0.0
 Release:        0%{?dist}
 Group:          Applications/System
 License:        Apache License, Version 2.0
@@ -21,7 +21,7 @@ Source0:        https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  golang >= 1.22
+BuildRequires:  golang >= 1.23
 
 Requires:       tuned
 
@@ -36,7 +36,7 @@ Tool for Redis orchestration.
 
 %package sync
 Summary:   RDS Sync daemon
-Version:   1.4.2
+Version:   2.0.0
 Release:   0%{?dist}
 Group:     Applications/System
 
@@ -114,13 +114,6 @@ ln -s /opt/%{name}/log \
 %clean
 rm -rf %{buildroot}
 
-%pre
-getent group %{name} &> /dev/null || groupadd -r %{name} &> /dev/null
-getent group redis &> /dev/null || groupadd -r redis &> /dev/null
-getent passwd redis &> /dev/null || \
-useradd -r -g redis -d %{_sharedstatedir}/redis -s /sbin/nologin \
-        -c 'Redis Server' redis &> /dev/null
-
 %post
 if [[ -d %{_sysconfdir}/bash_completion.d ]] ; then
   %{name} --completion=bash 1> %{_sysconfdir}/bash_completion.d/%{name} 2>/dev/null
@@ -166,7 +159,7 @@ systemctl daemon-reload &>/dev/null || :
 %dir /opt/%{name}/conf
 %dir /opt/%{name}/data
 %dir /opt/%{name}/log
-%attr(-, %{redis_user}, %{redis_user}) /opt/%{name}/pid
+%dir /opt/%{name}/pid
 %config(noreplace) %{_sysconfdir}/tuned/no-thp/tuned.conf
 %config(noreplace) %{_sysconfdir}/sysctl.d/50-rds.conf
 %config(noreplace) %{_sysconfdir}/security/limits.d/50-rds.conf
@@ -174,7 +167,7 @@ systemctl daemon-reload &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/%{name}.knf
 %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_localstatedir}/log/%{name}
-%config(noreplace) /opt/%{name}/templates/redis/*.conf
+%config(noreplace) /opt/%{name}/templates/server/*.conf
 %config(noreplace) /opt/%{name}/templates/sentinel/*.conf
 %{_sysconfdir}/tuned/no-thp/no-defrag.sh
 %{_mandir}/man1/%{name}.1.*
@@ -189,6 +182,12 @@ systemctl daemon-reload &>/dev/null || :
 ################################################################################
 
 %changelog
+* Tue Dec 24 2024 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
+- Added Valkey support
+- Improved syncing process
+- Dependencies update
+- Code refactoring
+
 * Fri Nov 01 2024 Anton Novojilov <andy@essentialkaos.com> - 1.11.2-0
 - [cli|sync] Fixed bug with daemonizing Redis server
 - Dependencies update

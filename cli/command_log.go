@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -16,7 +16,6 @@ import (
 	"github.com/essentialkaos/ek/v13/fmtc"
 	"github.com/essentialkaos/ek/v13/fmtutil"
 	"github.com/essentialkaos/ek/v13/fsutil"
-	"github.com/essentialkaos/ek/v13/mathutil"
 	"github.com/essentialkaos/ek/v13/path"
 	"github.com/essentialkaos/ek/v13/strutil"
 	"github.com/essentialkaos/ek/v13/terminal"
@@ -97,7 +96,7 @@ func readLogFile(logFile string, isRedisLog bool) error {
 	fs := fsutil.GetSize(logFile)
 
 	if fs > 0 {
-		fd.Seek(-1*mathutil.Min(fs, 4096), 2)
+		fd.Seek(-1*min(fs, 4096), 2)
 	}
 
 	lastPrint := time.Now()
@@ -161,9 +160,9 @@ func printRDSLogLine(line string) {
 	}
 
 	if target != "" {
-		fmtc.Printf("{s-}%s{!} {s}%s{!} "+colorTag+"%s{!}\n", date, target, line)
+		fmtc.Printfn("{s-}%s{!} {s}%s{!} "+colorTag+"%s{!}", date, target, line)
 	} else {
-		fmtc.Printf("{s-}%s{!} "+colorTag+"%s{!}\n", date, line)
+		fmtc.Printfn("{s-}%s{!} "+colorTag+"%s{!}", date, line)
 	}
 }
 
@@ -232,8 +231,8 @@ func printRedisLogLine(line string) {
 		return
 	}
 
-	fmtc.Printf(
-		"{s-}[ %s/%s/%s %s | %s ]{!} "+colorTag+"%s{!}\n",
+	fmtc.Printfn(
+		"{s-}[ %s/%s/%s %s | %s ]{!} "+colorTag+"%s{!}",
 		year, month, day, hms, role, line[sepIndex+3:],
 	)
 }

@@ -2,7 +2,7 @@ package cli
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                         Copyright (c) 2024 ESSENTIAL KAOS                          //
+//                         Copyright (c) 2025 ESSENTIAL KAOS                          //
 //      Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>     //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -19,7 +19,6 @@ import (
 	"github.com/essentialkaos/ek/v13/mathutil"
 	"github.com/essentialkaos/ek/v13/options"
 	"github.com/essentialkaos/ek/v13/pager"
-	"github.com/essentialkaos/ek/v13/system/process"
 	"github.com/essentialkaos/ek/v13/terminal"
 
 	CORE "github.com/essentialkaos/rds/core"
@@ -218,13 +217,13 @@ func isFilterFit(filter []string, state CORE.State, meta *CORE.InstanceMeta) boo
 		case "with-errors":
 			fit = state.IsWorks() && state.WithErrors()
 		case "orphan":
-			fit = isInstanceOwnerExist(meta.Auth.User) == false
+			fit = !isInstanceOwnerExist(meta.Auth.User)
 		case "outdated":
-			currentRedisVer, _ := CORE.GetRedisVersion()
+			currentServerVer, _ := CORE.GetServerVersion()
 			if state.IsStopped() {
 				fit = false
-			} else if currentRedisVer.String() != "" && meta.Compatible != "" {
-				fit = currentRedisVer.String() != meta.Compatible
+			} else if currentServerVer.String() != "" && meta.Compatible != "" {
+				fit = currentServerVer.String() != meta.Compatible
 			}
 		case "standby":
 			fit = meta.Preferencies.ReplicationType == CORE.REPL_TYPE_STANDBY
@@ -267,19 +266,13 @@ func getInstanceMemoryUsageWithColor(id int, state CORE.State) string {
 		return "{s-}∙∙∙∙∙∙∙∙{!}"
 	}
 
-	pid := CORE.GetInstancePID(id)
-
-	if pid == -1 {
-		return "{y}????????{!}"
-	}
-
-	usage, err := process.GetMemInfo(pid)
+	rss, swap, err := CORE.GetInstanceMemUsage(id)
 
 	if err != nil {
 		return "{y}????????{!}"
 	}
 
-	return fmtutil.PrettySize(usage.VmRSS)
+	return fmtutil.PrettySize(rss + swap)
 }
 
 // isMetaContainsTag return true if instance has given tag
